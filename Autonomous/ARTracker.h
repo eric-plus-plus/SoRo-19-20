@@ -18,7 +18,7 @@ class ARTracker
         
         ARTracker(std::string videoSource); //give the video input source
         bool findAR(); //true if found and updates the angleToAR and distanceToAR vars
-        bool findARPosts(); //see above
+        int findARPosts(); //returns number of AR Tags that it sees
         
     private:
         cv::VideoCapture cap; 
@@ -26,7 +26,10 @@ class ARTracker
         std::vector<aruco::Marker> Markers;
         cv::Mat frame;
         int post1area;
-        int centerPost1;
+        int post2area;
+        int post1distance;
+        int post2distance;
+        int centerPost;
 };
 
 ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
@@ -50,7 +53,7 @@ bool ARTracker::findAR()
         post1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
         //TODO: convert area to distance
         
-        centerPost1 = (Markers[0][1].x + Markers[0][0].x) / 2;
+        centerPost = (Markers[0][1].x + Markers[0][0].x) / 2;
         //TODO: convert the above to an angle
         
         return true;
@@ -61,4 +64,15 @@ bool ARTracker::findARPosts()
 {
     cap >> frame;
     Markers = MDetector.detect(frame);
+    if(Markers.size() == 0 || 1) return Markers.size(); //We may want this to handle finding one post differently
+    else
+    {
+        post1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
+        //TODO: convert area to distance
+        post2area = (Markers[1][1].x - Markers[1][0].x) * (Markers[1][3].y - Markers[1][0].y);
+        //TODO: convert area to distance
+        
+        centerPost = (Markers[0][1].x + Markers[0][0].x + Markers[1][1].x + Markers[1][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
+        //TODO: convert the above to an angle to the center of the posts.
+    }
 }
