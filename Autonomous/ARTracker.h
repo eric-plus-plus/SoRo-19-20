@@ -18,18 +18,19 @@ class ARTracker
         
         ARTracker(std::string videoSource); //give the video input source
         bool findAR(); //true if found and updates the angleToAR and distanceToAR vars
-        int findARPosts(); //returns number of AR Tags that it sees
+        int findARTags(); //returns number of AR Tags that it sees
         
     private:
         cv::VideoCapture cap; 
         aruco::MarkerDetector MDetector;
         std::vector<aruco::Marker> Markers;
         cv::Mat frame;
-        int post1area;
-        int post2area;
-        int post1distance;
-        int post2distance;
-        int centerPost;
+        int tag1area;
+        int tag2area;
+        int tag1distance;
+        int tag2distance;
+        int centerXTag;
+        float degreesPerPixel = 82.1/640.0; //fov / horizontal resolution
 };
 
 ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
@@ -50,29 +51,29 @@ bool ARTracker::findAR()
     if(Markers.size() == 0) return false; //no aruco markers found
     else
     {
-        post1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
+        tag1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
         //TODO: convert area to distance
         
-        centerPost = (Markers[0][1].x + Markers[0][0].x) / 2;
+        centerXTag = (Markers[0][1].x + Markers[0][0].x) / 2;
         //TODO: convert the above to an angle
         
         return true;
     }
 }
 
-bool ARTracker::findARPosts()
+bool ARTracker::findARTags()
 {
     cap >> frame;
     Markers = MDetector.detect(frame);
     if(Markers.size() == 0 || 1) return Markers.size(); //We may want this to handle finding one post differently
     else
     {
-        post1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
+        tag1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
         //TODO: convert area to distance
-        post2area = (Markers[1][1].x - Markers[1][0].x) * (Markers[1][3].y - Markers[1][0].y);
+        tag2area = (Markers[1][1].x - Markers[1][0].x) * (Markers[1][3].y - Markers[1][0].y);
         //TODO: convert area to distance
         
-        centerPost = (Markers[0][1].x + Markers[0][0].x + Markers[1][1].x + Markers[1][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
+        centerXTag = (Markers[0][1].x + Markers[0][0].x + Markers[1][1].x + Markers[1][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
         //TODO: convert the above to an angle to the center of the posts.
     }
 }
