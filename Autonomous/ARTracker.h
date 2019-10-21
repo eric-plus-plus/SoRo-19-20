@@ -12,25 +12,20 @@ class ARTracker
 {
     public:
         float angleToAR; //to the one post for findAR, to the center for findARPosts
-        float distanceToAR; //see above
-        
-        bool betweenPosts; //no clue how this is happening
+        float distanceToAR; //see above. Should be in centimeters
         
         ARTracker(std::string videoSource); //give the video input source
-        bool findAR(); //true if found and updates the angleToAR and distanceToAR vars
-        int findARTags(); //returns number of AR Tags that it sees
+        bool findAR(int id); //true if found and updates the angleToAR and distanceToAR vars
+        int findARTags(int id1, int id2); //returns number of AR Tags that it sees
         
     private:
         cv::VideoCapture cap; 
-        aruco::MarkerDetector MDetector;
-        std::vector<aruco::Marker> Markers;
+        aruco::MarkerDetector MDetector; 
+        std::vector<aruco::Marker> Markers; //to get the id use Markers[i].id;
         cv::Mat frame;
-        int tag1area;
-        int tag2area;
-        int tag1distance;
-        int tag2distance;
+        int widthOfTag;
         int centerXTag;
-        float degreesPerPixel = 82.1/640.0; //fov / horizontal resolution
+        float degreesPerPixel = 82.1/640.0; // fov / horizontal resolution
 };
 
 ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
@@ -41,39 +36,42 @@ ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
         exit(-1);
     }
     
-    //set dictionary here if needed
+    cap.set(CV_CAP_PROP_FRAME_WIDTH,640); //resolution set at 640x480
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+    
+    MDetector.setDictionary("../urc.dict");
 }
 
-bool ARTracker::findAR()
+bool ARTracker::findAR(int id)
 {
     cap >> frame;
     Markers = MDetector.detect(frame);
-    if(Markers.size() == 0) return false; //no aruco markers found
+    if(Markers.size() == 0 || Markers[0].id != id) return false; //correct ar tag not found
     else
     {
-        tag1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
-        //TODO: convert area to distance
+        //distance = (WIDTH / 2) / tan((pixelWidthOfTag / 2) * degreesPerPixel). Makes assumption of right triangle which I guess doesn't matter
+        widthOfTag = Markers[0][1].x - Markers[0][0].x;
+        distanceToAR = (20 / 2) / tan(((widthOfTag / 2) * degreesPerPixel) * (180 / 3.1415)); //ar tag's width is 20cm
         
         centerXTag = (Markers[0][1].x + Markers[0][0].x) / 2;
-        //TODO: convert the above to an angle
+        angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return true;
     }
 }
 
-bool ARTracker::findARTags()
+int ARTracker::findARTags(int id1, int id2)
 {
     cap >> frame;
     Markers = MDetector.detect(frame);
-    if(Markers.size() == 0 || 1) return Markers.size(); //We may want this to handle finding one post differently
+    if(Markers.size() == 0 || Markers.size() == 1) return Markers.size(); //We may want this to handle finding one post differently. TODO: check ids
     else
     {
-        tag1area = (Markers[0][1].x - Markers[0][0].x) * (Markers[0][3].y - Markers[0][0].y);
-        //TODO: convert area to distance
-        tag2area = (Markers[1][1].x - Markers[1][0].x) * (Markers[1][3].y - Markers[1][0].y);
-        //TODO: convert area to distance
+        //NOTE: Distance does not matter if we're trying to drive between the posts so I ingored it here
         
         centerXTag = (Markers[0][1].x + Markers[0][0].x + Markers[1][1].x + Markers[1][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
-        //TODO: convert the above to an angle to the center of the posts.
+        angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
+        
+        return Markers.size();
     }
 }

@@ -2,5 +2,5 @@
 
 int main()
 {
-    ARTracker* tracker = new ARTracker(0);
+    ARTracker* tracker = new ARTracker("/dev/video0");
 }
