@@ -51,7 +51,7 @@ bool ARTracker::findAR(int id)
     {
         //distance = (WIDTH / 2) / tan((pixelWidthOfTag / 2) * degreesPerPixel). Makes assumption of right triangle which I guess doesn't matter
         widthOfTag = Markers[0][1].x - Markers[0][0].x;
-        distanceToAR = (20 / 2) / tan(((widthOfTag / 2) * degreesPerPixel) * (180 / 3.1415)); //ar tag's width is 20cm
+        distanceToAR = (20 / 2) / tan(((widthOfTag / 2) * degreesPerPixel) * (3.1415 / 180)); //ar tag's width is 20cm
         
         centerXTag = (Markers[0][1].x + Markers[0][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
@@ -67,7 +67,7 @@ int ARTracker::findARTags(int id1, int id2)
     if(Markers.size() == 0 || Markers.size() == 1) return Markers.size(); //We may want this to handle finding one post differently. TODO: check ids
     else
     {
-        //NOTE: Distance does not matter if we're trying to drive between the posts so I ingored it here
+        //NOTE: Distance does not matter if we're trying to drive between the posts so I ignored it here
         
         centerXTag = (Markers[0][1].x + Markers[0][0].x + Markers[1][1].x + Markers[1][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
         angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
