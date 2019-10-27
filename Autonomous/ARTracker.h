@@ -11,20 +11,22 @@
 class ARTracker
 {
     public:
-        float angleToAR; //to the one post for findAR, to the center for findARPosts
-        float distanceToAR; //see above. Should be in centimeters
+        float angleToAR = 0; //to the one post for findAR, to the center for findARPosts
+        float distanceToAR = 0; //see above. Should be in centimeters
         
         ARTracker(std::string videoSource); //give the video input source
         bool findAR(int id); //true if found and updates the angleToAR and distanceToAR vars
         int findARTags(int id1, int id2); //returns number of AR Tags that it sees
         
+        cv::Mat frame;
+        
     private:
         cv::VideoCapture cap; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers; //to get the id use Markers[i].id;
-        cv::Mat frame;
-        int widthOfTag;
-        int centerXTag;
+        
+        int widthOfTag = 0;
+        int centerXTag = 0;
         float degreesPerPixel = 82.1/640.0; // fov / horizontal resolution
 };
 
@@ -39,6 +41,8 @@ ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
     cap.set(CV_CAP_PROP_FRAME_WIDTH,640); //resolution set at 640x480
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
     
+    cv::namedWindow("win");
+    
     MDetector.setDictionary("../urc.dict");
 }
 
@@ -46,7 +50,13 @@ bool ARTracker::findAR(int id)
 {
     cap >> frame;
     Markers = MDetector.detect(frame);
-    if(Markers.size() == 0 || Markers[0].id != id) return false; //correct ar tag not found
+    
+    if(Markers.size() == 0 || Markers[0].id != id) 
+    {
+        distanceToAR=0;
+        angleToAR=0;
+        return false; //correct ar tag not found
+    }
     else
     {
         //distance = (WIDTH / 2) / tan((pixelWidthOfTag / 2) * degreesPerPixel). Makes assumption of right triangle which I guess doesn't matter
