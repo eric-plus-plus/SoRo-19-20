@@ -1,3 +1,0 @@
-/home/reza/Desktop/SoRo/SoRo-19-20/Autonomous/build/CMakeFiles/rebuild_cache.dir
-/home/reza/Desktop/SoRo/SoRo-19-20/Autonomous/build/CMakeFiles/autonomous.dir
-/home/reza/Desktop/SoRo/SoRo-19-20/Autonomous/build/CMakeFiles/edit_cache.dir
