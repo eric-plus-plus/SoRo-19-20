@@ -7,7 +7,6 @@
 #include <opencv2/flann.hpp>
 #include <opencv2/aruco.hpp>
 #include <unistd.h>
-#include "gps/gps.h"
 
 class ARTracker
 {

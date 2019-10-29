@@ -1,6 +1,6 @@
 ## Update 10/29/19
 
-Added a cmake to this directory that can be linked with the library "gps" in another directory's cmake. However, the variables in gps.h had to be externed for this to work.
+Added a cmake to this directory that creates the library "gps" which can be linked in another directory's cmake. However, the variables in gps.h had to be externed for this to work.
 
 ## TCP example in C for libsbp
 
