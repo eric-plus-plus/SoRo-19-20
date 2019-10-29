@@ -4,8 +4,6 @@ project(autonomous)
 include_directories("${PROJECT_SOURCE_DIR}")
 add_subdirectory("${PROJECT_SOURCE_DIR}/gps")
 
-#set(HEADER_FILES ARTracker.cpp ARTracker.h gps/gps.c gps/gps.h gps/sbp.h gps/system.h gps/navigation.h gps/imu.h )
-#set(GPS_HEADER_FILES)
 set(HEADER_FILES ARTracker.cpp ARTracker.h)
 
 add_executable(autonomous ARTester.cpp ${HEADER_FILES})
