@@ -8,21 +8,37 @@
 #include <opencv2/aruco.hpp>
 #include <unistd.h>
 
+/*NOTE: Our cameras have autofocus. To turn off:
+    v4l2-ctl --list-devices #to find the device you want. Below I assume /dev/video0
+    v4l2-ctl -d /dev/video0 --set-ctrl=focus_auto=0
+    v4l2-ctl -d /dev/video0 --set-ctrl=focus_absolute=0
+    
+    This can also be done with v4l2ucp for the GUI lovers
+*/
+
 //this program takes a picture of an artag at 100cm away that is 20cm wide and returns the focal length for cm
 int main()
 {   
-    cv::Mat iamge;
     aruco::MarkerDetector MDetector; 
     std::vector<aruco::Marker> Markers;
     MDetector.setDictionary("../urc.dict");
-    cv::Mat image = cv::imread("/dev/video0");
-    Markers = MDetector.detect(image);
     
-    int widthOfTag = 0;
-    if(Markers.size() > 0)
-        widthOfTag = Markers[index][1].x - Markers[index][0].x;
-    else
-        return -2;
+    cv::VideoCapture cap("/dev/video0"); 
+    cv::Mat image;
+    
+    while(true)
+    {
+        cap >> image;
+        Markers = MDetector.detect(image);
         
-    std::cout << "Focal Length: " << ((widthOfTag * 100) / 20) << std::endl;
+        double widthOfTag = 0;
+        if(Markers.size() > 0)
+            widthOfTag = Markers[0][1].x - Markers[0][0].x;
+        else
+            std::cout << "nothing found" << std::endl;
+            
+        std::cout << "Focal Length: " << ((widthOfTag * 100.0) / 20.0) << std::endl;
+        cv::imshow("win", image);
+        cv::waitKey(100);
+    }
 }

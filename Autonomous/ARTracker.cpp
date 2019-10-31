@@ -40,7 +40,8 @@ bool ARTracker::findAR(int id)
     {
         //distance = (WIDTH / 2) / tan((pixelWidthOfTag / 2) * degreesPerPixel). Makes assumption of right triangle which I guess doesn't matter
         widthOfTag = Markers[index][1].x - Markers[index][0].x;
-        distanceToAR = (20 / 2) / tan(((widthOfTag / 2) * degreesPerPixel) * (3.1415 / 180)); //ar tag's width is 20cm
+        //distanceToAR = (20 / 2) / tan(((widthOfTag / 2) * degreesPerPixel) * (3.1415 / 180)); //ar tag's width is 20cm
+        distanceToAR = (20 * focalLength) / widthOfTag;
         
         centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
