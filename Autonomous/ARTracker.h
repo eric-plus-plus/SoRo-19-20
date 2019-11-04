@@ -23,7 +23,7 @@ class ARTracker
     private:
         cv::VideoCapture cap; 
         aruco::MarkerDetector MDetector; 
-        std::vector<aruco::Marker> Markers; //to get the id use Markers[i].id;
+        std::vector<aruco::Marker> Markers;
         
         int widthOfTag = 0;
         int centerXTag = 0;
