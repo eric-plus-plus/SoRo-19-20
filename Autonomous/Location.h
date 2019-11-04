@@ -1,7 +1,7 @@
 #ifndef LOCATION_H
 #define LOCATION_H
 
-#include "gps/gps.h"
+
 #include <math.h>
 #include <thread>
 #include <chrono>
@@ -11,8 +11,8 @@
 class Location
 {
 private:
-	float oldLatitude;
-	float oldLongitude;
+	float oldLatitude = 0.0;
+	float oldLongitude = 0.0;
 	bool running = true;
 
 	float calcBearing(float lat1, float lon1, float lat2, float lon2);
@@ -20,15 +20,15 @@ private:
 
 public:
 	
-	float latitude;
-	float longitude;
-	float height;
+	float latitude = 0.0;
+	float longitude = 0.0;
+	float height = 0.0;
 	//tow defined in msg_pos_llh_t in navigation.h
-	unsigned long time;
+	unsigned long time = 0;
 	//average of horizontal and vertical accuracies defined in msg_pos_llh_t in navigation.h
-	unsigned long error;
+	unsigned long error = 0;
 	//Current bearing of the rover: -180 south to -90 west to 180 south
-	float bearing;
+	float bearing = 0.0;
 
 	//Returns distance in kilometers between current latitude and longitude and parameters
 	float distanceTo(float lat, float lon);

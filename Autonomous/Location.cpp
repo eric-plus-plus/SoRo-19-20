@@ -1,4 +1,6 @@
 #include "Location.h"
+#include "gps/gps.h"
+#include <iostream>
 
 //Returns distance in kilometers between current latitude and longitude and parameters
 float Location::distanceTo(float lat, float lon)
@@ -32,17 +34,24 @@ float Location::bearingTo(float lat, float lon)
 //Starts updating public fields from the GPS box
 void Location::startGPSThread()
 {
+    char *ip = (char*)"192.168.1.222";
+    char *host = (char*)"55556";
+    gps_init(ip, host);
+    std::cout << "Connected!!!" << std::endl;
 	std::thread updateThread(&Location::updateFieldsLoop, this);
+	updateThread.detach();
 }
 
 //Updates all fields from the auto-filled struct defined in navigation.h
 void Location::updateFieldsLoop()
 {
+    
 	while(running)
 	{
+	    std::cout << "Started updating fields" << std::endl;
 		oldLatitude = latitude;
 		oldLongitude = longitude;
-
+        
 		latitude = pos_llh.lat;
 		longitude = pos_llh.lon;
 		height = pos_llh.height;
