@@ -1,0 +1,18 @@
+figure {
+  text-align: center;
+}
+
+.book .book-summary ul.summary li a.gitbook-link,
+.book .book-header .btn.sharing-link {
+  display: none;
+}
+
+#book-search-input {
+  display: none;
+}
+
+pre > button.copy-code-button {
+  font-size: small;
+  background-color: grey !important;
+  border: none !important;
+}

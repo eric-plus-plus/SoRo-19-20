@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Draw and Modify Features</title>
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <style>
+      .map {
+        width: 100%;
+        height:400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <div id="mouse-position"></div>
+    <form class="form-inline">
+      <label>Geometry type &nbsp;</label>
+      <select id="type">
+        <option value="Point">Point</option>
+        <option value="LineString">LineString</option>
+        <option value="Polygon">Polygon</option>
+        <option value="Circle">Circle</option>
+      </select>
+      <label>Projection </label>
+      <select id="projection">
+        <option value="EPSG:4326">EPSG:4326</option>
+        <option value="EPSG:3857">EPSG:3857</option>
+      </select>
+      <label>Precision </label>
+      <input id="precision" type="number" min="0" max="12" value="4"/>
+    </form>
+    <script src="index.js"></script>
+  </body>
+</html>
