@@ -2,26 +2,10 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include "Location.h"
+#include "DriveMode.h"
 
 using namespace std;
-
-class DriveMode
-{
-private:
-	bool onePost;
-	vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
-
-public:
-	bool driveAlongCoordinates(vector<list<int>[]> locations, int id);
-	bool driveAlongCoordinates(vector<list<int>[]> locations, int id1, int id2);
-	bool trackARTag(int id);
-	bool trackARTags(int id1, int id2);
-	bool searchForARTag();
-
-};
-
-
-
 
 vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 {
