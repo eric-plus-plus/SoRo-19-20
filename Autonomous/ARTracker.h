@@ -23,9 +23,10 @@ class ARTracker
     private:
         cv::VideoCapture cap; 
         aruco::MarkerDetector MDetector; 
-        std::vector<aruco::Marker> Markers; //to get the id use Markers[i].id;
+        std::vector<aruco::Marker> Markers;
         
         int widthOfTag = 0;
         int centerXTag = 0;
         float degreesPerPixel = 82.1/640.0; // fov / horizontal resolution. Noah gave me this
+        float focalLength = 611; //For cm. Found using finalFinalLength.cpp
 };
