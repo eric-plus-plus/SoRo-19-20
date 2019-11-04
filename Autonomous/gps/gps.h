@@ -14,36 +14,36 @@ extern "C" {
         
         
 /* SBP structs that messages from Piksi will feed. */
-extern msg_pos_llh_t      pos_llh;
-extern msg_baseline_ned_t baseline_ned;
-extern msg_vel_ned_t      vel_ned;
-extern msg_dops_t         dops;
-extern msg_gps_time_t gps_time; 
-extern msg_imu_raw_t      imu_raw;
+ msg_pos_llh_t      pos_llh;
+ msg_baseline_ned_t baseline_ned;
+ msg_vel_ned_t      vel_ned;
+ msg_dops_t         dops;
+ msg_gps_time_t gps_time; 
+ msg_imu_raw_t      imu_raw;
 
 /*
  * SBP callback nodes must be statically allocated. Each message ID / callback
  * pair must have a unique sbp_msg_callbacks_node_t associated with it.
  */
-extern sbp_msg_callbacks_node_t pos_llh_node;
-extern sbp_msg_callbacks_node_t baseline_ned_node;
-extern sbp_msg_callbacks_node_t vel_ned_node;
-extern sbp_msg_callbacks_node_t dops_node;
-extern sbp_msg_callbacks_node_t gps_time_node;
-extern sbp_msg_callbacks_node_t imu_raw_node;
+ sbp_msg_callbacks_node_t pos_llh_node;
+ sbp_msg_callbacks_node_t baseline_ned_node;
+ sbp_msg_callbacks_node_t vel_ned_node;
+ sbp_msg_callbacks_node_t dops_node;
+ sbp_msg_callbacks_node_t gps_time_node;
+ sbp_msg_callbacks_node_t imu_raw_node;
 
 // IP address and port that of the Piksi Multi
-extern char *tcp_ip_addr;
-extern char *tcp_ip_port;
+ char *tcp_ip_addr;
+ char *tcp_ip_port;
 
 // thread bitch
-extern pthread_t gps_update_thread;
+ pthread_t gps_update_thread;
 
 // state structure
-extern sbp_state_t s;
+ sbp_state_t s;
     
 // descriptor; status of the socket
-extern int socket_desc;
+ int socket_desc;
 
 //struct sockaddr_in server;
         /****** FUNCTION DECLARATIONS BITCH *******/
