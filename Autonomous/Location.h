@@ -14,14 +14,17 @@ private:
 	float oldLatitude = 0.0;
 	float oldLongitude = 0.0;
 	bool running = true;
+	const int waitDuration = 1;
 
 	float calcBearing(float lat1, float lon1, float lat2, float lon2);
 	void updateFieldsLoop();
 
 public:
-	
+	//Current latitude of the Rover
 	float latitude = 0.0;
+	//Current longitude of the Rover
 	float longitude = 0.0;
+	//Current height of the Rover
 	float height = 0.0;
 	//tow defined in msg_pos_llh_t in navigation.h
 	unsigned long time = 0;
@@ -37,6 +40,8 @@ public:
 	float bearingTo(float lat, float lon);
 	//Start updating this object's fields every 1 second
 	void startGPSThread();
+	//Stop updating this object's fields
+	void stopGPSThread();
 };
 
 #endif

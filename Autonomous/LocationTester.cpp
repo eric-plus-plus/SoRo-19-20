@@ -25,14 +25,14 @@ int main()
 	
 	while(true)
 	{
-	    cout << loc.latitude;
-	    cout << loc.longitude;
-	    cout << loc.height;
-	    cout << loc.time;
-	    cout << loc.error;
-	    cout << loc.bearing;
+	    cout << "Lat: " << loc.latitude << std::endl;
+	    cout << "Lon: " << loc.longitude << std::endl;
+	    cout << "Height: " << loc.height << std::endl;
+	    cout << "Time: " << loc.time << std::endl;
+	    cout << "Error: " << loc.error << std::endl;
+	    cout << "Bearing: " << loc.bearing << std::endl << std::endl;
 	    
-	    std::this_thread::sleep_for(std::chrono::seconds(1));
+	    std::this_thread::sleep_for(std::chrono::seconds(2));
 	
 	}
 

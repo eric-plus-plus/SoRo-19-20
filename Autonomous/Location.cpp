@@ -5,7 +5,7 @@
 //Returns distance in kilometers between current latitude and longitude and parameters
 float Location::distanceTo(float lat, float lon)
 {
-	float earthRadius = 6371;// .301;
+	float earthRadius = 6371.301;
 	float deltaLat = (lat - latitude) * (PI/180.0);
 	float deltaLon = (lon - longitude) * (PI/180.0);
 
@@ -34,12 +34,18 @@ float Location::bearingTo(float lat, float lon)
 //Starts updating public fields from the GPS box
 void Location::startGPSThread()
 {
+    running = true;
     char *ip = (char*)"192.168.1.222";
     char *host = (char*)"55556";
     gps_init(ip, host);
-    std::cout << "Connected!!!" << std::endl;
 	std::thread updateThread(&Location::updateFieldsLoop, this);
 	updateThread.detach();
+}
+
+void Location::stopGPSThread()
+{
+    running = false;
+    gps_finish();
 }
 
 //Updates all fields from the auto-filled struct defined in navigation.h
@@ -48,7 +54,6 @@ void Location::updateFieldsLoop()
     
 	while(running)
 	{
-	    std::cout << "Started updating fields" << std::endl;
 		oldLatitude = latitude;
 		oldLongitude = longitude;
         
@@ -59,7 +64,7 @@ void Location::updateFieldsLoop()
 		error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
 		bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
 
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(waitDuration));
 	}
 }
 
