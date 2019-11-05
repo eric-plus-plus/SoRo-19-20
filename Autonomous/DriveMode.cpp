@@ -4,6 +4,7 @@
 #include <list>
 #include "Location.h"
 #include "DriveMode.h"
+#include "ARTracker.h"
 
 using namespace std;
 
@@ -26,4 +27,36 @@ vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 	}
 	return PIDValues;
 }
+bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
+{
+    ARTracker tracker;
+    Location locationInst;
+    float bearingTo;
+    vector<double> wheelSpeeds;
+    for(int i = 0; i < locations.size(); ++i)
+    {
+         while(!tracker.findAR(id))
+         {
+            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1];
+            wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
+            //send wheel speeds
+            cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
+            //wait for a second
+         }
+         if(tracker.findAR(id))
+         {
+            return true;
+         }
+    }
+    return false;
+}
 
+for( coord in locations && !tracker.findAR(id))
+    while(!tracker.findAR(id))
+    {
+        find bearing to face next gps location
+        get wheel speeds using the previously found bearing
+        send wheel speeds to wheels with communication class //just print them for now
+        wait for a second
+    }
+}
