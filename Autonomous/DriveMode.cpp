@@ -33,7 +33,7 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
     Location locationInst;
     float bearingTo;
     vector<double> wheelSpeeds;
-    for(int i = 0; i < locations.size(); ++i)
+    for(int i = 0; i < locations.size() && !tracker.findAR(id); ++i)
     {
          while(!tracker.findAR(id))
          {
