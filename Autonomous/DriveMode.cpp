@@ -41,7 +41,7 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
             wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
             //send wheel speeds
             cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
-            //wait for a second
+            sleep(0);
          }
          if(tracker.findAR(id))
          {
@@ -51,6 +51,7 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
     return false;
 }
 
+/*					       
 for( coord in locations && !tracker.findAR(id))
     while(!tracker.findAR(id))
     {
@@ -60,3 +61,4 @@ for( coord in locations && !tracker.findAR(id))
         wait for a second
     }
 }
+*/
