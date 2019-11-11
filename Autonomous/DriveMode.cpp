@@ -51,14 +51,26 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
     return false;
 }
 
-/*					       
-for( coord in locations && !tracker.findAR(id))
-    while(!tracker.findAR(id))
+bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2)
+{
+    ARTracker tracker;
+    Location locationInst;
+    float bearingTo;
+    vector<double> wheelSpeeds;
+    for(int i = 0; i < locations.size(); ++i)
     {
-        find bearing to face next gps location
-        get wheel speeds using the previously found bearing
-        send wheel speeds to wheels with communication class //just print them for now
-        wait for a second
+         while(locationInst.distanceTo(locations.at(i)[0], locations.at(i)[1]) > 0.003)
+         {
+            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1]);
+            wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
+            //send wheel speeds
+            cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
+            sleep(0);
+         }
+         if(tracker.findAR(id1) || tracker.findAR(id2))
+         {
+            return true;
+         }
     }
+    return false;
 }
-*/
