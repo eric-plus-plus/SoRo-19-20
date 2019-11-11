@@ -33,11 +33,11 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
     Location locationInst;
     float bearingTo;
     vector<double> wheelSpeeds;
-    for(int i = 0; i < locations.size() && !tracker.findAR(id); ++i)
+    for(int i = 0; i < locations.size(); ++i)
     {
-         while(!tracker.findAR(id))
+         while(locationInst.distanceTo(locations.at(i)[0], locations.at(i)[1]) > 0.003)
          {
-            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1];
+            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
             //send wheel speeds
             cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
