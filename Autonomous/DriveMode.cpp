@@ -27,6 +27,7 @@ vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 	}
 	return PIDValues;
 }
+
 bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
 {
     ARTracker tracker;
@@ -42,6 +43,10 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
             //send wheel speeds
             cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
             sleep(0);
+            if(tracker.findAR(id))
+            {
+                return true;
+            }
          }
          if(tracker.findAR(id))
          {
@@ -51,7 +56,35 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
     return false;
 }
 
-bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2)
+
+/*
+while(distanceToAR < 300)
+{
+    if(findAR)
+        getWheelSpeeds(angleToAR)
+}
+*/
+bool DriveMode::trackARTag(int id)
+{
+    ARTracker tracker;
+    Location locationInst;
+    vector<double> wheelSpeeds;
+    
+    while(tracker.distanceToAR() > 300)
+    {
+        if(tracker.findAR(id))
+        {
+            wheelSpeeds = getWheelSpeeds(tracker.angleToAR);
+            //send wheel speeds
+            //wait one second
+        }
+    }
+    return true;
+}
+
+
+
+/*bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2)
 {
     ARTracker tracker;
     Location locationInst;
@@ -66,11 +99,15 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2
             //send wheel speeds
             cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
             sleep(0);
+            if(tracker.findAR(id1) && tracker.findAR(id2))
+            {
+                return true;
+            }
          }
-         if(tracker.findAR(id1) || tracker.findAR(id2))
+         if(tracker.findAR(id1) && tracker.findAR(id2))
          {
             return true;
          }
     }
     return false;
-}
+}*/
