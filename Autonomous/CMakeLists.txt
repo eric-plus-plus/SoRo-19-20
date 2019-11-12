@@ -4,9 +4,9 @@ project(autonomous)
 include_directories("${PROJECT_SOURCE_DIR}")
 add_subdirectory("${PROJECT_SOURCE_DIR}/gps")
 
-set(HEADER_FILES Location.cpp Location.h ARTracker.cpp ARTracker.h)
+set(HEADER_FILES DriveMode.cpp DriveMode.h Location.cpp Location.h ARTracker.cpp ARTracker.h)
 
-add_executable(autonomous LocationTester.cpp ${HEADER_FILES})
+add_executable(autonomous DriveModeTest.cpp ${HEADER_FILES})
 
 find_package( OpenCV REQUIRED )
 

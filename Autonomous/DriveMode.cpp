@@ -1,7 +1,8 @@
 
 #include <iostream>
 #include <vector>
-#include <list>
+#include <string>
+#include <unistd.h>
 #include "Location.h"
 #include "DriveMode.h"
 #include "ARTracker.h"
@@ -30,8 +31,8 @@ vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 
 bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
 {
-    ARTracker tracker;
-    Location locationInst;
+    
+    locationInst.startGPSThread();
     float bearingTo;
     vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
@@ -42,17 +43,20 @@ bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
             wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
             //send wheel speeds
             cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
-            sleep(0);
+            usleep(1000000);
             if(tracker.findAR(id))
             {
+                locationInst.stopGPSThread()
                 return true;
             }
          }
          if(tracker.findAR(id))
          {
+            locationInst.stopGPSThread();
             return true;
          }
     }
+    locationInst.stopGPSThread();
     return false;
 }
 
@@ -76,7 +80,7 @@ bool DriveMode::trackARTag(int id)
         {
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR);
             //send wheel speeds
-            //wait one second
+            usleep(1000000);
         }
     }
     return true;

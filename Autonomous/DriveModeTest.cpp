@@ -2,17 +2,20 @@
 #include <iostream>
 #include "DriveMode.h"
 
+using namespace std;
+
 int main()
 {
     
    DriveMode testInst;
    vector<double> locations;
-   locations.push_back({1,1});
-   locations.push_back({400, 30});
-   locations.push_back({0, 5});
-   locations.push_back({-20, 7});
+   int[] locationArray1 = {1, 1};
+   locations.push_back(locationArray1);
+  
    
    testInst.driveAlongCoordinates(locations, 3);
+   testInst.driveAlongCoordinates(locations, 9999);
+   testInst.driveAlongCoordinates(locations, -1);
    
    testInst.trackARTag(5);
    testInst.trackARTag(5000);

@@ -7,6 +7,9 @@ class DriveMode
 private:
 	bool onePost;
 	vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
+	String videoFile = "/dev/video0";
+    ARTracker tracker(videoFile); //"/dev/video0"
+    Location locationInst;
 
 public:
 	bool driveAlongCoordinates(vector<int[2]> locations, int id);
