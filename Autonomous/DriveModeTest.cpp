@@ -7,9 +7,11 @@ using namespace std;
 int main()
 {
     
-   DriveMode testInst;
-   vector<double> locations;
-   int[] locationArray1 = {1, 1};
+   DriveMode testInst("/dev/video0", /*speed*/1.0);
+   vector<vector<double>> locations;
+   vector<double> locationArray1;//[2] = {1, 1};
+   locationArray1.push_back(1.0);
+   locationArray1.push_back(1.0);
    locations.push_back(locationArray1);
   
    

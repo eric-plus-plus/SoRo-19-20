@@ -1,19 +1,19 @@
-
-
-using namespace std;
-
+#include "ARTracker.h"
+#include "Location.h"
 class DriveMode
 {
 private:
+    double speed;
 	bool onePost;
-	vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
-	String videoFile = "/dev/video0";
-    ARTracker tracker(videoFile); //"/dev/video0"
+	std::vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
+    ARTracker tracker; //"/dev/video0"
     Location locationInst;
+    //Communication communicate;
 
 public:
-	bool driveAlongCoordinates(vector<int[2]> locations, int id);
-	bool driveAlongCoordinates(vector<int[2]> locations, int id1, int id2);
+    DriveMode(std::string videoFile, double speed);
+	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id);
+	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2);
 	bool trackARTag(int id);
 	bool trackARTags(int id1, int id2);
 	bool searchForARTag();

@@ -3,15 +3,16 @@
 #include <vector>
 #include <string>
 #include <unistd.h>
-#include "Location.h"
 #include "DriveMode.h"
-#include "ARTracker.h"
 
-using namespace std;
-
-vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
+DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
 {
-	vector<double> PIDValues(2);
+    this->speed = speed;
+}
+
+std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
+{
+	std::vector<double> PIDValues(2);
 	amountOff /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed > 90)
 	{
@@ -29,24 +30,25 @@ vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 	return PIDValues;
 }
 
-bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id)
+bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id)
 {
     
     locationInst.startGPSThread();
     float bearingTo;
-    vector<double> wheelSpeeds;
+    std::vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
     {
-         while(locationInst.distanceTo(locations.at(i)[0], locations.at(i)[1]) > 0.003)
+         while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.003)
          {
-            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1]);
-            wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
+            bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
+            wheelSpeeds = getWheelSpeeds(bearingTo, speed);
             //send wheel speeds
-            cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
+            //communicate.arc(wheelsSpeeds[0], wheelSpeeds[1]);
+            std::cout << wheelSpeeds[0] << " : " << wheelSpeeds[1] << std::endl;
             usleep(1000000);
             if(tracker.findAR(id))
             {
-                locationInst.stopGPSThread()
+                locationInst.stopGPSThread();
                 return true;
             }
          }
@@ -70,16 +72,17 @@ while(distanceToAR < 300)
 */
 bool DriveMode::trackARTag(int id)
 {
-    ARTracker tracker;
+    //ARTracker tracker;
     Location locationInst;
-    vector<double> wheelSpeeds;
+    std::vector<double> wheelSpeeds;
     
-    while(tracker.distanceToAR() > 300)
+    while(tracker.distanceToAR > 300)
     {
         if(tracker.findAR(id))
         {
-            wheelSpeeds = getWheelSpeeds(tracker.angleToAR);
+            wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
             //send wheel speeds
+            //communicate.arc(wheelSpeeds[0], wheelSpeeds[1]);
             usleep(1000000);
         }
     }
