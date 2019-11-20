@@ -5,7 +5,6 @@
 #include <opencv2/highgui.hpp>
 #include <aruco/markerdetector.h>
 #include <opencv2/flann.hpp>
-#include <opencv2/aruco.hpp>
 #include <unistd.h>
 
 class ARTracker
