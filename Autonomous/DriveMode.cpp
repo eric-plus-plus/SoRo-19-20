@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <unistd.h>
+//#include <unistd.h>
 #include "DriveMode.h"
 
 DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
@@ -45,7 +45,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             //send wheel speeds
             //communicate.arc(wheelsSpeeds[0], wheelSpeeds[1]);
             std::cout << wheelSpeeds[0] << " : " << wheelSpeeds[1] << std::endl;
-            usleep(1000000);
+            //usleep(1000000);
+            cv::waitKey(1000);
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
@@ -83,7 +84,8 @@ bool DriveMode::trackARTag(int id)
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
             //send wheel speeds
             //communicate.arc(wheelSpeeds[0], wheelSpeeds[1]);
-            usleep(1000000);
+            //usleep(1000000);
+            cv::waitKey(1000);
         }
     }
     return true;
