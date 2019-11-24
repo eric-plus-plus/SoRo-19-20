@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    ARTracker* tracker = new ARTracker("/dev/video0");
+    ARTracker* tracker = new ARTracker("/dev/video1");
     //cv::namedWindow("win");
     while(true)
     {

@@ -10,7 +10,7 @@ private:
     ARTracker tracker; //"/dev/video0"
     Location locationInst;
     //Communication communicate;
-    UDPOut* out = new UDPOut("192.168.1.100", 1256, "192.168.1.106", 1001);
+    UDPOut* out = new UDPOut("10.0.0.2", 1256, "10.0.0.101", 1001);
 
 public:
 

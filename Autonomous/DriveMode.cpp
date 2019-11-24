@@ -76,13 +76,13 @@ while(distanceToAR < 300)
 bool DriveMode::trackARTag(int id)
 {
     //ARTracker tracker;
-    Location locationInst;
     std::vector<double> wheelSpeeds;
     
-    while(tracker.distanceToAR > 300)
+    while(tracker.distanceToAR > 300 || tracker.distanceToAR == -1)
     {
         if(tracker.findAR(id))
         {
+	    std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
             //send wheel speeds
             //communicate.arc(wheelSpeeds[0], wheelSpeeds[1]);
@@ -91,6 +91,8 @@ bool DriveMode::trackARTag(int id)
             //usleep(1000000);
             cv::waitKey(1000);
         }
+//	else
+//	    std::cout << "cannot find tag" << std::endl;
     }
     return true;
 }
