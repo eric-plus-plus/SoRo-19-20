@@ -7,13 +7,13 @@ using namespace std;
 int main()
 {
     ARTracker* tracker = new ARTracker("/dev/video1");
-    //cv::namedWindow("win");
+    //cv::namedWindow("win"); //This will break the code if run over SSH
     while(true)
     {
         cout << tracker->findAR(0) << endl;
         cout << "distance: " << tracker->distanceToAR << endl;
         cout << "angle: " << tracker->angleToAR << endl;
-    //    cv::imshow("win", tracker->frame);
+    //    cv::imshow("win", tracker->frame); //This will break the code if run over SSH
         cv::waitKey(100);
     }
 }

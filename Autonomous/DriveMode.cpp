@@ -2,13 +2,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
-//#include <unistd.h>
 #include "DriveMode.h"
 
 DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
 {
     this->speed = speed;
 }
+
 
 std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
 {
@@ -42,13 +42,13 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
          {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
+            
             //send wheel speeds
-            //communicate.arc(wheelsSpeeds[0], wheelSpeeds[1]);
             std::string str = out->controlToStr(wheelSpeeds[0], wheelSpeeds[1], 0,0);
             out->sendMessage(&str);
             std::cout << wheelSpeeds[0] << " : " << wheelSpeeds[1] << std::endl;
-            //usleep(1000000);
-            cv::waitKey(100);
+            
+            cv::waitKey(100); //waits for 100ms
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
@@ -65,34 +65,24 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     return false;
 }
 
-
-/*
-while(distanceToAR < 300)
-{
-    if(findAR)
-        getWheelSpeeds(angleToAR)
-}
-*/
 bool DriveMode::trackARTag(int id)
 {
-    //ARTracker tracker;
     std::vector<double> wheelSpeeds;
     
-    while(tracker.distanceToAR > 300 || tracker.distanceToAR == -1)
+    //drives until the distance to the tag is less than 300cm.
+    while(tracker.distanceToAR > 300 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.findAR(id))
         {
-	    std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
+	        std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
+            
             //send wheel speeds
-            //communicate.arc(wheelSpeeds[0], wheelSpeeds[1]);
             std::string str = out->controlToStr(wheelSpeeds[0], wheelSpeeds[1], 0,0);
             out->sendMessage(&str);
-            //usleep(1000000);
-            cv::waitKey(1000);
+            
+            cv::waitKey(100); //waits for 100ms
         }
-//	else
-//	    std::cout << "cannot find tag" << std::endl;
     }
     return true;
 }

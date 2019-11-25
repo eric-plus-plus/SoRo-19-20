@@ -11,7 +11,7 @@ ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
     cap.set(cv::CAP_PROP_FRAME_WIDTH,640); //resolution set at 640x480
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
     
-    //cv::namedWindow("win"); //creates the window. Use this for debug
+    //cv::namedWindow("win"); //creates the window. Use this for debug. NOTE: will break the code if run over SSH
     
     MDetector.setDictionary("../urc.dict");
 }

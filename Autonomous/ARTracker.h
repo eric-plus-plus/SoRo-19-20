@@ -17,7 +17,7 @@ class ARTracker
         bool findAR(int id); //true if found and updates the angleToAR and distanceToAR vars
         int findARTags(int id1, int id2); //returns number of correct AR Tags that it sees
         
-        cv::Mat frame; //the camera frame. Mostly for debugging
+        cv::Mat frame; //the camera frame. Can be used for debugging
         
     private:
         cv::VideoCapture cap; 
