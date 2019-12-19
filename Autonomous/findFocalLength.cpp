@@ -9,9 +9,9 @@
 #include <unistd.h>
 
 /*NOTE: Our cameras have autofocus. To turn off:
-    v4l2-ctl --list-devices #to find the device you want. Below I assume /dev/video0
-    v4l2-ctl -d /dev/video0 --set-ctrl=focus_auto=0
-    v4l2-ctl -d /dev/video0 --set-ctrl=focus_absolute=0
+    v4l2-ctl --list-devices #to find the device you want. Below I assume /dev/video1
+    v4l2-ctl -d /dev/video1 --set-ctrl=focus_auto=0
+    v4l2-ctl -d /dev/video1 --set-ctrl=focus_absolute=0
     
     This can also be done with v4l2ucp for the GUI lovers
 */
