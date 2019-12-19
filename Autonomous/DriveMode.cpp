@@ -69,16 +69,17 @@ bool DriveMode::trackARTag(int id)
 {
     std::vector<double> wheelSpeeds;
     
-    //drives until the distance to the tag is less than 300cm.
-    while(tracker.distanceToAR > 300 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
+    //drives until the distance to the tag is less than 250cm. NOTE: rover only needs to be within 300cm to score.
+    while(tracker.distanceToAR > 250 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.findAR(id))
         {
 	        std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
-            
+            std::cout<< wheelSpeeds[0] << ", " << wheelSpeeds[1] << std::endl; 
             //send wheel speeds
             std::string str = out->controlToStr(wheelSpeeds[0], wheelSpeeds[1], 0,0);
+	    //std::cout << str << std::endl;
             out->sendMessage(&str);
             
             cv::waitKey(100); //waits for 100ms
