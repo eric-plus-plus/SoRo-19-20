@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <vector>
+#include <math.h>
 #include <string>
 #include "DriveMode.h"
 
@@ -68,22 +69,38 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
 bool DriveMode::trackARTag(int id)
 {
     std::vector<double> wheelSpeeds;
-    
-    //drives until the distance to the tag is less than 250cm. NOTE: rover only needs to be within 300cm to score.
-    while(tracker.distanceToAR > 250 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
+    int timesNotFound = -1;
+    //drives until the distance to the tag is less than 50cm. NOTE: rover only needs to be within 300cm to score.
+    while(tracker.distanceToAR > 50 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.findAR(id))
         {
-	        std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
+            std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
-            std::cout<< wheelSpeeds[0] << ", " << wheelSpeeds[1] << std::endl; 
+            std::cout<< round(wheelSpeeds[0]) << ", " << round(wheelSpeeds[1]) << std::endl; 
             //send wheel speeds
-            std::string str = out->controlToStr(wheelSpeeds[0], wheelSpeeds[1], 0,0);
+            std::string str = out->controlToStr(round(wheelSpeeds[0]), round(wheelSpeeds[1]), 0,0);
 	    //std::cout << str << std::endl;
             out->sendMessage(&str);
-            
-            cv::waitKey(100); //waits for 100ms
+            timesNotFound = 0;
         }
+        else if(timesNotFound < 100 && timesNotFound != -1) //checks 100 times to ensure that the tag was lost. May want to make larger
+        {
+            //send wheel speeds
+            std::string str = out->controlToStr(round(wheelSpeeds[0]), round(wheelSpeeds[1]), 0,0);
+            std::cout<< round(wheelSpeeds[0]) << ", " << round(wheelSpeeds[1]) << std::endl;  
+            out->sendMessage(&str);
+            std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
+            timesNotFound++;
+        }
+        else
+        {
+            //Stops the rover. Probably not the best idea but this is what we're doing for now
+            std::string str = out->controlToStr(0, 0, 0,0);
+            out->sendMessage(&str);
+            std::cout << "Tag 1 not found" << std::endl;
+        }
+        cv::waitKey(10); //waits for 10ms    
     }
     return true;
 }

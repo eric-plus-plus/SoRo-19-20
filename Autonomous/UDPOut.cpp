@@ -53,7 +53,7 @@ void UDPOut::sendMessage(std::string* str)
 {
     const char* cstr = (*str).c_str();
     int len = str->length();
-    printf("Sending: %s\n", cstr); //this will not print characters the terminal can print...
+    //printf("Sending: %s\n", cstr); //this will not print characters the terminal can print...
     
     sendto(sockfd, (const char *)cstr, len, 0, (const struct sockaddr *) &destaddr, sizeof(destaddr));
 }
