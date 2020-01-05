@@ -33,7 +33,7 @@ std::string UDPOut::controlToStr(int leftWheels, int rightWheels, int gimbalTilt
     str += char(0);
     str += char(0);
     str += char(leftWheels);
-    str += char(leftWheels);
+    str += char(rightWheels);
     str += char(gimbalTilt);
     str += char(gimbalPan);
     str += char( (leftWheels + rightWheels + gimbalTilt + gimbalPan)/5 );

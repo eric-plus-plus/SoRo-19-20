@@ -77,18 +77,18 @@ bool DriveMode::trackARTag(int id)
         {
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
-            std::cout<< round(wheelSpeeds[0]) << ", " << round(wheelSpeeds[1]) << std::endl; 
+            std::cout<< round(wheelSpeeds[1]) << ", " << round(wheelSpeeds[0]) << std::endl; 
             //send wheel speeds
-            std::string str = out->controlToStr(round(wheelSpeeds[0]), round(wheelSpeeds[1]), 0,0);
+            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
 	    //std::cout << str << std::endl;
             out->sendMessage(&str);
             timesNotFound = 0;
         }
-        else if(timesNotFound < 100 && timesNotFound != -1) //checks 100 times to ensure that the tag was lost. May want to make larger
+        else if(timesNotFound < 10 && timesNotFound != -1) //checks 100 times to ensure that the tag was lost. May want to make larger
         {
             //send wheel speeds
-            std::string str = out->controlToStr(round(wheelSpeeds[0]), round(wheelSpeeds[1]), 0,0);
-            std::cout<< round(wheelSpeeds[0]) << ", " << round(wheelSpeeds[1]) << std::endl;  
+            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
+            std::cout<< round(wheelSpeeds[1]) << ", " << round(wheelSpeeds[0]) << std::endl;  
             out->sendMessage(&str);
             std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
             timesNotFound++;
@@ -100,7 +100,7 @@ bool DriveMode::trackARTag(int id)
             out->sendMessage(&str);
             std::cout << "Tag 1 not found" << std::endl;
         }
-        cv::waitKey(10); //waits for 10ms    
+        cv::waitKey(100); //waits for 10ms    
     }
     return true;
 }
