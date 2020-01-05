@@ -7,7 +7,7 @@
 
 DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
 {
-    this->speed = speed;
+    this->speed = speed; //probably going to want more ways to change the speed...
 }
 
 
@@ -31,9 +31,8 @@ std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed
 	return PIDValues;
 }
 
-bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id)
-{
-    
+bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id) //used for legs 1-3
+{    
     locationInst.startGPSThread();
     float bearingTo;
     std::vector<double> wheelSpeeds;
@@ -45,9 +44,9 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
             
             //send wheel speeds
-            std::string str = out->controlToStr(wheelSpeeds[0], wheelSpeeds[1], 0,0);
+            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
             out->sendMessage(&str);
-            std::cout << wheelSpeeds[0] << " : " << wheelSpeeds[1] << std::endl;
+            std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
             
             cv::waitKey(100); //waits for 100ms
             if(tracker.findAR(id))
@@ -63,44 +62,43 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
          }
     }
     locationInst.stopGPSThread();
-    return false;
+    return false; //got to gps location without finding the wanted ar tag
 }
 
-bool DriveMode::trackARTag(int id)
+bool DriveMode::trackARTag(int id) //used for legs 1-3
 {
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    //drives until the distance to the tag is less than 50cm. NOTE: rover only needs to be within 300cm to score.
-    while(tracker.distanceToAR > 50 || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
+    int stopDistance = 50;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        if(tracker.findAR(id))
+        if(tracker.findAR(id) || timesNotFound < 10 && timesNotFound != -1)
         {
+            if(tracker.findAR(id)
+            {
+                wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
+                timesNotFound = 0;
+            }
+            else
+            {
+                std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
+                timesNotFound++;
+            }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
             std::cout<< round(wheelSpeeds[1]) << ", " << round(wheelSpeeds[0]) << std::endl; 
             //send wheel speeds
             std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-	    //std::cout << str << std::endl;
             out->sendMessage(&str);
-            timesNotFound = 0;
-        }
-        else if(timesNotFound < 10 && timesNotFound != -1) //checks 100 times to ensure that the tag was lost. May want to make larger
-        {
-            //send wheel speeds
-            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-            std::cout<< round(wheelSpeeds[1]) << ", " << round(wheelSpeeds[0]) << std::endl;  
-            out->sendMessage(&str);
-            std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
-            timesNotFound++;
+            
         }
         else
         {
-            //Stops the rover. Probably not the best idea but this is what we're doing for now
+            //Stops the rover
             std::string str = out->controlToStr(0, 0, 0,0);
             out->sendMessage(&str);
             std::cout << "Tag 1 not found" << std::endl;
         }
-        cv::waitKey(100); //waits for 10ms    
+        cv::waitKey(100); //waits for 100ms    
     }
     return true;
 }
