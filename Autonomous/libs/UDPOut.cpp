@@ -22,7 +22,7 @@ UDPOut::UDPOut(const char* host_ip, int host_port, const char* dest_ip, int dest
     int error = bind(sockfd, (const struct sockaddr *)&myaddr, sizeof(myaddr));
     if (error < 0)
     {
-        printf("There was an error my guy");
+        printf("error with socket\n");
     }
 }
 

@@ -74,7 +74,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     {
         if(tracker.findAR(id) || timesNotFound < 10 && timesNotFound != -1)
         {
-            if(tracker.findAR(id)
+            if(tracker.findAR(id))
             {
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
