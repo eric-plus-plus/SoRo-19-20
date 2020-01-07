@@ -1,11 +1,11 @@
 #include <vector>
 #include <iostream>
-#include "libs/DriveMode.h"
+#include <libs/DriveMode.h>
 
 int main()
 {
     
-    DriveMode rover("/dev/video0", /*speed*/60.0);
+    DriveMode rover("/dev/video0", 60.0);
     std::vector<std::vector<double>> locations;
     double lat, lon;
     while(true)
