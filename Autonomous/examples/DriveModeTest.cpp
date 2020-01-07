@@ -1,14 +1,14 @@
 #include <vector>
 #include <iostream>
-#include "DriveMode.h"
+#include <libs/DriveMode.h>
 
 using namespace std;
 
 int main()
 {
     
-   DriveMode testInst("/dev/video0", /*speed*/1.0);
-   vector<vector<double>> locations;
+   DriveMode testInst("/dev/video1", /*speed*/60.0);
+  /* vector<vector<double>> locations;
    vector<double> locationArray1;//[2] = {1, 1};
    locationArray1.push_back(1.0);
    locationArray1.push_back(1.0);
@@ -21,7 +21,7 @@ int main()
    
    testInst.trackARTag(5);
    testInst.trackARTag(5000);
-   testInst.trackARTag(-10);
+   testInst.trackARTag(-10);*/
    testInst.trackARTag(0);
 
 
