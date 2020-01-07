@@ -3,7 +3,7 @@
 #include <Servo.h>
 
 //Set equal to 1 for serial debugging
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 /*
      Pin wiring diagram
@@ -132,6 +132,12 @@ void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_por
     updateServos();
     timeOut = millis();
   }
+  #if DEBUG_MODE == 1
+  else
+  {
+    Serial.println("Bad hash!");
+  }
+  #endif
 }
 
 void setup() {
