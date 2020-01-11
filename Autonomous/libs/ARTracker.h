@@ -28,4 +28,6 @@ class ARTracker
         int centerXTag = 0;
         float degreesPerPixel = 82.1/640.0; // fov / horizontal resolution. Noah gave me this
         float focalLength = 611; //For cm. Found using finalFinalLength.cpp
+        float differenceParameter = 0.0;
+        float distanceParameter = 0.0;
 };

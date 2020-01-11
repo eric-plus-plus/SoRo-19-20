@@ -80,9 +80,42 @@ int ARTracker::findARTags(int id1, int id2)
     else 
     {
         //NOTE: Distance does not matter if we're trying to drive between the posts so I ignored it here
+        int width1 = Markers[id1Index][1].x - Markers[id1Index][0].x;
+        int width2 = Markers[id2Index][1].x - Markers[id2Index][0].x;
+
+        float distance1 = (20 * focalLength) / width1;
+        float distance2 = (20 * focalLength) / width2;
+        int fartherIndex;
+        int closerIndex;
+        if(distance1 > distance2)
+        {
+            fartherIndex = id1Index;
+            closerIndex = id2Index;
+        }
+        else
+        {
+            fartherIndex = id2Index;
+            closerIndex = id1Index;
+        }
+
+        float distDiff = std::abs(distance2 - distance1);
+        float avgDist = (distance1 + distance2) / 2.0;
+        int turningDirection;
+
+        //If it is turning in the wrong direction, switch these
+        if(Markers[closerIndex][1].x - Markers[fartherIndex][1].x > 0)
+        {
+            turningDirection = 1;
+        }
+        else
+        {
+            turningDirection = -1;
+        }
         
         centerXTag = (Markers[id1Index][1].x + Markers[id1Index][0].x + Markers[id2Index][1].x + Markers[id2Index][0].x) / 4; //takes the average of all four x edges of the markers. Could probably cut this to two
-        angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
+        //Adjust the coefficient of distDiff if it is turning too much or too little
+        angleToAR = degreesPerPixel * (centerXTag - 320) +
+            turningDirection * (differenceParameter * distDiff * std::pow(distanceParameter, -1 * avgDist)); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return Markers.size();
     }
