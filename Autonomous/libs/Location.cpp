@@ -35,7 +35,7 @@ float Location::bearingTo(float lat, float lon)
 void Location::startGPSThread()
 {
     running = true;
-    char *ip = (char*)"192.168.1.222";
+    char *ip = (char*)"10.0.0.222";
     char *host = (char*)"55556";
     gps_init(ip, host);
 	std::thread updateThread(&Location::updateFieldsLoop, this);
@@ -51,20 +51,25 @@ void Location::stopGPSThread()
 //Updates all fields from the auto-filled struct defined in navigation.h
 void Location::updateFieldsLoop()
 {
-    
 	while(running)
 	{
-		oldLatitude = latitude;
-		oldLongitude = longitude;
-        
-		latitude = pos_llh.lat;
-		longitude = pos_llh.lon;
-		height = pos_llh.height;
-		time = pos_llh.tow;
-		error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
-		bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
+		if(pos_llh.lat + pos_llh.lon != 0)
+		{
+			oldLatitude = latitude;
+			oldLongitude = longitude;
+		
+			latitude = pos_llh.lat;
+			longitude = pos_llh.lon;
+			height = pos_llh.height;
+			time = pos_llh.tow;
+			error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
+			bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
 
+			allZero = false;
+		}
+		else allZero = true;
 		std::this_thread::sleep_for(std::chrono::seconds(waitDuration));
+		std::cout << pos_llh.lat << " " << pos_llh.lon << std::endl;
 	}
 }
 

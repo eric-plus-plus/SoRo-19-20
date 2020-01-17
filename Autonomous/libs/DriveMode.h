@@ -8,11 +8,10 @@ private:
 	bool onePost;
 	std::vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
     ARTracker tracker;
-    Location locationInst;
     UDPOut* out = new UDPOut("10.0.0.2", 1256, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 
 public:
-
+    Location locationInst;
     DriveMode(std::string videoFile, double speed); //the video file of the camera and the base speed that the rover drives at
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id); //drives along a list of coordinates until it gets to the end or finds the given AR tag
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2); //same as above except it looks for 2 tags for the gates
