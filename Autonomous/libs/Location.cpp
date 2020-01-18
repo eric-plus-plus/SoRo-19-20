@@ -56,13 +56,30 @@ void Location::updateFieldsLoop()
 	{
 		oldLatitude = latitude;
 		oldLongitude = longitude;
-        
-		latitude = pos_llh.lat;
-		longitude = pos_llh.lon;
-		height = pos_llh.height;
-		time = pos_llh.tow;
-		error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
-		bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
+        if(pos_llh.lat != 0)
+		{
+			latitude = pos_llh.lat;
+		}
+		if(pos_llh.lon != 0)
+		{
+			longitude = pos_llh.lon;
+		}
+		if(pos_llh.height != 0)
+		{
+			height = pos_llh.height;
+		}
+		if(pos_llh.tow != 0)
+		{
+			time = pos_llh.tow;
+		}
+		if(pos_llh.h_accuracy != 0 && pos_llh.v_accuracy != 0)
+		{
+			error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
+		}
+		if(oldLatitude != latitude || oldLongitude != longitude)
+		{
+			bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
+		}
 
 		std::this_thread::sleep_for(std::chrono::seconds(waitDuration));
 	}
