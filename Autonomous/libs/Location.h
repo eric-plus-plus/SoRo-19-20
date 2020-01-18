@@ -42,6 +42,8 @@ public:
 	void startGPSThread();
 	//Stop updating this object's fields
 	void stopGPSThread();
+        
+	bool allZero = true;
 };
 
 #endif
