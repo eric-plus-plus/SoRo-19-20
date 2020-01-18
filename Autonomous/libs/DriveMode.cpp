@@ -15,7 +15,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed
 {
 	std::vector<double> PIDValues(2);
 	amountOff /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
-	if (baseSpeed > 90)
+	if (baseSpeed < 0)
 	{
 		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of amountOff
 		//this formula is still almost certainly going to need to be adjusted
@@ -28,10 +28,10 @@ std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed
 		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
 	}
-        if(PIDValues[0] > 90) PIDValues[0] = 90;
-        if(PIDValues[1] > 90) PIDValues[1] = 90;
-        if(PIDValues[0] < -90) PIDValues[0] = -90;
-        if(PIDValues[1] < -90) PIDValues[1] = -90;
+        if(PIDValues[0] > 50) PIDValues[0] = 50;
+        if(PIDValues[1] > 50) PIDValues[1] = 50;
+        if(PIDValues[0] < -50) PIDValues[0] = -50;
+        if(PIDValues[1] < -50) PIDValues[1] = -50;
 	return PIDValues;
 }
 
@@ -42,12 +42,17 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::cout<<"Waiting for GPS connection" << std::endl;
     while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
-
+     
+    //Drives for 2 seconds to hopefully get a good angle from the gps
+    std::string str = out->controlToStr(speed,speed,0,0);
+    out->sendMessage(&str);
+    cv::waitKey(2000);
+    
     float bearingTo;
     std::vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
     {
-         while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.003) //.003km I think
+        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.003) //.003km I think
          {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
