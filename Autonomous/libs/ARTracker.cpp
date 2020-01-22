@@ -19,6 +19,12 @@ ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
 bool ARTracker::findAR(int id)
 {
     cap >> frame;
+    
+    //filters the image
+    cv::cvtColor(frame, frame, CV_RGB2GRAY);
+    frame = frame > 108;
+    cv::blur( frame, frame, cv::Size(3,3) );
+    
     Markers = MDetector.detect(frame);
     
     int index = -1;
