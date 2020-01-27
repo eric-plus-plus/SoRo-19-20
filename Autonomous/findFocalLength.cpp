@@ -14,7 +14,6 @@
     v4l2-ctl -d /dev/video1 --set-ctrl=focus_absolute=0
     v4l2-ctl -d /dev/video1 --set-ctrl=contrast=255
     v4l2-ctl -d /dev/video1 --set-ctrl=sharpness=255
-    v4l2-ctl -d /dev/video1 --set-ctrl=saturation=0 #this one may not do much...
     
     This can also be done with v4l2ucp for the GUI lovers
 */
