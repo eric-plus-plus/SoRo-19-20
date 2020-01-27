@@ -8,24 +8,40 @@ ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
         exit(-1);
     }
     
-    cap.set(cv::CAP_PROP_FRAME_WIDTH,640); //resolution set at 640x480
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    
-    //cv::namedWindow("win"); //creates the window. Use this for debug. NOTE: will break the code if run over SSH
-    
+    cap.set(cv::CAP_PROP_FRAME_WIDTH,1920); //resolution set at 640x480
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+
     MDetector.setDictionary("../urc.dict");
 }
 
 bool ARTracker::findAR(int id)
 {
+    //cv::Mat image;
     cap >> frame;
     
     //filters the image
     cv::cvtColor(frame, frame, CV_RGB2GRAY);
-    frame = frame > 108;
-    cv::blur( frame, frame, cv::Size(3,3) );
+    //cv::GaussianBlur(image,frame,cv::Size(0, 0),5);
+    //cv::addWeighted(image, 2.5, frame, -1.5, 0, frame);
+    //frame = (frame > 200);
+    //cv::blur( frame, frame, cv::Size(3,3) );
     
-    Markers = MDetector.detect(frame);
+    for(int i = 40; i <= 240; i+=40)
+    {
+        Markers = MDetector.detect(frame > i);
+        if(Markers.size() > 0)
+        {
+            frame = frame > i; //purely for debug
+            break;
+        }
+        if(i == 240)
+        {
+            std::cout << "no tags found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+            distanceToAR=-1;
+            angleToAR=0;
+            return false;
+        }
+    }
     
     int index = -1;
     for(int i = 0; i < Markers.size(); i++)
@@ -49,7 +65,7 @@ bool ARTracker::findAR(int id)
         distanceToAR = (20 * focalLength) / widthOfTag;
         
         centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
-        angleToAR = degreesPerPixel * (centerXTag - 320); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
+        angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return true;
     }

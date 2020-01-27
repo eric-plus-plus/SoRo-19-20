@@ -8,10 +8,13 @@
 #include <opencv2/aruco.hpp>
 #include <unistd.h>
 
-/*NOTE: Our cameras have autofocus. To turn off:
+/*NOTE: Certain settings need adjusted before code is run. To do this run the code below:
     v4l2-ctl --list-devices #to find the device you want. Below I assume /dev/video1
     v4l2-ctl -d /dev/video1 --set-ctrl=focus_auto=0
     v4l2-ctl -d /dev/video1 --set-ctrl=focus_absolute=0
+    v4l2-ctl -d /dev/video1 --set-ctrl=contrast=255
+    v4l2-ctl -d /dev/video1 --set-ctrl=sharpness=255
+    v4l2-ctl -d /dev/video1 --set-ctrl=saturation=0 #this one may not do much...
     
     This can also be done with v4l2ucp for the GUI lovers
 */
@@ -24,6 +27,9 @@ int main()
     MDetector.setDictionary("../urc.dict");
     
     cv::VideoCapture cap("/dev/video0"); 
+    cap.set(cv::CAP_PROP_FRAME_WIDTH,1920); //resolution set at 640x480
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    
     cv::Mat image;
     
     while(true)
