@@ -20,7 +20,7 @@ bool ARTracker::findAR(int id)
     cap >> frame;
     
     //filters the image
-    cv::cvtColor(frame, frame, CV_RGB2GRAY);
+    cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
     //cv::GaussianBlur(image,frame,cv::Size(0, 0),5);
     //cv::addWeighted(image, 2.5, frame, -1.5, 0, frame);
     //frame = (frame > 200);

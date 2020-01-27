@@ -2,8 +2,13 @@
 #include <iostream>
 #include <libs/DriveMode.h>
 
-int main()
+int main(int argc, char* argv[])
 {
+    if(argc < 4)
+    {
+        std::cout << "ERROR, not enough args." << std::endl;
+        return -2;
+    }
     
     DriveMode rover("/dev/video1", 30.0);
     std::vector<std::vector<double>> locations;
