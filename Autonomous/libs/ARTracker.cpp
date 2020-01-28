@@ -26,7 +26,7 @@ bool ARTracker::findAR(int id)
     //frame = (frame > 200);
     //cv::blur( frame, frame, cv::Size(3,3) );
     
-    for(int i = 40; i <= 240; i+=40)
+    for(int i = 40; i <= 220; i+=60)
     {
         Markers = MDetector.detect(frame > i);
         if(Markers.size() > 0)
@@ -34,7 +34,7 @@ bool ARTracker::findAR(int id)
             frame = frame > i; //purely for debug
             break;
         }
-        if(i == 240)
+        if(i == 220)
         {
             std::cout << "no tags found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
             distanceToAR=-1;
