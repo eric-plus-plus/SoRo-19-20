@@ -12,7 +12,7 @@ private:
 
 public:
     Location locationInst;
-    DriveMode(std::string videoFile, double speed); //the video file of the camera and the base speed that the rover drives at
+    DriveMode(std::string leftFile, std::string middleFile, std::string rightFile, double speed); //the video file of the camera and the base speed that the rover drives at
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id); //drives along a list of coordinates until it gets to the end or finds the given AR tag
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2); //same as above except it looks for 2 tags for the gates
 	bool trackARTag(int id); //tracks the AR tag here. NOTE: really need to have found the ar tag first

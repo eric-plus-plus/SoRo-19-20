@@ -1,23 +1,39 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(std::string videoSource) : cap(videoSource)
+ARTracker::ARTracker(std::string leftFile, std::string middleFile, std::string rightFile) : leftCap(leftFile), middleCap(middleFile), rightCap(rightFile)
 {
-    if(!cap.isOpened())
+    if(!leftCap.isOpened())
     {
-        std::cout<< "Unable to open video file: " << videoSource << std::endl;
+        std::cout<< "Unable to open left video file" << std::endl;
         exit(-1);
     }
     
-    cap.set(cv::CAP_PROP_FRAME_WIDTH,1920); //resolution set at 640x480
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    if(!middleCap.isOpened())
+    {
+        std::cout<< "Unable to open middle video file"<< std::endl;
+        exit(-1);
+    }
+    
+    if(!rightCap.isOpened())
+    {
+        std::cout<< "Unable to open right video file" << std::endl;
+        exit(-1);
+    }
+    
+    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    middleCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    middleCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    rightCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 
     MDetector.setDictionary("../urc.dict");
 }
 
-bool ARTracker::findAR(int id)
+bool ARTracker::trackAR(int id)
 {
     //cv::Mat image;
-    cap >> frame;
+    middleCap >> frame;
     
     //filters the image
     cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
@@ -71,9 +87,9 @@ bool ARTracker::findAR(int id)
     }
 }
 
-int ARTracker::findARTags(int id1, int id2)
+int ARTracker::trackARTags(int id1, int id2)
 {
-    cap >> frame;
+    middleCap >> frame;
     Markers = MDetector.detect(frame);
     
     int id1Index = -1;

@@ -5,7 +5,7 @@
 #include <string>
 #include "DriveMode.h"
 
-DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
+DriveMode::DriveMode(std::string leftFile, std::string middleFile, std::string rightFile, double speed):tracker(leftFile, middleFile, rightFile)
 {
     this->speed = speed; //probably going to want more ways to change the speed...
 }
@@ -63,13 +63,13 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
             
             cv::waitKey(100); //waits for 100ms
-            if(tracker.findAR(id))
+            if(tracker.trackAR(id))
             {
                 locationInst.stopGPSThread();
                 return true;
             }
          }
-         if(tracker.findAR(id))
+         if(tracker.trackAR(id))
          {
             locationInst.stopGPSThread();
             return true;
@@ -89,7 +89,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
     while(tracker.angleToAR > 3 || tracker.angleToAR < -3)
     {
-        if(tracker.findAR(id) || timesNotFound < 10)
+        if(tracker.trackAR(id) || timesNotFound < 10)
         {
             if(timesNotFound > 10)
             {
@@ -121,9 +121,9 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        if(tracker.findAR(id) || timesNotFound < 10 && timesNotFound != -1)
+        if(tracker.trackAR(id) || timesNotFound < 10 && timesNotFound != -1)
         {
-            if(tracker.findAR(id))
+            if(tracker.trackAR(id))
             {
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
