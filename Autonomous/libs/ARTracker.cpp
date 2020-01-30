@@ -30,42 +30,32 @@ ARTracker::ARTracker(std::string leftFile, std::string middleFile, std::string r
     MDetector.setDictionary("../urc.dict");
 }
 
-bool ARTracker::trackAR(int id)
+bool ARTracker::arFound(int id, cv::Mat image)
 {
-    //cv::Mat image;
-    middleCap >> frame;
-    
-    //filters the image
-    cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-    //cv::GaussianBlur(image,frame,cv::Size(0, 0),5);
-    //cv::addWeighted(image, 2.5, frame, -1.5, 0, frame);
-    //frame = (frame > 200);
-    //cv::blur( frame, frame, cv::Size(3,3) );
-    
+    cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
+    //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(frame > i);
+        Markers = MDetector.detect(image > i);
         if(Markers.size() > 0)
         {
-            frame = frame > i; //purely for debug
+            //frame = frame > i; //purely for debug
             break;
         }
         if(i == 220)
         {
-            std::cout << "no tags found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-            distanceToAR=-1;
-            angleToAR=0;
+            distanceToAR = -1;
+            angleToAR = 0;
             return false;
         }
     }
-    
     int index = -1;
-    for(int i = 0; i < Markers.size(); i++)
+    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
     {
         if(Markers[i].id == id)
         {
             index = i;
-            break;  
+            break; 
         }   
     }
     if(index == -1) 
@@ -85,6 +75,31 @@ bool ARTracker::trackAR(int id)
         
         return true;
     }
+}
+
+int ARTracker::findAR(int id)
+{
+    //middle camera checker
+    middleCap >> frame;
+    if(arFound(id, frame)) return 2;
+    
+    //left camera checker
+    leftCap >> frame;
+    if(arFound(id, frame)) return 1;
+    
+    //right camera checker
+    rightCap >> frame;
+    if(arFound(id, frame)) return 3;
+    
+    return 0;
+}
+
+bool ARTracker::trackAR(int id)
+{
+    //cv::Mat image;
+    middleCap >> frame;
+    if(arFound(id, frame)) return true;
+    return false;
 }
 
 int ARTracker::trackARTags(int id1, int id2)

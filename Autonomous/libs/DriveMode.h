@@ -6,6 +6,7 @@ class DriveMode
 private:
     double speed;
 	bool onePost;
+	int cameraFound;
 	std::vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
     ARTracker tracker;
     UDPOut* out = new UDPOut("10.0.0.2", 1256, "10.0.0.101", 1001); //ip of the jetson, ip of the nano

@@ -28,6 +28,7 @@ class ARTracker
         cv::VideoCapture leftCap, middleCap, rightCap; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers;
+        bool arFound(int id, cv::Mat image);
         
         int widthOfTag = 0;
         int centerXTag = 0;
