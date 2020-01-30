@@ -97,11 +97,11 @@ void loop()
   for(int i = 0; i < 14; i++)
   {
     Udp.write(message[i]);
-    //Serial.print(int(message[i]));
-    //Serial.print(", ");
+    Serial.print(int(message[i]));
+    Serial.print(", ");
   }
   Udp.endPacket();
-  //Serial.print("\n");
+  Serial.print("\n");
   delay(100);
 }
 
@@ -243,7 +243,7 @@ void readData()
   message[9] = (char)(pos_3);
 
   int tempJoystick = analogRead(PIN_JOYSTICK);
-  Serial.println(tempJoystick);
+  //Serial.println(tempJoystick);
   message[10] = (char)(tempJoystick >> 8);
   message[11] = (char)(tempJoystick);
   
@@ -252,12 +252,12 @@ void readData()
   if(!digitalRead(PIN_BUTTON1)) // 2^0 - open claw
   {
     message[12] = message[12] | 0x01;
-    Serial.println("Open");
+    //Serial.println("Open");
   }
   if(!digitalRead(PIN_BUTTON2)) // 2^1 - close claw
   {
     message[12] = message[12] | 0x02;
-    Serial.println("Close");
+    //Serial.println("Close");
   }
 
   // hash

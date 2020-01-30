@@ -3,7 +3,7 @@
 #include <Servo.h>
 
 //Set equal to 1 for serial debugging
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 /*
      Pin wiring diagram
