@@ -44,7 +44,7 @@ bool ARTracker::arFound(int id, cv::Mat image)
         Markers = MDetector.detect(image > i);
         if(Markers.size() > 0)
         {
-            mFrame = image > i; //purely for debug
+            //mFrame = image > i; //purely for debug
             break;
         }
         if(i == 220)
@@ -57,7 +57,6 @@ bool ARTracker::arFound(int id, cv::Mat image)
     int index = -1;
     for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
     {
-        std::cout << Markers[i].id << std::endl;
         if(Markers[i].id == id)
         {
             index = i;
@@ -87,8 +86,8 @@ bool ARTracker::arFound(int id, cv::Mat image)
 int ARTracker::findAR(int id)
 {
     //middle camera checker
-    middleCap >> mFrame;
-    if(arFound(id, mFrame)) return 2;
+    middleCap >> frame;
+    if(arFound(id, frame)) return 2;
     
     //left camera checker
     leftCap >> frame;
