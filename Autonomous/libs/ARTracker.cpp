@@ -20,14 +20,17 @@ ARTracker::ARTracker(std::string leftFile, std::string middleFile, std::string r
         exit(-1);
     }
     
-    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
+    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 420);
     middleCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     middleCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-    rightCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    rightCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
+    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 420);
 
-    MDetector.setDictionary("../urc.dict");
+    middleCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
+    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
+    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
+    std::cout << "got here" << std::endl;
 }
 
 bool ARTracker::arFound(int id, cv::Mat image)

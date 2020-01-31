@@ -1,3 +1,3 @@
-MIDDLE=port0-4
-RIGHT=port0-7
-LEFT=port0-3
+MIDDLE=port2.1
+RIGHT=port2.4
+LEFT=port2.3
