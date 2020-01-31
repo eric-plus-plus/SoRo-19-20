@@ -19,6 +19,9 @@ ARTracker::ARTracker(std::string mainFile, std::string secondaryFile) : mainCap(
     secondaryCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     secondaryCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 
+    mainCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    secondaryCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+
     mainCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
     secondaryCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
     //std::cout << "got here" << std::endl;
@@ -38,7 +41,7 @@ bool ARTracker::arFound(int id, cv::Mat image)
             //mFrame = image > i; //purely for debug
             break;
         }
-        if(i == 220)
+        else if(i == 220)
         {
             distanceToAR = -1;
             angleToAR = 0;
@@ -58,7 +61,6 @@ bool ARTracker::arFound(int id, cv::Mat image)
     {
         distanceToAR=-1;
         angleToAR=0;
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
         return false; //correct ar tag not found
     }
     else
@@ -80,10 +82,12 @@ int ARTracker::findAR(int id)
     mainCap >> frame;
     if(arFound(id, frame)) return 2;
     
-    //left camera checker
+    //secondary camera checker
     secondaryCap >> frame;
     if(arFound(id, frame)) return 1;
     
+     
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return 0;
 }
 
