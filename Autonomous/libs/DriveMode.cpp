@@ -28,10 +28,12 @@ std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed
 		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
 	}
-        if(PIDValues[0] > 50) PIDValues[0] = 50;
-        if(PIDValues[1] > 50) PIDValues[1] = 50;
-        if(PIDValues[0] < -50) PIDValues[0] = -50;
-        if(PIDValues[1] < -50) PIDValues[1] = -50;
+
+	int max = 50;
+        if(PIDValues[0] > max) PIDValues[0] = max;
+        if(PIDValues[1] > max) PIDValues[1] = max;
+        if(PIDValues[0] < -max) PIDValues[0] = -max;
+        if(PIDValues[1] < -max) PIDValues[1] = -max;
 	return PIDValues;
 }
 
@@ -52,7 +54,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
     {
-        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.003) //.003km I think
+        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);

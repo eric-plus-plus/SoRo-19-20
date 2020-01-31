@@ -1,2 +1,2 @@
-MAIN=port2.1
-SECONDARY=port2.4
+MAIN=port2.2
+SECONDARY=port2.3

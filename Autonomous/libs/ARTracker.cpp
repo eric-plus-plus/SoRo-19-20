@@ -80,11 +80,11 @@ int ARTracker::findAR(int id)
 {
     //middle camera checker
     mainCap >> frame;
-    if(arFound(id, frame)) return 2;
+    if(arFound(id, frame)) return 1;
     
     //secondary camera checker
     secondaryCap >> frame;
-    if(arFound(id, frame)) return 1;
+    if(arFound(id, frame)) return 2;
     
      
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;

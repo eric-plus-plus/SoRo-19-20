@@ -20,5 +20,5 @@ v4l2-ctl -d $secondary_file --set-ctrl=contrast=255
 v4l2-ctl -d $secondary_file --set-ctrl=sharpness=255
 
 cd build
-./autonomous $secondary_file $main_file
+./autonomous $main_file $secondary_file
 

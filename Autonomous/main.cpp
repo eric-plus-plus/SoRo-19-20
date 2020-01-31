@@ -6,8 +6,8 @@
 int main(int argc, char* argv[])
 {    
     if(argc != 3)
-        std::cout << "Arguments: left_camera_file, middle_camera_file, right_camera_file" << std::endl;    
-    DriveMode rover(argv[0], argv[1], argv[2], 30.0);
+        std::cout << "Arguments: main_camera_file, secondary_camera_file" << std::endl;    
+    DriveMode rover(argv[1], argv[2], 30.0);
     std::vector<std::vector<double>> locations;
     double lat, lon;
     while(true)
