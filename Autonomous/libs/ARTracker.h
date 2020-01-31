@@ -20,8 +20,8 @@ class ARTracker
         bool trackAR(int id);//just uses one camera to find the tag. More efficient
         int trackARTags(int id1, int id2); 
         
-        cv::Mat leftFrame, middleFrame, rightFrame; //the camera frames. Can be used for debugging
-        cv::Mat frame; //for use when we're just using one camera
+        //cv::Mat leftFrame, middleFrame, rightFrame; //the camera frames. Can be used for debugging
+        cv::Mat frame, mFrame; //for use when we're just using one camera
         
         
     private:

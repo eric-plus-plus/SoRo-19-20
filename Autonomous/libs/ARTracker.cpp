@@ -21,16 +21,18 @@ ARTracker::ARTracker(std::string leftFile, std::string middleFile, std::string r
     }
     
     leftCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
-    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 420);
+    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
     middleCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     middleCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     rightCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
-    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 420);
+    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
 
-    middleCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
-    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
-    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('H', '2', '6', '4') );
-    std::cout << "got here" << std::endl;
+    middleCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    //std::cout << "got here" << std::endl;
+    
+    MDetector.setDictionary("../urc.dict");
 }
 
 bool ARTracker::arFound(int id, cv::Mat image)
@@ -42,7 +44,7 @@ bool ARTracker::arFound(int id, cv::Mat image)
         Markers = MDetector.detect(image > i);
         if(Markers.size() > 0)
         {
-            //frame = frame > i; //purely for debug
+            mFrame = image > i; //purely for debug
             break;
         }
         if(i == 220)
@@ -55,6 +57,7 @@ bool ARTracker::arFound(int id, cv::Mat image)
     int index = -1;
     for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
     {
+        std::cout << Markers[i].id << std::endl;
         if(Markers[i].id == id)
         {
             index = i;
@@ -65,6 +68,7 @@ bool ARTracker::arFound(int id, cv::Mat image)
     {
         distanceToAR=-1;
         angleToAR=0;
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
         return false; //correct ar tag not found
     }
     else
@@ -83,8 +87,8 @@ bool ARTracker::arFound(int id, cv::Mat image)
 int ARTracker::findAR(int id)
 {
     //middle camera checker
-    middleCap >> frame;
-    if(arFound(id, frame)) return 2;
+    middleCap >> mFrame;
+    if(arFound(id, mFrame)) return 2;
     
     //left camera checker
     leftCap >> frame;

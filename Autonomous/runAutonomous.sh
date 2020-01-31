@@ -10,6 +10,8 @@ middle_file=$(v4l2-ctl --list-devices | grep -A1 "$middle):" | tail -1)
 left_file=$(v4l2-ctl --list-devices | grep -A1 "$left):" | tail -1)
 right_file=$(v4l2-ctl --list-devices | grep -A1 "$right):" | tail -1)
 
+echo $left_file $middle_file $right_file
+
 v4l2-ctl -d $middle_file --set-ctrl=focus_auto=0
 v4l2-ctl -d $middle_file --set-ctrl=focus_absolute=0
 v4l2-ctl -d $middle_file --set-ctrl=contrast=255
