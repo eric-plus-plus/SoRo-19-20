@@ -5,7 +5,7 @@
 #include <string>
 #include "DriveMode.h"
 
-DriveMode::DriveMode(std::string leftFile, std::string middleFile, std::string rightFile, double speed):tracker(leftFile, middleFile, rightFile)
+DriveMode::DriveMode(std::string mainFile, std::string secondaryFile, double speed):tracker(mainFile, secondaryFile)
 {
     this->speed = speed; //probably going to want more ways to change the speed...
 }

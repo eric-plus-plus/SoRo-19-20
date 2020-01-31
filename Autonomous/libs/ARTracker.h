@@ -13,7 +13,7 @@ class ARTracker
         float angleToAR = 0; //to the one post for findAR, to the center for findARPosts
         float distanceToAR = -1; //see above. Should be in centimeters
         
-        ARTracker(std::string leftFile, std::string middleFile, std::string rightFile); //give the video input source
+        ARTracker(std::string mainFile, std::string secondaryFile); //give the video input source
         int findAR(int id); //returns 0 if nothing found, 1 for left, 2 for middle, and 3 for right if a camera finds the tag
         int findARTags(int id1, int id2); //returns camera that finds the tag if its found
         
@@ -25,7 +25,7 @@ class ARTracker
         
         
     private:
-        cv::VideoCapture leftCap, middleCap, rightCap; 
+        cv::VideoCapture mainCap, secondaryCap; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers;
         bool arFound(int id, cv::Mat image);

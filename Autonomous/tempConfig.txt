@@ -1,3 +1,2 @@
-MIDDLE=port2.1
-RIGHT=port2.4
-LEFT=port2.2
+MAIN=port0-7
+SECONDARY=port0-9

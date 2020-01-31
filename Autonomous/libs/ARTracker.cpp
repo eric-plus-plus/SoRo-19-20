@@ -1,35 +1,26 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(std::string leftFile, std::string middleFile, std::string rightFile) : leftCap(leftFile), middleCap(middleFile), rightCap(rightFile)
+ARTracker::ARTracker(std::string mainFile, std::string secondaryFile) : mainCap(mainFile), secondaryCap(secondaryFile)
 {
-    if(!leftCap.isOpened())
+    if(!mainCap.isOpened())
     {
-        std::cout<< "Unable to open left video file" << std::endl;
+        std::cout<< "Unable to open main video file" << std::endl;
         exit(-1);
     }
     
-    if(!middleCap.isOpened())
+    if(!secondaryCap.isOpened())
     {
-        std::cout<< "Unable to open middle video file"<< std::endl;
+        std::cout<< "Unable to open secondary video file"<< std::endl;
         exit(-1);
     }
     
-    if(!rightCap.isOpened())
-    {
-        std::cout<< "Unable to open right video file" << std::endl;
-        exit(-1);
-    }
-    
-    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
-    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    middleCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-    middleCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-    rightCap.set(cv::CAP_PROP_FRAME_WIDTH,640);
-    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+    mainCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    mainCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    secondaryCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    secondaryCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 
-    middleCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
-    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
-    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    mainCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    secondaryCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
     //std::cout << "got here" << std::endl;
     
     MDetector.setDictionary("../urc.dict");
@@ -86,16 +77,12 @@ bool ARTracker::arFound(int id, cv::Mat image)
 int ARTracker::findAR(int id)
 {
     //middle camera checker
-    middleCap >> frame;
+    mainCap >> frame;
     if(arFound(id, frame)) return 2;
     
     //left camera checker
-    leftCap >> frame;
+    secondaryCap >> frame;
     if(arFound(id, frame)) return 1;
-    
-    //right camera checker
-    rightCap >> frame;
-    if(arFound(id, frame)) return 3;
     
     return 0;
 }
@@ -103,12 +90,12 @@ int ARTracker::findAR(int id)
 bool ARTracker::trackAR(int id)
 {
     //cv::Mat image;
-    middleCap >> frame;
+    mainCap >> frame;
     if(arFound(id, frame)) return true;
     return false;
 }
 
-int ARTracker::trackARTags(int id1, int id2)
+/*int ARTracker::trackARTags(int id1, int id2)
 {
     middleCap >> frame;
     Markers = MDetector.detect(frame);
@@ -145,4 +132,4 @@ int ARTracker::trackARTags(int id1, int id2)
         
         return Markers.size();
     }
-}
+}*/
