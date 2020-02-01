@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
         point.push_back(lon);
         locations.push_back(point);
     }
-    rover.driveAlongCoordinates(locations, 5);
-    rover.trackARTag(5);
+    rover.driveAlongCoordinates(locations, 0);
+    rover.trackARTag(0);
     return 0;
 }  

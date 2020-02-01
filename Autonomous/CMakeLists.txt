@@ -6,7 +6,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/gps")
 
 set(HEADER_FILES libs/DriveMode.cpp libs/DriveMode.h libs/Location.cpp libs/Location.h libs/ARTracker.cpp libs/ARTracker.h libs/UDPOut.cpp libs/UDPOut.cpp)
 
-add_executable(autonomous examples/ARTester.cpp ${HEADER_FILES})
+add_executable(autonomous main.cpp ${HEADER_FILES})
 
 find_package( OpenCV REQUIRED )
 
