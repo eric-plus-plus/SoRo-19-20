@@ -1,3 +1,3 @@
 MAIN=port2.2
-LEFT=port2.3
+LEFT=port2.4
 RIGHT=port2.4

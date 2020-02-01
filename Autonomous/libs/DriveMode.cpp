@@ -110,7 +110,12 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             out->sendMessage(&str);
             timesNotFound = 0;
         }
-        else if(cameraFound == 2) //secondary camera found it originally so turn that way (right)
+        else if(cameraFound == 2) //left camera found it originally so turn that way
+        {
+            str = out -> controlToStr(-30, 30, 0, 0);
+            out -> sendMessage(&str);
+        }
+        else if(cameraFound == 3) //right camera found it originally so turn that way
         {
             str = out -> controlToStr(30, -30, 0, 0);
             out -> sendMessage(&str);
