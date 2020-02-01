@@ -41,7 +41,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
 {    
     locationInst.startGPSThread();
 
-    std::cout<<"Waiting for GPS connection" << std::endl;
+    std::cout<<"Waiting for GPS connection..." << std::endl;
     while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
@@ -88,16 +88,16 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = 0;
-    int stopDistance = 50;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
     
-    tracker.trackAR(id); //gets an intial angle from the middle camera
+    tracker.trackAR(id); //gets an intial angle from the main camera
     
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
     while(tracker.angleToAR > 5 || tracker.angleToAR < -5 || tracker.angleToAR == 0) //its 0 if it doesn't see it
     {
         if(tracker.trackAR(id))
         {
-            cameraFound == 2;
+            cameraFound == 1;
             if(tracker.angleToAR > 5)
             {
                 str = out->controlToStr(30, -30, 0,0);
@@ -110,12 +110,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             out->sendMessage(&str);
             timesNotFound = 0;
         }
-        else if(cameraFound == 1) //left camera found it originally so turn that way
-        {
-            str = out -> controlToStr(-30, 30, 0, 0);
-            out -> sendMessage(&str);
-        }
-        else if(cameraFound == 3) //right camera found it originally so turn that way
+        else if(cameraFound == 2) //secondary camera found it originally so turn that way (right)
         {
             str = out -> controlToStr(30, -30, 0, 0);
             out -> sendMessage(&str);
