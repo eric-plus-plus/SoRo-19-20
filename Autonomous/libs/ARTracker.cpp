@@ -1,6 +1,6 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(std::string mainFile, std::string secondaryFile) : mainCap(mainFile), secondaryCap(secondaryFile)
+ARTracker::ARTracker(std::string mainFile, std::string leftFile, std::string rightFile) : mainCap(mainFile), leftCap(leftFile), rightCap(rightFile)
 {
     if(!mainCap.isOpened())
     {
@@ -8,22 +8,32 @@ ARTracker::ARTracker(std::string mainFile, std::string secondaryFile) : mainCap(
         exit(-1);
     }
     
-    if(!secondaryCap.isOpened())
+    if(!leftCap.isOpened())
     {
-        std::cout<< "Unable to open secondary video file"<< std::endl;
+        std::cout<< "Unable to open left video file"<< std::endl;
+        exit(-1);
+    }
+    
+    if(!rightCap.isOpened())
+    {
+        std::cout<< "Unable to open right video file"<< std::endl;
         exit(-1);
     }
     
     mainCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     mainCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-    secondaryCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-    secondaryCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    rightCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 
     mainCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-    secondaryCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    leftCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    rightCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     mainCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
-    secondaryCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
     //std::cout << "got here" << std::endl;
     
     MDetector.setDictionary("../urc.dict");
@@ -82,10 +92,13 @@ int ARTracker::findAR(int id)
     mainCap >> frame;
     if(arFound(id, frame)) return 1;
     
-    //secondary camera checker
-    secondaryCap >> frame;
+    //left camera checker
+    leftCap >> frame;
     if(arFound(id, frame)) return 2;
     
+    //right camera checker
+    rightCap >> frame;
+    if(arFound(id, frame)) return 3;
      
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return 0;
