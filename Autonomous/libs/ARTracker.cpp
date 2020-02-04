@@ -1,6 +1,6 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(std::string mainFile, std::string leftFile, std::string rightFile) : mainCap(mainFile), leftCap(leftFile), rightCap(rightFile)
+ARTracker::ARTracker(std::string mainFile, std::string leftFile, std::string rightFile) : mainCap(mainFile)//, leftCap(leftFile), rightCap(rightFile)
 {
     if(!mainCap.isOpened())
     {
@@ -8,7 +8,7 @@ ARTracker::ARTracker(std::string mainFile, std::string leftFile, std::string rig
         exit(-1);
     }
     
-    if(!leftCap.isOpened())
+    /*if(!leftCap.isOpened())
     {
         std::cout<< "Unable to open left video file"<< std::endl;
         exit(-1);
@@ -18,22 +18,22 @@ ARTracker::ARTracker(std::string mainFile, std::string leftFile, std::string rig
     {
         std::cout<< "Unable to open right video file"<< std::endl;
         exit(-1);
-    }
+    }*/
     
     mainCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     mainCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-    leftCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+    /*leftCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     leftCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     rightCap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    rightCap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);*/
 
     mainCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-    leftCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-    rightCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    //leftCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    //rightCap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
-    mainCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
-    leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
-    rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    //mainCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    //leftCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
+    //rightCap.set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc('M', 'J', 'P', 'G') );
     //std::cout << "got here" << std::endl;
     
     MDetector.setDictionary("../urc.dict");
@@ -93,13 +93,13 @@ int ARTracker::findAR(int id)
     if(arFound(id, frame)) return 1;
     
     //left camera checker
-    leftCap >> frame;
+    /*leftCap >> frame;
     if(arFound(id, frame)) return 2;
     
     //right camera checker
     rightCap >> frame;
     if(arFound(id, frame)) return 3;
-     
+     */
     std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return 0;
 }
