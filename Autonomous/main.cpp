@@ -2,12 +2,10 @@
 #include <iostream>
 #include <libs/DriveMode.h>
 
-//takes arguments left camera file, middle camera file, right camera file
+//takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
 {    
-    if(argc != 3)
-        std::cout << "Arguments: main_camera_file, left_camera_file, right_camera_file" << std::endl;    
-    DriveMode rover(argv[1], argv[2], argv[3], 40.0);
+    DriveMode rover(argv + 1, "MJPG", 40.0);
     std::vector<std::vector<double>> locations;
     double lat, lon;
     while(true)

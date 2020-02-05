@@ -5,7 +5,7 @@
 #include <string>
 #include "DriveMode.h"
 
-DriveMode::DriveMode(std::string mainFile, std::string leftFile, std::string rightFile, double speed):tracker(mainFile, leftFile, rightFile)
+DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
     this->speed = speed; //probably going to want more ways to change the speed...
 }
@@ -30,10 +30,10 @@ std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed
 	}
 
 	int max = 75;
-        if(PIDValues[0] > max) PIDValues[0] = max;
-        if(PIDValues[1] > max) PIDValues[1] = max;
-        if(PIDValues[0] < -max) PIDValues[0] = -max;
-        if(PIDValues[1] < -max) PIDValues[1] = -max;
+    if(PIDValues[0] > max) PIDValues[0] = max;
+    if(PIDValues[1] > max) PIDValues[1] = max;
+    if(PIDValues[0] < -max) PIDValues[0] = -max;
+    if(PIDValues[1] < -max) PIDValues[1] = -max;
 	return PIDValues;
 }
 
@@ -68,15 +68,13 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
             
             cv::waitKey(10); //waits for 100ms
-            cameraFound = tracker.findAR(id);
-            if(cameraFound != 0)
+            if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
                 return true;
             }
         }
-        cameraFound = tracker.findAR(id);
-        if(cameraFound != 0)
+        if(tracker.findAR(id))
         {
             locationInst.stopGPSThread();
             return true;
@@ -100,7 +98,6 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     {
         if(tracker.trackAR(id))
         {
-            cameraFound == 1;
             if(tracker.angleToAR > 5)
             {
                 str = out->controlToStr(30, -30, 0,0);
@@ -113,29 +110,10 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             out->sendMessage(&str);
             timesNotFound = 0;
         }
-        else if(cameraFound == 2) //left camera found it originally so turn that way
+        else //turns to the left until it sees it
         {
             str = out -> controlToStr(-30, 30, 0, 0);
             out -> sendMessage(&str);
-        }
-        else if(cameraFound == 3) //right camera found it originally so turn that way
-        {
-            str = out -> controlToStr(30, -30, 0, 0);
-            out -> sendMessage(&str);
-        }
-        else if(timesNotFound < 100)
-        {
-            timesNotFound++;
-            std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
-            out -> sendMessage(&str);
-        }
-        else
-        {
-            //Stops the rover
-            str = out->controlToStr(0, 0, 0,0);
-            out->sendMessage(&str);
-            std::cout << "Tag not found during turning phase. This is not good" << std::endl;
-            return false; //TODO do something with this
         }
         cv::waitKey(10);
     }
