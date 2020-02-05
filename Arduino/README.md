@@ -1,6 +1,13 @@
-# Arduino Code
+# Arduino Code :100:
 
-## Testing Tools
+Required libraries (install them from the built in library manager):
+* PID (1.2.0)
+  * [Documentation](https://playground.arduino.cc/Code/PIDLibrary/)
+* EtherCard (1.1.0)
+  * Only needed for using the Arduino Nano ethernet shield. The Uno-style shield (on the Megas) uses the built in ethernet library.
+  * [GitHub](https://github.com/njh/EtherCard)
+
+## Testing Programs
 
 ### servo_test.ino
 
@@ -13,6 +20,10 @@ When calibrating, use the range 10 to 170 instead of the full 0 to 180 because i
 
 This is similar to *servo_test.ino* but made specifically for the rover's arm. It works the same way, except you can select which angle you want to drive.
 What's new in this one is you can just spam the enter key in the console if you want it to stop moving in case you accidentally type 9 instead of 90.
+
+### rover_arm_pid_test.ino
+
+This works like the other arm test program except you type in an enocde value you want it to move to instead of a speed. *This is currently unfinished, so please do not use it for testing.*
 
 ## Rover Programs
 
