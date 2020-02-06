@@ -10,24 +10,29 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
     this->speed = speed; //probably going to want more ways to change the speed...
 }
 
-
-std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
+std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
 	std::vector<double> PIDValues(2);
-	amountOff /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
+	
+	/*error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed < 0)
 	{
-		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of amountOff
+		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
 		//this formula is still almost certainly going to need to be adjusted
-		PIDValues[0] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
-		PIDValues[1] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
+		PIDValues[0] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
+		PIDValues[1] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 	}
 
 	else
 	{
-		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
-		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
-	}
+		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
+		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
+	}*/
+	
+	double kp = .5, ki = .0005;
+	errorAccumulation += error * time;
+	PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
+	PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
 
 	int max = 75;
     if(PIDValues[0] > max) PIDValues[0] = max;
@@ -57,6 +62,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
     {
+        time = 0;
         while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
@@ -67,7 +73,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             out->sendMessage(&str);
             std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
             
-            cv::waitKey(10); //waits for 100ms
+            cv::waitKey(10); //waits for 10ms although the actual wait may be a bit longer
+            time += 10;
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
@@ -120,6 +127,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
+        time = 0;
         if(tracker.trackAR(id) || timesNotFound < 100 && timesNotFound != -1)
         {
             if(tracker.trackAR(id))
@@ -147,7 +155,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             std::cout << "Tag not found" << std::endl;
             return false; //TODO: do something about this
         }
-        cv::waitKey(10); //waits for 100ms    
+        cv::waitKey(10); //waits for 10ms    
+        time += 10;
     }
     return true;
 }

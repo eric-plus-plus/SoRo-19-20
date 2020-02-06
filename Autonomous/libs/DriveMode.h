@@ -6,10 +6,13 @@ class DriveMode
 private:
     double speed;
 	bool onePost;
-	std::vector<double> getWheelSpeeds(double amountOff, double baseSpeed);
+	std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
     UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 
+    //variables to be used for the i in getWheelSpeeds
+    double errorAccumulation, time; //time in ms
+ 
 public:
     Location locationInst;
     DriveMode(char* cameras[], std::string format, double speed); //the video file of the camera and the base speed that the rover drives at
