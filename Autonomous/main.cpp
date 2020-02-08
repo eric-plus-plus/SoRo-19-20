@@ -22,5 +22,8 @@ int main(int argc, char* argv[])
     }
     rover.driveAlongCoordinates(locations, 5);
     rover.trackARTag(5);
+
+    std::cout << "\ndon't worry about the next error" << std::endl;
+    rover.locationInst.stopGPS();
     return 0;
 }  

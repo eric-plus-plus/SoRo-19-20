@@ -45,6 +45,11 @@ void Location::startGPSThread()
 void Location::stopGPSThread()
 {
     running = false;
+}
+
+void Location::stopGPS()
+{
+    running = false;
     gps_finish();
 }
 

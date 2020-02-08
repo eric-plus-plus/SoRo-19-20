@@ -5,9 +5,9 @@ class DriveMode
 {
 private:
     double speed, leftWheelSpeed = 0, rightWheelSpeed = 0;
-	bool onePost, running;
-	std::string speedString;
-	std::vector<double> getWheelSpeeds(double error, double baseSpeed);
+    bool onePost, running;
+    std::string speedString;
+    std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
     UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 
@@ -15,6 +15,7 @@ private:
     double errorAccumulation, time; //time in ms
     
     void sendSpeed();
+    void printSpeeds();
  
 public:
     Location locationInst;

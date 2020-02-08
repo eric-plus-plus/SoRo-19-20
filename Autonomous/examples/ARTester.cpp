@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     //cv::namedWindow("win"); //This will break the code if run over SSH
     while(true)
     {
-        cout << tracker->findAR(0) << endl;
+        cout << tracker->findAR(5) << endl;
         cout << "distance: " << tracker->distanceToAR << endl;
         cout << "angle: " << tracker->angleToAR << endl;
         //cv::imshow("win", tracker->mFrame); //This will break the code if run over SSH

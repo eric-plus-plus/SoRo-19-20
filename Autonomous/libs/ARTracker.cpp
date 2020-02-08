@@ -2,7 +2,7 @@
 
 ARTracker::ARTracker(char* cameras[], std::string format)
 {
-    for(int i = 1; true; i++) //initializes the cameras
+    for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)
             break;
@@ -76,8 +76,8 @@ bool ARTracker::findAR(int id)
         *caps[i] >> frame;
         if(arFound(id, frame)) return true;
     }
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-    return 0;
+    //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    return false;
 }
 
 bool ARTracker::trackAR(int id)
