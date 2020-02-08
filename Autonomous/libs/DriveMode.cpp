@@ -7,7 +7,22 @@
 
 DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
+    running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
+    std::thread speedThread(sendSpeed, this);
+}
+
+//Sends speed in a separate thread
+void DriveMode::sendSpeed() 
+{
+    while(running) 
+    {
+	//send wheel speeds
+        std::string str = out->controlToStr(round(leftWheelSpeed), round(rightWheelSpeed), 0,0);
+        out->sendMessage(&str);
+        std::cout << round(leftWheelSpeed) << " : " << round(rightWheelSpeed) << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
@@ -67,27 +82,27 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
-            
-            //send wheel speeds
-            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-            out->sendMessage(&str);
-            std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
-            
+	    leftWheelSpeed = wheelSpeeds[1];
+	    rightWheelSpeed = wheelSpeeds[0];            
+
             cv::waitKey(10); //waits for 10ms although the actual wait may be a bit longer
             time += 10;
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
+		running = false;
                 return true;
             }
         }
         if(tracker.findAR(id))
         {
             locationInst.stopGPSThread();
+	    running = false;
             return true;
         }
     }
     locationInst.stopGPSThread();
+    running = false;
     return false; //got to gps location without finding the wanted ar tag
 }
 

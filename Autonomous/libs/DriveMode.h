@@ -4,18 +4,19 @@
 class DriveMode
 {
 private:
-    double speed;
-	bool onePost;
+    double speed, leftWheelSpeed, rightWheelSpeed;
+	bool onePost, running;
 	std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
     UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 
     //variables to be used for the i in getWheelSpeeds
     double errorAccumulation, time; //time in ms
+    
  
 public:
     Location locationInst;
-    DriveMode(char* cameras[], std::string format, double speed); //the video file of the camera and the base speed that the rover drives at
+    DriveMode(char* cameras[], std::string format, double speed); //the video file of the camera and the base speed that the rover drives at. Also starts a thread to send speed
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id); //drives along a list of coordinates until it gets to the end or finds the given AR tag
 	bool driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2); //same as above except it looks for 2 tags for the gates
 	bool trackARTag(int id); //tracks the AR tag here. NOTE: really need to have found the ar tag first
