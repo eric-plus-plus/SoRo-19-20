@@ -32,7 +32,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
 	std::vector<double> PIDValues(2);
 	
-	error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
+	/*error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed < 0)
 	{
 		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
@@ -45,12 +45,12 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 	{
 		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-	}
+	}*/
 
-    /*double kp = .5, ki = .0005;
+    double kp = .5, ki = .00005;
     errorAccumulation += error * time;
-    PIDValues[0] = speed + (error * kp + errorAccumulation * ki);
-    PIDValues[1] = speed - (error * kp + errorAccumulation * ki);*/
+    PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
+    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
 
     int max = 75;
     if(PIDValues[0] > max) PIDValues[0] = max;
@@ -85,6 +85,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     for(int i = 0; i < locations.size(); ++i)
     {
         time = 0;
+        errorAccumulation = 0;
         while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
@@ -167,9 +168,10 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         cv::waitKey(100);
     }
     
+    time =0;
+    errorAccumulation = 0; 
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        time = 0;
         if(tracker.trackAR(id) || timesNotFound < 10)
         {
             if(tracker.trackAR(id))
