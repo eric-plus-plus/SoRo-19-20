@@ -35,9 +35,6 @@ float Location::bearingTo(float lat, float lon)
 void Location::startGPSThread()
 {
     running = true;
-    char *ip = (char*)"10.0.0.222";
-    char *host = (char*)"55556";
-    gps_init(ip, host);
 	std::thread updateThread(&Location::updateFieldsLoop, this);
 	updateThread.detach();
 }
@@ -45,6 +42,13 @@ void Location::startGPSThread()
 void Location::stopGPSThread()
 {
     running = false;
+}
+
+void Location::startGPS()
+{
+    char *ip = (char*)"10.0.0.222";
+    char *host = (char*)"55556";
+    gps_init(ip, host);
 }
 
 void Location::stopGPS()

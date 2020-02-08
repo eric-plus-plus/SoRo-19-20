@@ -42,8 +42,10 @@ public:
 	void startGPSThread();
 	//Stop updating this object's fields
 	void stopGPSThread();
-        //Stops the GPS. Call this at the end of the program
-        void stopGPS();
+	//Starts the GPS. probably should make this a constuctor
+	void startGPS();
+    //Stops the GPS. Call this at the end of the program
+    void stopGPS();
         
 	bool allZero = true;
 };

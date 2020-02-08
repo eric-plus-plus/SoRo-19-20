@@ -9,7 +9,7 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
 {
     running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
-    
+    locationInst.startGPS();
     //starts sending the speeds here
     std::thread speedThread(&DriveMode::sendSpeed, this);
     speedThread.detach();
@@ -71,7 +71,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
