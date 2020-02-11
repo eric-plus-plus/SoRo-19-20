@@ -32,7 +32,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
 	std::vector<double> PIDValues(2);
 	
-	/*error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
+	error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed < 0)
 	{
 		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
@@ -45,12 +45,12 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 	{
 		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-	}*/
+	}
 
-    double kp = .5, ki = .00005;
+    /*double kp = .5, ki = .00005;
     errorAccumulation += error * time;
     PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
-    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
+    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);*/
 
     int max = 75;
     if(PIDValues[0] > max) PIDValues[0] = max;
