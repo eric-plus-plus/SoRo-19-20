@@ -1,5 +1,5 @@
 # Autonomous
-Everything needs to be run using make files. Simple g++ with not work without linking.
+Code for the Autonomous portion of the Mars University Rover Challenge.
 
 ## How to Compile and Run:
 ### Install Dependencies:
@@ -13,7 +13,8 @@ cmake .. <br>
 make 
 
 ### Running:
-After building successfully, go back to SoRo-19-20/Autonomous and run <br>
+First, ensure that everything in config.txt is properly filled out <br>
+After this, go back to SoRo-19-20/Autonomous and run <br>
 bash runAutonomous.sh
 
 ### Notes:
@@ -21,3 +22,6 @@ Run v4l2-ctl --list-devices to find which port each camera is plugged into when 
 To change file that is executed, change the executable specified in CMakeLists.txt and rerun cmake .. <br>
 To recompile the code, rerun "make" in build <br>
 To clean, delete build and rerun the commands in the "Build the Project" section
+
+## Contact:
+Reza Torbati - reza.j.torbati-1@ou.edu
