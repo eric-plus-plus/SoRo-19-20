@@ -1,6 +1,6 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(char* cameras[], std::string format)
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, cv::Size(1920,1080), false) //for the SAR and debug I guess
 {
     for(int i = 0; true; i++) //initializes the cameras
     {
@@ -22,7 +22,7 @@ ARTracker::ARTracker(char* cameras[], std::string format)
     MDetector.setDictionary("../urc.dict");
 }
 
-bool ARTracker::arFound(int id, cv::Mat image)
+bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
@@ -31,11 +31,15 @@ bool ARTracker::arFound(int id, cv::Mat image)
         Markers = MDetector.detect(image > i);
         if(Markers.size() > 0)
         {
+            if(writeToFile)
+                videoWriter.write(image > i); //purely for debug
             //mFrame = image > i; //purely for debug
             break;
         }
         else if(i == 220)
         {
+            if(writeToFile)
+                videoWriter.write(image);
             distanceToAR = -1;
             angleToAR = 0;
             return false;
@@ -74,7 +78,7 @@ bool ARTracker::findAR(int id)
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(arFound(id, frame)) return true;
+        if(arFound(id, frame, false)) return true;
     }
     //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return false;
@@ -84,7 +88,7 @@ bool ARTracker::trackAR(int id)
 {
     //cv::Mat image;
     *caps[0] >> frame;
-    if(arFound(id, frame)) return true;
+    if(arFound(id, frame, true)) return true;
     return false;
 }
 

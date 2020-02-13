@@ -22,12 +22,14 @@ class ARTracker
         
         cv::Mat frame, mFrame; //for use when we're just using one camera. mFrame isn't really used but good to have for debug
         
+        cv::VideoWriter videoWriter;
+        
         
     private:
         std::vector<cv::VideoCapture*> caps; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers;
-        bool arFound(int id, cv::Mat image);
+        bool arFound(int id, cv::Mat image, bool writeToFile);
         
         int widthOfTag = 0;
         int centerXTag = 0;
