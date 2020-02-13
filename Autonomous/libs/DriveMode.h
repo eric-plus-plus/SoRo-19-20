@@ -9,7 +9,6 @@ private:
     std::string speedString;
     std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
-    UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 
     //variables to be used for the i in getWheelSpeeds
     double errorAccumulation, time; //time in ms
@@ -25,6 +24,7 @@ public:
 	bool trackARTag(int id); //tracks the AR tag here. NOTE: really need to have found the ar tag first
 	bool trackARTags(int id1, int id2); //same as above except it tracks the center of the posts between the tags
 	bool searchForARTag(); //searches for the tags if it gets to the end of driveAlongCoordinates without finding one
-
+	
+	UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
 };
 

@@ -5,7 +5,11 @@
 //takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
 {    
+    std::string ledStr;
     DriveMode rover(argv + 1, "MJPG", 40.0);
+    
+    ledStr = rover.out->ledToStr(true, false, false);
+    rover.out->sendMessage(&ledStr); //red
     std::vector<std::vector<double>> locations;
     double lat, lon;
     while(true)
@@ -22,6 +26,8 @@ int main(int argc, char* argv[])
     }
     rover.driveAlongCoordinates(locations, 5);
     rover.trackARTag(5);
+    ledStr = rover.out->ledToStr(false, true, false);
+    rover.out->sendMessage(&ledStr); //green
    
     locations.clear(); 
     while(true)
@@ -36,9 +42,14 @@ int main(int argc, char* argv[])
         point.push_back(lon);
         locations.push_back(point);
     }
+    ledStr = rover.out->ledToStr(true, false, false);
+    rover.out->sendMessage(&ledStr); //red
     rover.driveAlongCoordinates(locations, 0);
     rover.trackARTag(0);
-
+    ledStr = rover.out->ledToStr(false, true, false);
+    rover.out->sendMessage(&ledStr); //green
+    
+    
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
     rover.locationInst.stopGPS();
