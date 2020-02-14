@@ -1,6 +1,6 @@
 #include "ARTracker.h"
 
-ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, cv::Size(1920,1080), false) //for the SAR and debug I guess
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc('M','J','P','G'), 5, cv::Size(1920,1080), false) //for the SAR and debug I guess
 {
     for(int i = 0; true; i++) //initializes the cameras
     {
@@ -32,9 +32,12 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         if(Markers.size() > 0)
         {
             if(writeToFile)
-                videoWriter.write(image > i); //purely for debug
-            //mFrame = image > i; //purely for debug
-            break;
+            {
+		mFrame = image > i; //purely for debug
+                videoWriter.write(mFrame); //purely for debug
+            }    
+
+	break;
         }
         else if(i == 220)
         {
@@ -78,7 +81,7 @@ bool ARTracker::findAR(int id)
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(arFound(id, frame, false)) return true;
+        if(arFound(id, frame, true)) return true;
     }
     //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return false;

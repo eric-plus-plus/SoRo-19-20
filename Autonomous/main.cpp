@@ -6,7 +6,7 @@
 int main(int argc, char* argv[])
 {    
     std::string ledStr;
-    DriveMode rover(argv + 1, "MJPG", 40.0);
+    DriveMode rover(argv + 1, "YUYV", 40.0);
     
     ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
