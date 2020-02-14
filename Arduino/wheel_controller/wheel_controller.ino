@@ -20,6 +20,8 @@
      gimbal tilt: A1
      brake disk: A3
 
+     LED RGB: A5, 9, 8
+
      ethernet adapter: 10, 11, 12, 13
 
      jetson power button: A0
@@ -38,6 +40,11 @@
 #define SERVO_TILT A1
 #define SERVO_BRAKE A3
 
+#define LED_R A5
+#define LED_G 9
+#define LED_B 8
+
+
 #define JETSON_POWER A0
 
 // ethernet interface ip address (static ip)
@@ -50,7 +57,6 @@ static byte mymac[] = { 0x70, 0x69, 0xFF, 0xFF, 0x30, 0x31 };
 byte Ethernet::buffer[500];
 
 // wheel_controller stuff
-const char DEVICE_ID = 0;
 Servo wheel[6], gimbal_pan, gimbal_tilt, disk;
 char myHash = 0;
 char serialHash = 0;
@@ -68,11 +74,16 @@ unsigned long timeOut = 0;
 void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len) {
   IPAddress src(src_ip[0], src_ip[1], src_ip[2], src_ip[3]);
 
-  // serial transmission blueprint:
-  // [start transmission = -127 or 255] [device id] [overdrive] [left wheels]...
+  // serial transmission blueprints:
+  
+  // wheels
+  // [start transmission = -127 or 255] [0] [overdrive] [left wheels]...
   // ...[right wheels] [gimble tilt] [gimble pan] [hash]
   // hash = (sum of data bytes--no start or id) / (num of bytes)
   // all message bytes will be within the range [-90,90]
+
+  // lights
+  // [start transmission = -127] [1] [00000RGB] [hash]
 
 #if DEBUG_MODE == 1
   for (int i = 0; i < len; i++)
@@ -83,61 +94,104 @@ void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_por
   Serial.print("\n");
 #endif
 
-  if (len != 8)
+  // check for -127, message type
+  if (len >= 2)
   {
-#if DEBUG_MODE == 1
-    Serial.println("Message is wrong length!");
-#endif
+    if (data[0] != -127)
+    {
+      #if DEBUG_MODE == 1
+      Serial.println("Message does not start with -127!");
+      #endif
+      return;
+    }
+    
+    if (data[1] == 0) // wheel type
+    {
+      if (len != 8)
+      {
+        #if DEBUG_MODE == 1
+        Serial.println("Wheel message is wrong length!");
+        #endif
+        return;
+      }
+    
+      modifiers = data[2];
+    
+      leftWheels = data[3];
+    
+      rightWheels = data[4];
+    
+      tiltByte = data[5];
+      tilt += tiltByte;
+      if (tilt < 40 || tilt >= 127)
+        tilt -= tiltByte;
+    
+      pan = data[6];
+    
+      serialHash = data[7];
+      myHash = (pan + tiltByte + leftWheels + rightWheels + modifiers) / 5;
+      if (myHash == serialHash)
+      {
+        //sprintf(serResp, "%d\t%d\t%d\t%d\t%d\t%d", overdrive, leftWheels, rightWheels, tilt, pan, serialHash);
+        //Serial.println(serResp);
+        updateServos();
+        timeOut = millis();
+      }
+      #if DEBUG_MODE == 1
+      else
+      {
+        Serial.println("Bad hash!");
+      }
+      #endif
+    }
+    
+    else if(data[1] == 1) // light type
+    {
+      if (len != 4)
+      {
+        #if DEBUG_MODE == 1
+        Serial.println("Light message is wrong length!");
+        #endif
+        return;
+      }
 
-    return;
+      if (data[2] != data[3]) // kind of dumb but it follows the same standard as before
+      {
+        #if DEBUG_MODE == 1
+        Serial.println("Bad hash!");
+        #endif
+        return;
+      }
+
+      // red
+      if (data[2] & 0x2)
+        digitalWrite(LED_R, HIGH);
+      else
+        digitalWrite(LED_R, LOW);
+      // green
+      if (data[2] & 0x1)
+        digitalWrite(LED_G, HIGH);
+      else
+        digitalWrite(LED_G, LOW);
+      // blue
+      if (data[2] & 0x0)
+        digitalWrite(LED_B, HIGH);
+      else
+        digitalWrite(LED_B, LOW);
+
+      #if DEBUG_MODE == 1
+      Serial.println("Changed LEDs");
+      #endif
+    }
+
+    else // unknown type
+    {
+      #if DEBUG_MODE == 1
+      Serial.println("Unknown device id!");
+      #endif
+      return;
+    }
   }
-
-  if (data[0] != -127)
-  {
-#if DEBUG_MODE == 1
-    Serial.println("Message does not start with -127!");
-#endif
-
-    return;
-  }
-
-  if (data[1] != 0)
-  {
-#if DEBUG_MODE == 1
-    Serial.println("Wrong device id!");
-#endif
-
-    return;
-  }
-
-  modifiers = data[2];
-
-  leftWheels = data[3];
-
-  rightWheels = data[4];
-
-  tiltByte = data[5];
-  tilt += tiltByte;
-  if (tilt < 40 || tilt >= 127)
-    tilt -= tiltByte;
-
-  pan = data[6];
-
-  serialHash = data[7];
-  myHash = (pan + tiltByte + leftWheels + rightWheels + modifiers) / 5;
-  if (myHash == serialHash)
-  {
-    //sprintf(serResp, "%d\t%d\t%d\t%d\t%d\t%d", overdrive, leftWheels, rightWheels, tilt, pan, serialHash);
-    //Serial.println(serResp);
-    updateServos();
-    timeOut = millis();
-  }
-  #if DEBUG_MODE == 1
-  else
-  {
-    Serial.println("Bad hash!");
-  }
-  #endif
 }
 
 void setup() {
@@ -179,8 +233,17 @@ void setup() {
   gimbal_tilt.write(90);
   disk.write(90);
 
+  // Setup LED pins
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  
+  digitalWrite(LED_R, LOW);
+  digitalWrite(LED_G, LOW);
+  digitalWrite(LED_B, LOW);
+  
+  // Press jeston's power button (Currently unconnected)
   pinMode(JETSON_POWER, OUTPUT);
-
   delay(5000);
   digitalWrite(JETSON_POWER, HIGH);
   delay(2000);
