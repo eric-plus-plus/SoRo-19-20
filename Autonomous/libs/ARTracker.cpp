@@ -81,7 +81,7 @@ bool ARTracker::findAR(int id)
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(arFound(id, frame, true)) return true;
+        if(arFound(id, frame, false)) return true;
     }
     //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     return false;
@@ -91,7 +91,7 @@ bool ARTracker::trackAR(int id)
 {
     //cv::Mat image;
     *caps[0] >> frame;
-    if(arFound(id, frame, true)) return true;
+    if(arFound(id, frame, false)) return true;
     return false;
 }
 

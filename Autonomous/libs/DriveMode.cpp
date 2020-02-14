@@ -52,7 +52,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
     PIDValues[1] = speed + (error * kp + errorAccumulation * ki);*/
 
-    int max = 75;
+    int max = 65;
     if(PIDValues[0] > max) PIDValues[0] = max;
     if(PIDValues[1] > max) PIDValues[1] = max;
     if(PIDValues[0] < -max) PIDValues[0] = -max;
@@ -71,7 +71,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
@@ -100,17 +100,20 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
-                return true;
+                std::cout << "Found tag!!!" << std::endl;
+		return true;
             }
         }
 	std::cout << tracker.findAR(id) << std::endl;
         if(tracker.findAR(id))
         {
             locationInst.stopGPSThread();
+            std::cout << "Found tag!!!" << std::endl;
             return true;
         }
     }
     locationInst.stopGPSThread();
+    std::cout << "Made it to the gps tag" << std::endl;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -119,27 +122,27 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    int stopDistance = 300;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
     
     tracker.trackAR(id); //gets an intial angle from the main camera
     
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
-    while(tracker.angleToAR > 10 || tracker.angleToAR < -5 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
+    while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackAR(id))
         {            
             if(tracker.angleToAR > 10)
             {
                 std::cout << "turning right" << std::endl;
-                leftWheelSpeed = 30;
-                rightWheelSpeed = -30;
+                leftWheelSpeed = 45;
+                rightWheelSpeed = -45;
                 //str = out->controlToStr(30, -30, 0,0);
             }
             else
             {
                 std::cout << "turning left" << std::endl;
-                leftWheelSpeed = -30;
-                rightWheelSpeed = 30;
+                leftWheelSpeed = -45;
+                rightWheelSpeed = 45;
                 //str = out->controlToStr(-30, 30, 0,0);
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
@@ -150,13 +153,14 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         {
             //str = out -> controlToStr(-30, 30, 0, 0);
             //out -> sendMessage(&str);
-            leftWheelSpeed = -30;
-            rightWheelSpeed = 30;
+            leftWheelSpeed = -45;
+            rightWheelSpeed = 45;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
         {
-            std::cout << "Didn't find it " << ++timesNotFound << " times" << std::endl;
+	    timesNotFound++;
+            std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
         }
         else
         {
@@ -205,6 +209,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         cv::waitKey(100); //waits for 100ms    
         time += 100;
     }
+    leftWheelSpeed = 0;
+    rightWheelSpeed = 0;
     return true;
 }
 
