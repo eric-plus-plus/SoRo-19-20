@@ -164,23 +164,40 @@ void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_por
       }
 
       // red
-      if (data[2] & 0x2)
+      if (data[2] & 0x4)
         digitalWrite(LED_R, HIGH);
       else
         digitalWrite(LED_R, LOW);
       // green
-      if (data[2] & 0x1)
+      if (data[2] & 0x2)
         digitalWrite(LED_G, HIGH);
       else
         digitalWrite(LED_G, LOW);
       // blue
-      if (data[2] & 0x0)
+      if (data[2] & 0x1)
         digitalWrite(LED_B, HIGH);
       else
         digitalWrite(LED_B, LOW);
 
       #if DEBUG_MODE == 1
-      Serial.println("Changed LEDs");
+      String debug = "Changed LEDs (";
+      
+      if (data[2] & 0x4)
+        debug += "1";
+      else
+        debug += "0";
+
+      if (data[2] & 0x2)
+        debug += "1";
+      else
+        debug += "0";
+
+      if (data[2] & 0x1)
+        debug += "1)";
+      else
+        debug += "0)";
+      
+      Serial.println(debug);
       #endif
     }
 
