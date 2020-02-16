@@ -1,8 +1,6 @@
 # Arduino Code :100:
 
 Required libraries (install them from the built in library manager):
-* PID (1.2.0)
-  * [Documentation](https://playground.arduino.cc/Code/PIDLibrary/)
 * EtherCard (1.1.0)
   * Only needed for using the Arduino Nano ethernet shield. The Uno-style shield (on the Megas) uses the built in ethernet library.
   * [GitHub](https://github.com/njh/EtherCard)
@@ -23,7 +21,9 @@ What's new in this one is you can just spam the enter key in the console if you 
 
 ### rover_arm_pid_test.ino
 
-This works like the other arm test program except you type in an enocde value you want it to move to instead of a speed. *This is currently unfinished, so please do not use it for testing.*
+This works like the other arm test program except you type in an enocder value you want it to move to instead of a speed. *This is currently unfinished, so please do not use it for testing.*
+
+The "PID.h" files are based on the [Arduino PID library](https://playground.arduino.cc/Code/PIDLibrary/) made by Brett Beauregard. ([Github page](https://github.com/br3ttb/Arduino-PID-Library/)) The only change I've made is the addition of a function to reset the intergral term of the PID.
 
 ## Rover Programs
 

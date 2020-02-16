@@ -1,5 +1,10 @@
 #include <Servo.h>
-#include <PID_v1.h>
+#include "PID.h"
+
+// "PID.h" is a modified version of Brett Beauregard's PID Library (see links below).
+// https://playground.arduino.cc/Code/PIDLibrary/
+// https://github.com/br3ttb/Arduino-PID-Library/
+// All I did was add a function to reset the integral term.
 
 // Advanced PID Rover Arm Tester (incomplete)
 // Written for the Arduino Mega on the rover's arm
@@ -12,8 +17,9 @@
 // Caution: This code will not stop you from breaking the arm
 
 
-// TODO: incorporate limit switches
-//       method for zeroing positions
+// TODO: test limit switches
+//       test method for zeroing positions
+//       actually use doubles for the PID stuff (improves accuracy)
 
 
 // Arduino Mega pins to attach Talon controllers to
@@ -24,7 +30,17 @@
 #define PIN_S_WRISTP 34
 #define PIN_S_WRISTR 35
 
-// Port K bits for encoders
+// Arduino Mega pins to attach limit switches to
+#define PIN_L_BASE 36
+#define PIN_L_SHOULDER_MIN 37
+#define PIN_L_SHOULDER_MAX 38
+#define PIN_L_ELBOW_MIN 39
+#define PIN_L_ELBOW_MAX 40
+#define PIN_L_WRISTP_MIN 41 // unused?
+#define PIN_L_WRISTP_MAX 42 // unused?
+#define PIN_L_CLAW 43
+
+// Port K bits (pins) for encoders
 #define ENC_BASE_A 0x01     // pin A8
 #define ENC_BASE_B 0x02     // pin A9
 #define ENC_SHOULDER_A 0x04 // pin A10
@@ -43,6 +59,12 @@
 #define MAX_ELBOW 310
 #define MIN_WRISTP -278
 #define MAX_WRISTP 295
+
+// Offset of the setpoint for the PID controls during the zeroing process
+#define ZERO_SPEED 10
+// Time (ms) between changing encoder position
+#define ZERO_PERIOD 500
+#define DEBUG_PERIOD 750
 
 // encoder positions - updated by interrupt
 volatile int eBase = 0;
@@ -75,7 +97,9 @@ PID pidWristP(&pidInWristP, &pidOutWristP, &pidSetWristP, 1, 1, 0, P_ON_E, REVER
 // test program vars
 String inString = "";
 int select = 3; // 3 - default to elbow
-unsigned long timePrint;
+bool calibrated = true;
+unsigned long timePrint, timeZero;
+
 
 void setup() {
   // setup servos
@@ -102,6 +126,24 @@ void setup() {
   sei();
 
   port_k_prev = PINK;
+
+  // setup limit switch pins (uses pull up resistors)
+  pinMode(PIN_L_BASE, INPUT);
+  digitalWrite(PIN_L_BASE, HIGH);
+  pinMode(PIN_L_SHOULDER_MIN, INPUT);
+  digitalWrite(PIN_L_SHOULDER_MIN, HIGH);
+  pinMode(PIN_L_SHOULDER_MAX, INPUT);
+  digitalWrite(PIN_L_SHOULDER_MAX, HIGH);
+  pinMode(PIN_L_ELBOW_MIN, INPUT);
+  digitalWrite(PIN_L_ELBOW_MIN, HIGH);
+  pinMode(PIN_L_ELBOW_MAX, INPUT);
+  digitalWrite(PIN_L_ELBOW_MAX, HIGH);
+  pinMode(PIN_L_WRISTP_MIN, INPUT);
+  digitalWrite(PIN_L_WRISTP_MIN, HIGH);
+  pinMode(PIN_L_WRISTP_MAX, INPUT);
+  digitalWrite(PIN_L_WRISTP_MAX, HIGH);
+  pinMode(PIN_L_CLAW, INPUT);
+  digitalWrite(PIN_L_CLAW, HIGH);
   
   // setup serial
   Serial.begin(9600);
@@ -110,11 +152,15 @@ void setup() {
   Serial.println("90 is still (if motor controllers are calibrated).");
   Serial.println("Talon motor controllers should be calibrated to range of 10-170.");
   Serial.println();
-  Serial.println("Enter a character to select motors:");
-  Serial.println("A = base");
-  Serial.println("B = shoulder");
-  Serial.println("C = elbow (default)");
-  Serial.println("D = wrist pitch");
+  Serial.println("Type a name to select a joint:");
+  Serial.println("base (b)");
+  Serial.println("shoudler (s)");
+  Serial.println("elbow (e)");
+  Serial.println("wrist (w)");
+  Serial.println();
+  Serial.println("Other commands:");
+  Serial.println("reset (r) - stops all motors, sets encoder positions to 0.");
+  Serial.println("zero (z) - starts the calibration sequence.");
   
   // setup PID stuff
   pidBase.SetOutputLimits(-255, 255);
@@ -142,23 +188,132 @@ void setup() {
   pidWristP.SetMode(AUTOMATIC);
 }
 
-void loop() {
-  // handle PID stuff periodically
+/*
+ * Sets all pid control setpoints and encoder positions to 0.
+ * Stop motors.
+ */
+void pid_reset()
+{
+  sBase.write(90);
+  eBase = 0;
+  pidInBase = map(0, MIN_BASE, MAX_BASE, -255, 255);
+  pidSetBase = map(0, MIN_BASE, MAX_BASE, -255, 255);
+  pidBase.ResetI();
+  
+  sShoulder.write(90);
+  eShoulder = 0;
+  pidInShoulder = map(0, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
+  pidSetShoulder = map(0, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
+  pidShoulder.ResetI();
+
+  sElbow.write(90);
+  eElbow = 0;
+  pidInElbow = map(0, MIN_ELBOW, MAX_ELBOW, -255, 255);
+  pidSetElbow = map(0, MIN_ELBOW, MAX_ELBOW, -255, 255);
+  pidElbow.ResetI();
+
+  sWristP.write(90);
+  eWristP = 0;
+  pidInWristP = map(0, MIN_WRISTP, MAX_WRISTP, -255, 255);
+  pidSetWristP = map(0, MIN_WRISTP, MAX_WRISTP, -255, 255);
+  pidWristP.ResetI();
+}
+
+/*
+ * Update pid controllers.
+ * Handles limit switches.
+ * Set motor speeds.
+ * Doesn't change setpoints. 
+ */
+void pid_update()
+{
+  int temp;
+  
   pidInBase = map(eBase, MIN_BASE, MAX_BASE, -255, 255); // map encoder range to 0-255
   pidBase.Compute();
   sBase.write(map(pidOutBase, -255, 255, 10, 170));
-
+  // TODO: limit switch(?)
+  
   pidInShoulder = map(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -255, 255); // map encoder range to 0-255
   pidShoulder.Compute();
-  sShoulder.write(map(pidOutShoulder, -255, 255, 10, 170));
+  temp = map(pidOutShoulder, -255, 255, 10, 170);
+  if (digitalRead(PIN_L_SHOULDER_MIN) == LOW)
+  {
+    // limit switch pressed: reset position. don't let the motor move towards stow.
+    eShoulder = 0;
+    if (temp > 90)
+      temp = 90;
+  }
+  // TODO: max limit switch
+  sShoulder.write(temp);
   
   pidInElbow = map(eElbow, MIN_ELBOW, MAX_ELBOW, -255, 255); // map encoder range to 0-255
   pidElbow.Compute();
-  sElbow.write(map(pidOutElbow, -255, 255, 10, 170));
+  temp = map(pidOutElbow, -255, 255, 10, 170);
+  if (digitalRead(PIN_L_ELBOW_MIN) == LOW)
+  {
+    // limit switch pressed: reset position. don't let the motor move towards stow.
+    eElbow = 0;
+    if (temp > 90)
+      temp = 90;
+  }
+  // TODO: max limit switch
+  sElbow.write(temp);
   
   pidInWristP = map(eWristP, MIN_WRISTP, MAX_WRISTP, -255, 255); // map encoder range to 0-255
   pidWristP.Compute();
   sWristP.write(map(pidOutWristP, -255, 255, 10, 170));
+  // TODO: limit switch(?)
+}
+
+/* 
+ * Moves all joints towards "zero" positions until the corresponding limit switch is pressed.
+ * Needs to be called continuously until complete.
+ * Currently only moves elbow and shoulder joints.
+ */
+void pid_zero() {
+  // periodically add to encoder values to make joints move towards stow position.
+  // set calibrated to true when complete
+  if (millis()-timeZero > ZERO_PERIOD)
+  {
+    Serial.println("Zeroing...");
+    timeZero = millis();
+    calibrated = true;
+    
+    if (digitalRead(PIN_L_SHOULDER_MIN) == HIGH) // switch not pressed
+    {
+      eShoulder += ZERO_SPEED;
+      calibrated = false;
+    }
+
+    if (digitalRead(PIN_L_ELBOW_MIN) == HIGH)
+    {
+      eElbow += ZERO_SPEED;
+      calibrated = false;
+    }
+  }
+}
+
+void loop() {
+  // periodically display encoder positions
+  if (millis()-timePrint > DEBUG_PERIOD)
+  {
+    timePrint = millis();
+    
+    //Serial.println("set: " + String(pidSetShoulder) + "\tin: " + String(pidInShoulder) + "\tout: " + String(pidOutShoulder));
+    
+    /*
+    Serial.print("B: " + String(pidSetBase) + ", " + String(pidOutBase));
+    Serial.print("\tS: " + String(pidSetShoulder) + ", " + String(pidOutShoulder));
+    Serial.print("\tE: " + String(pidSetElbow) + ", " + String(pidOutElbow));
+    Serial.println("\tW: " + String(pidSetWristP) + ", " + String(pidOutWristP));
+    */
+
+    Serial.print("B: " + String(eBase));
+    Serial.print("\tS: " + String(eShoulder));
+    Serial.print("\tE: " + String(eElbow));
+    Serial.println("\tW: " + String(eWristP));
+  }
   
   // read and handle serial terminal commands
   while (Serial.available() > 0)
@@ -166,6 +321,13 @@ void loop() {
     int inChar = Serial.read();
     if (inChar == '\n')
     {
+      // don't allow commands when calibrating
+      if (!calibrated)
+      {
+        Serial.println("Wait for me to finish calibrating!");
+        break;
+      }
+      
       // check for number
       bool num = true;
       if (inString.length() == 0)
@@ -188,7 +350,7 @@ void loop() {
       }
       if (num)
       {
-        // if a number, set the position
+        // number command - set the position
         int temp = inString.toInt();
         Serial.println(temp);
         
@@ -210,35 +372,48 @@ void loop() {
       }
       else
       {
+        // non-number command
+        inString.toLowerCase();
+        
         // anything that isn't a number changes all setpoints to the current position (should stop them)
         pidSetBase = map(eBase, MIN_BASE, MAX_BASE, -255, 255);
         pidSetShoulder = map(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
         pidSetElbow = map(eElbow, MIN_ELBOW, MAX_ELBOW, -255, 255);
         pidSetWristP = map(eWristP, MIN_WRISTP, MAX_WRISTP, -255, 255);
 
-        if (inString == "A" || inString == "a")
+        if (inString == "base" || inString == "b")
         {
           select = 0;
           Serial.println("Selected Base");
         }
-        else if (inString == "B" || inString == "b")
+        else if (inString == "shoulder" || inString == "s")
         {
           select = 1;
           Serial.println("Selected Shoulder");
         }
-        else if (inString == "C" || inString == "c")
+        else if (inString == "elbow" || inString == "e")
         {
           select = 2;
           Serial.println("Selected Elbow");
         }
-        else if (inString == "D" || inString == "d")
+        else if (inString == "wrist" || inString == "w")
         {
           select = 3;
-          Serial.println("Selected Claw");
+          Serial.println("Selected Wrist");
+        }
+        else if (inString == "reset" || inString == "r")
+        {
+          pid_reset();
+          Serial.println("Reset PID and positions");
+        }
+        else if (inString == "zero" || inString == "z")
+        {
+          calibrated = false;
+          pid_reset();
         }
         else
         {
-          Serial.println("IDK what that means bro");
+          Serial.println("Stopping (unknown command)");
         }
       }
 
@@ -251,17 +426,11 @@ void loop() {
     }
   }
 
-  // periodically display encoder positions
-  if (millis()-timePrint > 750)
-  {
-    timePrint = millis();
-    //Serial.println("B " + String(eBase) + "\tS " + String(eShoulder) + "\tE " + String(eElbow) + "\tW " + String(eWristP));
-    
-    Serial.print("B: " + String(pidSetBase) + ", " + String(pidOutBase));
-    Serial.print("\tS: " + String(pidSetShoulder) + ", " + String(pidOutShoulder));
-    Serial.print("\tE: " + String(pidSetElbow) + ", " + String(pidOutElbow));
-    Serial.println("\tW: " + String(pidSetWristP) + ", " + String(pidOutWristP));
-  }
+  // update pid, motor outputs
+  pid_update();
+
+  if (!calibrated)
+    pid_zero();
 }
 
 ISR(PCINT2_vect) // pin change interrupt for pins A8 to A15 (update encoder positions)
