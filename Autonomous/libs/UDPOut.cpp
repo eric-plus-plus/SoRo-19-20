@@ -43,6 +43,23 @@ std::string UDPOut::controlToStr(int leftWheels, int rightWheels, int gimbalTilt
     return str;
 }
 
+std::string UDPOut::ledToStr(bool red, bool green, bool blue)
+{
+    std::string str = "";
+    str += char(-127);
+    str += char(1);
+    char temp = 0;
+    if (red)
+        temp |= (1 << 2);
+    if (green)
+        temp |= (1 << 1);
+    if (blue)
+        temp |= (1 << 0);
+    str += temp;
+    str += temp;
+    return str;
+}
+
 UDPOut::~UDPOut()
 {
     shutdown(sockfd, 2);

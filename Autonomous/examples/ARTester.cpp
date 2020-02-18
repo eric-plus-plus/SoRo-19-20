@@ -4,16 +4,17 @@
 
 using namespace std;
 
-int main()
-{
-    ARTracker* tracker = new ARTracker("/dev/video1");
+int main(int argc, char* argv[])
+{    
+    std::cout << argv[0] << "\n" << argv[1] << std::endl;
+    ARTracker* tracker = new ARTracker(argv + 1, "MJPG");
     //cv::namedWindow("win"); //This will break the code if run over SSH
     while(true)
     {
-        cout << tracker->findAR(0) << endl;
+        cout << tracker->findAR(5) << endl;
         cout << "distance: " << tracker->distanceToAR << endl;
         cout << "angle: " << tracker->angleToAR << endl;
-    //    cv::imshow("win", tracker->frame); //This will break the code if run over SSH
+        //cv::imshow("win", tracker->mFrame); //This will break the code if run over SSH
         cv::waitKey(100);
     }
 }
