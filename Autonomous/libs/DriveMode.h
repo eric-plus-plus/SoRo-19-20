@@ -13,8 +13,8 @@ private:
     //variables to be used for the i in getWheelSpeeds
     double errorAccumulation, time; //time in ms
     
-    void sendSpeed();
-    void printSpeeds();
+    void sendSpeed(); //for the thread to send wheel speeds
+    void printSpeeds(); //prints the speeds. Just to be lazy with
  
 public:
     Location locationInst;

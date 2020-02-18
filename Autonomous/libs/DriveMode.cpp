@@ -10,6 +10,7 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
     running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
+    
     //starts sending the speeds here
     std::thread speedThread(&DriveMode::sendSpeed, this);
     speedThread.detach();
@@ -23,8 +24,7 @@ void DriveMode::sendSpeed()
 	    //send wheel speeds
         speedString = out->controlToStr(round(leftWheelSpeed), round(rightWheelSpeed), 0,0);
         out->sendMessage(&speedString);
-        //std::cout << round(leftWheelSpeed) << " : " << round(rightWheelSpeed) << std::endl;
-	    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	    std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
     }
 }
 
@@ -101,10 +101,9 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
             {
                 locationInst.stopGPSThread();
                 std::cout << "Found tag!!!" << std::endl;
-		return true;
+                return true;
             }
         }
-	std::cout << tracker.findAR(id) << std::endl;
         if(tracker.findAR(id))
         {
             locationInst.stopGPSThread();
@@ -113,7 +112,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
         }
     }
     locationInst.stopGPSThread();
-    std::cout << "Made it to the gps tag" << std::endl;
+    std::cout << "Made it to the gps location without seeing the tag..." << std::endl;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -131,35 +130,30 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     {
         if(tracker.trackAR(id))
         {            
-            if(tracker.angleToAR > 10)
+            if(tracker.angleToAR > 30)
             {
                 std::cout << "turning right" << std::endl;
                 leftWheelSpeed = 45;
                 rightWheelSpeed = -45;
-                //str = out->controlToStr(30, -30, 0,0);
             }
             else
             {
                 std::cout << "turning left" << std::endl;
                 leftWheelSpeed = -45;
                 rightWheelSpeed = 45;
-                //str = out->controlToStr(-30, 30, 0,0);
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            //out->sendMessage(&str);
             timesNotFound = 0;
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            //str = out -> controlToStr(-30, 30, 0, 0);
-            //out -> sendMessage(&str);
             leftWheelSpeed = -45;
             rightWheelSpeed = 45;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
         {
-	    timesNotFound++;
+            timesNotFound++;
             std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
         }
         else
@@ -172,8 +166,9 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         cv::waitKey(100);
     }
     
-    time =0;
+    time = 0;
     errorAccumulation = 0; 
+    std::cout << "\nWe are locked on and ready to track!\n" << std::endl;
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.trackAR(id) || timesNotFound < 10)
@@ -189,9 +184,6 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 timesNotFound++;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            //send wheel speeds
-            //str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-            //out->sendMessage(&str);
             leftWheelSpeed = wheelSpeeds[1];
             rightWheelSpeed = wheelSpeeds[0];
             printSpeeds();
@@ -199,8 +191,6 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         else
         {
             //Stops the rover
-            //str = out->controlToStr(0, 0, 0,0);
-            //out->sendMessage(&str);
             leftWheelSpeed = 0;
             rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
@@ -213,33 +203,3 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     rightWheelSpeed = 0;
     return true;
 }
-
-
-
-/*bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2)
-{
-    ARTracker tracker;
-    Location locationInst;
-    float bearingTo;
-    vector<double> wheelSpeeds;
-    for(int i = 0; i < locations.size(); ++i)
-    {
-         while(locationInst.distanceTo(locations.at(i)[0], locations.at(i)[1]) > 0.003)
-         {
-            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1]);
-            wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
-            //send wheel speeds
-            cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
-            sleep(0);
-            if(tracker.findAR(id1) && tracker.findAR(id2))
-            {
-                return true;
-            }
-         }
-         if(tracker.findAR(id1) && tracker.findAR(id2))
-         {
-            return true;
-         }
-    }
-    return false;
-}*/

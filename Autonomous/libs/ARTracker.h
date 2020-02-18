@@ -10,11 +10,11 @@
 class ARTracker
 {
     public:
-        float angleToAR = 0; //to the one post for findAR, to the center for findARPosts
+        float angleToAR = 0; //to the single post for findAR, to the center for findARPosts
         float distanceToAR = -1; //see above. Should be in centimeters
         
         ARTracker(char* cameras[], std::string format); //give the video input source
-        bool findAR(int id); //returns 0 if nothing found, 1 for main, 2 for left, 3 for right if a camera finds the tag
+        bool findAR(int id); //false if nothing found, true else
         int findARTags(int id1, int id2); //returns camera that finds the tag if its found
         
         bool trackAR(int id);//just uses one camera to find the tag. More efficient
