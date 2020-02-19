@@ -5,77 +5,114 @@
 #include <string>
 #include "DriveMode.h"
 
-DriveMode::DriveMode(std::string videoFile, double speed):tracker(videoFile)
+DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
+    running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
+    locationInst.startGPS();
+    
+    //starts sending the speeds here
+    std::thread speedThread(&DriveMode::sendSpeed, this);
+    speedThread.detach();
 }
 
+//Sends speed in a separate thread
+void DriveMode::sendSpeed() 
+{
+    while(running) 
+    {
+	    //send wheel speeds
+        speedString = out->controlToStr(round(leftWheelSpeed), round(rightWheelSpeed), 0,0);
+        out->sendMessage(&speedString);
+	    std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
+    }
+}
 
-std::vector<double> DriveMode::getWheelSpeeds(double amountOff, double baseSpeed)
+std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
 	std::vector<double> PIDValues(2);
-	amountOff /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
+	
+	error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed < 0)
 	{
-		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of amountOff
+		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
 		//this formula is still almost certainly going to need to be adjusted
-		PIDValues[0] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
-		PIDValues[1] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
+		PIDValues[0] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
+		PIDValues[1] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 	}
 
 	else
 	{
-		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
-		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * amountOff - 1.0889139999999999e-27 * pow(amountOff, 2) + 7.591631000000001e-17 * pow(amountOff, 3) - 7.105946999999999e-38 * pow(amountOff, 4)) / 15;
+		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
+		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 	}
-        if(PIDValues[0] > 50) PIDValues[0] = 50;
-        if(PIDValues[1] > 50) PIDValues[1] = 50;
-        if(PIDValues[0] < -50) PIDValues[0] = -50;
-        if(PIDValues[1] < -50) PIDValues[1] = -50;
-	return PIDValues;
+
+    /*double kp = .5, ki = .00005;
+    errorAccumulation += error * time;
+    PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
+    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);*/
+
+    int max = 65;
+    if(PIDValues[0] > max) PIDValues[0] = max;
+    if(PIDValues[1] > max) PIDValues[1] = max;
+    if(PIDValues[0] < -max) PIDValues[0] = -max;
+    if(PIDValues[1] < -max) PIDValues[1] = -max;
+    return PIDValues;
+}
+
+void DriveMode::printSpeeds()
+{
+    std::cout << "Left Wheels: " << round(leftWheelSpeed) << std::endl;
+    std::cout << "Right Wheels: " << round(rightWheelSpeed) << std::endl;
 }
 
 bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id) //used for legs 1-3
 {    
     locationInst.startGPSThread();
 
-    std::cout<<"Waiting for GPS connection" << std::endl;
+    std::cout<<"Waiting for GPS connection..." << std::endl;
     while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
-    //Drives for 2 seconds to hopefully get a good angle from the gps
-    std::string str = out->controlToStr(speed,speed,0,0);
-    out->sendMessage(&str);
-    cv::waitKey(2000);
+    //Drives for 4 seconds to hopefully get a good angle from the gps
+    leftWheelSpeed = speed;
+    rightWheelSpeed = speed;
+    printSpeeds();
+    cv::waitKey(4000);
     
     float bearingTo;
     std::vector<double> wheelSpeeds;
     for(int i = 0; i < locations.size(); ++i)
     {
-        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.003) //.003km I think
-         {
+        time = 0;
+        errorAccumulation = 0;
+        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
+        {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
-            
-            //send wheel speeds
-            std::string str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-            out->sendMessage(&str);
-            std::cout << round(wheelSpeeds[1]) << " : " << round(wheelSpeeds[0]) << std::endl;
-            
+            leftWheelSpeed = wheelSpeeds[1];
+            rightWheelSpeed = wheelSpeeds[0];
+            printSpeeds();            
+
             cv::waitKey(100); //waits for 100ms
+            time += 100; //updates time
+            
             if(tracker.findAR(id))
             {
                 locationInst.stopGPSThread();
+                std::cout << "Found tag!!!" << std::endl;
                 return true;
             }
-         }
-         if(tracker.findAR(id))
-         {
+        }
+        if(tracker.findAR(id))
+        {
             locationInst.stopGPSThread();
+            std::cout << "Found tag!!!" << std::endl;
             return true;
-         }
+        }
     }
     locationInst.stopGPSThread();
+    std::cout << "Made it to the gps location without seeing the tag..." << std::endl;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -84,46 +121,59 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    int stopDistance = 50;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    
+    tracker.trackAR(id); //gets an intial angle from the main camera
     
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
-    while(tracker.angleToAR > 3 || tracker.angleToAR < -3)
+    while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
-        if(tracker.findAR(id) || timesNotFound < 10)
-        {
-            if(timesNotFound > 10)
+        if(tracker.trackAR(id))
+        {            
+            if(tracker.angleToAR > 30)
             {
-                std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
-                timesNotFound++;
-            }
-            else if(tracker.angleToAR > 3)
-            {
-                str = out->controlToStr(speed, -speed, 0,0);
-                timesNotFound = 0;
+                std::cout << "turning right" << std::endl;
+                leftWheelSpeed = 45;
+                rightWheelSpeed = -45;
             }
             else
             {
-                str = out->controlToStr(-speed, speed, 0,0);
-                timesNotFound = 0;
+                std::cout << "turning left" << std::endl;
+                leftWheelSpeed = -45;
+                rightWheelSpeed = 45;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            out->sendMessage(&str);
+            timesNotFound = 0;
+        }
+        else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
+        {
+            leftWheelSpeed = -45;
+            rightWheelSpeed = 45;
+            std::cout << "Haven't seen it so turning left" << std::endl;
+        }
+        else if(timesNotFound < 10)
+        {
+            timesNotFound++;
+            std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
         }
         else
         {
-            //Stops the rover
-            str = out->controlToStr(0, 0, 0,0);
-            out->sendMessage(&str);
-            std::cout << "Tag not found during turning phase. This is not good" << std::endl;
+            leftWheelSpeed = 0;
+            rightWheelSpeed = 0;
+            std::cout << "we lost it..." << std::endl;
+            return false; //TODO: do something about this
         }
         cv::waitKey(100);
     }
     
+    time = 0;
+    errorAccumulation = 0; 
+    std::cout << "\nWe are locked on and ready to track!\n" << std::endl;
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        if(tracker.findAR(id) || timesNotFound < 10 && timesNotFound != -1)
+        if(tracker.trackAR(id) || timesNotFound < 10)
         {
-            if(tracker.findAR(id))
+            if(tracker.trackAR(id))
             {
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
@@ -134,50 +184,22 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 timesNotFound++;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            std::cout<< round(wheelSpeeds[1]) << ", " << round(wheelSpeeds[0]) << std::endl; 
-            //send wheel speeds
-            str = out->controlToStr(round(wheelSpeeds[1]), round(wheelSpeeds[0]), 0,0);
-            out->sendMessage(&str);
-            
+            leftWheelSpeed = wheelSpeeds[1];
+            rightWheelSpeed = wheelSpeeds[0];
+            printSpeeds();
         }
         else
         {
             //Stops the rover
-            str = out->controlToStr(0, 0, 0,0);
-            out->sendMessage(&str);
+            leftWheelSpeed = 0;
+            rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
+            return false; //TODO: do something about this
         }
         cv::waitKey(100); //waits for 100ms    
+        time += 100;
     }
+    leftWheelSpeed = 0;
+    rightWheelSpeed = 0;
     return true;
 }
-
-
-
-/*bool DriveMode::driveAlongCoordinates(vector<int[2]> locations, int id1, int id2)
-{
-    ARTracker tracker;
-    Location locationInst;
-    float bearingTo;
-    vector<double> wheelSpeeds;
-    for(int i = 0; i < locations.size(); ++i)
-    {
-         while(locationInst.distanceTo(locations.at(i)[0], locations.at(i)[1]) > 0.003)
-         {
-            bearingTo = locationInst.bearingTo(locations.at(i)[0], locations.at(i)[1]);
-            wheelSpeeds = getWheelSpeeds(bearingTo, baseSpeed);
-            //send wheel speeds
-            cout << wheelSpeeds.at(0) << " : " << wheelSpeeds.at(1) << endl;
-            sleep(0);
-            if(tracker.findAR(id1) && tracker.findAR(id2))
-            {
-                return true;
-            }
-         }
-         if(tracker.findAR(id1) && tracker.findAR(id2))
-         {
-            return true;
-         }
-    }
-    return false;
-}*/

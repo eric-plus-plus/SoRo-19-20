@@ -10,22 +10,29 @@
 class ARTracker
 {
     public:
-        float angleToAR = 0; //to the one post for findAR, to the center for findARPosts
+        float angleToAR = 0; //to the single post for findAR, to the center for findARPosts
         float distanceToAR = -1; //see above. Should be in centimeters
         
-        ARTracker(std::string videoSource); //give the video input source
-        bool findAR(int id); //true if found and updates the angleToAR and distanceToAR vars
-        int findARTags(int id1, int id2); //returns number of correct AR Tags that it sees
+        ARTracker(char* cameras[], std::string format); //give the video input source
+        bool findAR(int id); //false if nothing found, true else
+        int findARTags(int id1, int id2); //returns camera that finds the tag if its found
         
-        cv::Mat frame; //the camera frame. Can be used for debugging
+        bool trackAR(int id);//just uses one camera to find the tag. More efficient
+        int trackARTags(int id1, int id2); 
+        
+        cv::Mat frame, mFrame; //for use when we're just using one camera. mFrame isn't really used but good to have for debug
+        
+        cv::VideoWriter videoWriter;
+        
         
     private:
-        cv::VideoCapture cap; 
+        std::vector<cv::VideoCapture*> caps; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers;
+        bool arFound(int id, cv::Mat image, bool writeToFile);
         
         int widthOfTag = 0;
         int centerXTag = 0;
-        float degreesPerPixel = 82.1/640.0; // fov / horizontal resolution. Noah gave me this
-        float focalLength = 611; //For cm. Found using finalFinalLength.cpp
+        float degreesPerPixel = 78.0/1920.0; // fov / horizontal resolution
+        float focalLength = 1380; //611 worked for 640x480, for cm. Found using finalFinalLength.cpp
 };
