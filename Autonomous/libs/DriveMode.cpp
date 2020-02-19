@@ -130,18 +130,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     {
         if(tracker.trackAR(id))
         {            
-            if(tracker.angleToAR > 30)
-            {
-                std::cout << "turning right" << std::endl;
-                leftWheelSpeed = 45;
-                rightWheelSpeed = -45;
-            }
-            else
-            {
-                std::cout << "turning left" << std::endl;
-                leftWheelSpeed = -45;
-                rightWheelSpeed = 45;
-            }
+            getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
@@ -168,7 +157,13 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     time = 0;
     errorAccumulation = 0; 
-    std::cout << "\nWe are locked on and ready to track!\n" << std::endl;
+    std::cout << "We are locked on and ready to track!" << std::endl;
+    
+    //stops for a second to let things settle
+    //leftWheelSpeed = 0;
+    //rightWheelSpeed = 0;
+    //cv::wait(1000);
+    
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.trackAR(id) || timesNotFound < 10)
