@@ -1,6 +1,7 @@
 #include "ARTracker.h"
 
 ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc('M','J','P','G'), 5, cv::Size(1920,1080), false)
+{
     for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)
