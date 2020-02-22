@@ -1,13 +1,52 @@
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <math.h>
 #include <string>
 #include "DriveMode.h"
 
+//Reads the file and sets the variables need in the class
+bool DriveMode::config() 
+{
+    std::ifstream file;
+    std::string line;
+	std::size_t found;
+    file.open("config.txt");
+    if(!file.is_open())
+		return false;
+    while(getline(file, line)) 
+    {
+		found = line.find_last_of("JETSON_IP=");
+		if(found != std::string::npos) 
+		{
+			jetsonIP = line.substr(found + 1).c_str();		
+		}
+		found = line.find_last_of("JETSON_PORT=");
+		if(found != std::string::npos) 
+		{
+			jetsonPort = std::stoi(line.substr(found + 1));			
+		}
+		found = line.find_last_of("NANO_IP=");
+		if(found != std::string::npos) 
+		{
+			nanoIP = line.substr(found + 1).c_str();			
+		}
+		found = line.find_last_of("NANO_PORT=");
+		if(found != std::string::npos) 
+		{
+			nanoPort = std::stoi(line.substr(found + 1));		
+		}
+	}
+	return true;
+}  
+
 DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
-    running = true;
+	if(!config())
+		std::cout << "Error opening file" << std::endl;
+	out = new UDPOut(jetsonIP, jetsonPort, nanoIP, nanoPort);    
+	running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
     

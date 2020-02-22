@@ -1,12 +1,41 @@
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <libs/DriveMode.h>
 
+//Reads the config file and takes only the variables needed 
+bool config(std::string* format, double* speed) {
+    std::ifstream file;
+    std::string line;
+	std::size_t found;
+    file.open("config.txt");
+    if(!file.is_open())
+		return false;
+    while(getline(file, line)) 
+    {
+		found = line.find_last_of("FORMAT=");
+		if(found != std::string::npos) 
+		{
+			*format = line.substr(found + 1);		
+		}
+		found = line.find_last_of("SPEED=");
+		if(found != std::string::npos) 
+		{
+			*speed = std::stod(line.substr(found + 1));			
+		}
+	}
+	return true;
+}   
 //takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
 {    
-    std::string ledStr;
-    DriveMode rover(argv + 1, "MJPG", 40.0);
+    std::string ledStr, format; 
+	double speed;
+
+	if(!config(&format, &speed))
+		std::cout << "Error opening file" << std::endl;
+	
+    DriveMode rover(argv + 1, format, speed);
     
     ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
