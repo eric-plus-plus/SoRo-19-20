@@ -10,34 +10,20 @@
 bool DriveMode::config() 
 {
     std::ifstream file;
-    std::string line;
+    std::string line, info;
 	std::size_t found;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		found = line.find_last_of("JETSON_IP=");
-		if(found != std::string::npos) 
-		{
-			jetsonIP = line.substr(found + 1).c_str();		
-		}
-		found = line.find_last_of("JETSON_PORT=");
-		if(found != std::string::npos) 
-		{
-			jetsonPort = std::stoi(line.substr(found + 1));			
-		}
-		found = line.find_last_of("NANO_IP=");
-		if(found != std::string::npos) 
-		{
-			nanoIP = line.substr(found + 1).c_str();			
-		}
-		found = line.find_last_of("NANO_PORT=");
-		if(found != std::string::npos) 
-		{
-			nanoPort = std::stoi(line.substr(found + 1));		
-		}
+		info += line;
 	}
+	//The numbers there will correctly parse the proper sized substring
+	jetsonIP = info.substr(info.find("JETSON_IP=") + 10, 8).c_str();
+	jetsonPort = std::stoi(info.substr(info.find("JETSON_PORT=") + 12, 5));
+	nanoIP = info.substr(info.find("NANO_IP=") + 8, 10).c_str();
+	nanoPort = std::stoi(info.substr(info.find("NANO_PORT=") + 10, 5));
 	return true;
 }  
 

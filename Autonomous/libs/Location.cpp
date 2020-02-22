@@ -5,24 +5,18 @@
 //Reads the file and sets the variables need in the class
 bool Location::config() {
     std::ifstream file;
-    std::string line;
+    std::string line, info;
 	std::size_t found;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		found = line.find_last_of("SWIFT_IP");
-		if(found != std::string::npos) 
-		{
-			swiftIP = line.substr(found + 1);			
-		}
-		found = line.find_last_of("SWIFT_PORT=");
-		if(found != std::string::npos) 
-		{
-			swiftPort = line.substr(found + 1);			
-		}
+		info += line;
 	}
+	//The numbers there will correctly parse the proper sized substring
+	swiftIP = info.substr(info.find("SWIFT_IP=") + 9, 10);
+	swiftPort = info.substr(info.find("SWIFT_PORT=") + 11, 5);
 	return true;
 }
 

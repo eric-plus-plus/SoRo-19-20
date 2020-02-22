@@ -4,24 +4,18 @@
 bool ARTracker::config() 
 {
     std::ifstream file;
-    std::string line;
+    std::string line, info;
 	std::size_t found;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		found = line.find_last_of("DEGREES_PER_PIXEL=");
-		if(found != std::string::npos) 
-		{
-			degreesPerPixel = std::stof(line.substr(found + 1));		
-		}
-		found = line.find_last_of("FOCAL_LENGTH=");
-		if(found != std::string::npos) 
-		{
-			focalLength = std::stof(line.substr(found + 1));			
-		}
+		info += line;
 	}
+	//The numbers there will correctly parse the proper sized substring
+	degreesPerPixel = std::stod(info.substr(info.find("DEGREES_PER_PIXEL=") + 18, info.find("FOCAL_LENGTH=" - 18)));
+	focalLength = std::stod(info.substr(info.find("FOCAL_LENGTH=") + 13, 4));
 	return true;
 }  
 

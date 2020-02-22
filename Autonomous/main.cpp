@@ -6,24 +6,18 @@
 //Reads the config file and takes only the variables needed 
 bool config(std::string* format, double* speed) {
     std::ifstream file;
-    std::string line;
+    std::string line, info;
 	std::size_t found;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		found = line.find_last_of("FORMAT=");
-		if(found != std::string::npos) 
-		{
-			*format = line.substr(found + 1);		
-		}
-		found = line.find_last_of("SPEED=");
-		if(found != std::string::npos) 
-		{
-			*speed = std::stod(line.substr(found + 1));			
-		}
+		info += line;
 	}
+	//The numbers there will correctly parse the proper sized substring
+	*speed = std::stod(info.substr(info.find("SPEED=") + 6, 2));
+	*format = info.substr(info.find("FORMAT=") + 7, 4);
 	return true;
 }   
 //takes arguments mainCamera, rest of the camera files
