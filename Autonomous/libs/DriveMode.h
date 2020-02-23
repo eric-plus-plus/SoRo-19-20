@@ -5,8 +5,11 @@ class DriveMode
 {
 private:
     double speed, leftWheelSpeed = 0, rightWheelSpeed = 0;
+	int jetsonPort, nanoPort;
     bool onePost, running;
     std::string speedString;
+	const char* jetsonIP;
+	const char* nanoIP;
     std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
 
@@ -15,7 +18,8 @@ private:
     
     void sendSpeed(); //for the thread to send wheel speeds
     void printSpeeds(); //prints the speeds. Just to be lazy with
- 
+	bool config();	
+
 public:
     Location locationInst;
     DriveMode(char* cameras[], std::string format, double speed); //the video file of the camera and the base speed that the rover drives at. Also starts a thread to send speed
@@ -25,6 +29,6 @@ public:
 	bool trackARTags(int id1, int id2); //same as above except it tracks the center of the posts between the tags
 	bool searchForARTag(); //searches for the tags if it gets to the end of driveAlongCoordinates without finding one
 	
-	UDPOut* out = new UDPOut("10.0.0.2", 5005, "10.0.0.101", 1001); //ip of the jetson, ip of the nano
+	UDPOut* out; //ip of the jetson, ip of the nano
 };
 

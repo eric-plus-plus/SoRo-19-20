@@ -1,6 +1,33 @@
 #include "Location.h"
 #include "gps/gps.h"
 #include <iostream>
+#include <vector>
+
+//Reads the file and sets the variables need in the class
+bool Location::config() {
+    std::ifstream file;
+    std::string line, info;
+	std::vector<std::string> lines;
+    file.open("config.txt");
+    if(!file.is_open())
+		return false;
+    while(getline(file, line)) 
+    {
+		//info += line;
+		lines.push_back(line);
+	}
+	for(int i = 0; i < lines.size(); ++i) 
+	{
+		if(lines[i].find("SWIFT_IP=") != std::string::npos) 
+			swiftIP = lines[i].substr(lines[i].find("SWIFT_IP=") + 9);
+		if(lines[i].find("SWIFT_PORT=") != std::string::npos) 
+			swiftPort = lines[i].substr(lines[i].find("SWIFT_PORT=") + 11);
+	}
+	/*//The numbers there will correctly parse the proper sized substring
+	swiftIP = info.substr(info.find("SWIFT_IP=") + 9, 10);
+	swiftPort = info.substr(info.find("SWIFT_PORT=") + 11, 5);
+	*/return true;
+}
 
 //Returns distance in kilometers between current latitude and longitude and parameters
 float Location::distanceTo(float lat, float lon)
@@ -46,8 +73,10 @@ void Location::stopGPSThread()
 
 void Location::startGPS()
 {
-    char *ip = (char*)"10.0.0.222";
-    char *host = (char*)"55556";
+	if(!config())
+		std::cout << "Error opening file" << std::endl;    
+	char* ip = &swiftIP[0];
+    char* host = &swiftPort[0];
     gps_init(ip, host);
 }
 

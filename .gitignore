@@ -8,3 +8,7 @@ Makefile
 .Rhistory
 libgps.a
 build/
+.main.cpp.swo
+.main.cpp.swp
+.runAutonomous.sh.swo
+.runAutonomous.sh.swp

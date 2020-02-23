@@ -1,13 +1,50 @@
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <math.h>
 #include <string>
 #include "DriveMode.h"
 
+//Reads the file and sets the variables need in the class
+bool DriveMode::config() 
+{
+    std::ifstream file;
+    std::string line;//, info;
+	std::vector<std::string> lines;
+    file.open("config.txt");
+    if(!file.is_open())
+		return false;
+    while(getline(file, line)) 
+    {
+		//info += line;
+		lines.push_back(line);
+	}
+	for(int i = 0; i < lines.size(); ++i) 
+	{
+		if(lines[i].find("JETSON_IP=") != std::string::npos) 
+			jetsonIP = lines[i].substr(lines[i].find("JETSON_IP=") + 10).c_str();
+		if(lines[i].find("JETSON_PORT=") != std::string::npos) 
+			jetsonPort = std::stoi(lines[i].substr(lines[i].find("JETSON_PORT=") + 12));
+		if(lines[i].find("NANO_IP=") != std::string::npos) 
+			nanoIP = lines[i].substr(lines[i].find("NANO_IP=") + 8).c_str();
+		if(lines[i].find("NANO_PORT=") != std::string::npos) 
+			nanoPort = std::stoi(lines[i].substr(lines[i].find("NANO_PORT=") + 10));
+	}
+	/*//The numbers there will correctly parse the proper sized substring
+	jetsonIP = info.substr(info.find("JETSON_IP=") + 10, 8).c_str();
+	jetsonPort = std::stoi(info.substr(info.find("JETSON_PORT=") + 12, 5));
+	nanoIP = info.substr(info.find("NANO_IP=") + 8, 10).c_str();
+	nanoPort = std::stoi(info.substr(info.find("NANO_PORT=") + 10, 5));
+	*/return true;
+}  
+
 DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
-    running = true;
+	if(!config())
+		std::cout << "Error opening file" << std::endl;
+	out = new UDPOut(jetsonIP, jetsonPort, nanoIP, nanoPort);    
+	running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
     
