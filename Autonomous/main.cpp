@@ -2,11 +2,13 @@
 #include <iostream>
 #include <libs/DriveMode.h>
 
-void driveToPoll(int id, DriveMode rover)
+void driveToPoll(int id, DriveMode rover, bool finish)
 {
     double lat, lon;
     std::string ledStr;
+    bool found;
     std::vector<std::vector<double>> locations; 
+    
     while(true)
     {
         std::vector<double> point;
@@ -19,24 +21,29 @@ void driveToPoll(int id, DriveMode rover)
         point.push_back(lon);
         locations.push_back(point);
     }
+    
     ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
-    rover.driveAlongCoordinates(locations, id);
-    rover.trackARTag(id);
+    
+    found = rover.driveAlongCoordinates(locations, id);
+    //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
+    if(found || finish) 
+        rover.trackARTag(id);
+    
     ledStr = rover.out->ledToStr(false, true, false);
     rover.out->sendMessage(&ledStr); //green
 }
 
 //takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
-{        
+{
     DriveMode rover(argv + 1, "MJPG", 40.0);
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    driveToPoll(0, rover);
-    driveToPoll(4, rover);
-    driveToPoll(5, rover);
+    driveToPoll(0, rover, false);
+    driveToPoll(4, rover, false);
+    driveToPoll(5, rover, true);
 
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
