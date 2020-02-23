@@ -1,23 +1,32 @@
 #include "Location.h"
 #include "gps/gps.h"
 #include <iostream>
+#include <vector>
 
 //Reads the file and sets the variables need in the class
 bool Location::config() {
     std::ifstream file;
     std::string line, info;
-	std::size_t found;
+	std::vector<std::string> lines;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		info += line;
+		//info += line;
+		lines.push_back(line);
 	}
-	//The numbers there will correctly parse the proper sized substring
+	for(int i = 0; i < lines.size(); ++i) 
+	{
+		if(lines[i].find("SWIFT_IP=") != string::npos) 
+			swiftIP = lines[i].substr(info.find("SWIFT_IP=") + 9);
+		if(lines[i].find("SWIFT_PORT=") != string::npos) 
+			swiftPort = lines[i].substr(info.find("SWIFT_PORT=") + 11);
+	}
+	/*//The numbers there will correctly parse the proper sized substring
 	swiftIP = info.substr(info.find("SWIFT_IP=") + 9, 10);
 	swiftPort = info.substr(info.find("SWIFT_PORT=") + 11, 5);
-	return true;
+	*/return true;
 }
 
 //Returns distance in kilometers between current latitude and longitude and parameters

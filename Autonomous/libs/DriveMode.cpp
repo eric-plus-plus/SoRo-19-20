@@ -10,21 +10,33 @@
 bool DriveMode::config() 
 {
     std::ifstream file;
-    std::string line, info;
-	std::size_t found;
+    std::string line;//, info;
+	std::vector<std::string> lines;
     file.open("config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
     {
-		info += line;
+		//info += line;
+		lines.push_back(line);
 	}
-	//The numbers there will correctly parse the proper sized substring
+	for(int i = 0; i < lines.size(); ++i) 
+	{
+		if(lines[i].find("JETSON_IP=") != string::npos) 
+			jetsonIP = lines[i].substr(info.find("JETSON_IP=") + 10).c_str();
+		if(lines[i].find("JETSON_PORT=") != string::npos) 
+			jetsonPort = std::stoi(lines[i].substr(info.find("JETSON_PORT=") + 12));
+		if(lines[i].find("NANO_IP=") != string::npos) 
+			nanoIP = lines[i].substr(info.find("NANO_IP=") + 8).c_str();
+		if(lines[i].find("NANO_PORT=") != string::npos) 
+			nanoPort = std::stoi(lines[i].substr(info.find("NANO_PORT=") + 10));
+	}
+	/*//The numbers there will correctly parse the proper sized substring
 	jetsonIP = info.substr(info.find("JETSON_IP=") + 10, 8).c_str();
 	jetsonPort = std::stoi(info.substr(info.find("JETSON_PORT=") + 12, 5));
 	nanoIP = info.substr(info.find("NANO_IP=") + 8, 10).c_str();
 	nanoPort = std::stoi(info.substr(info.find("NANO_PORT=") + 10, 5));
-	return true;
+	*/return true;
 }  
 
 DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
