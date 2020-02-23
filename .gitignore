@@ -12,3 +12,4 @@ build/
 .main.cpp.swp
 .runAutonomous.sh.swo
 .runAutonomous.sh.swp
+.DriveMode.cpp.swp
