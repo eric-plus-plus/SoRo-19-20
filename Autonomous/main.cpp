@@ -1,74 +1,49 @@
 #include <vector>
 #include <iostream>
 #include <libs/DriveMode.h>
-  
-//takes arguments mainCamera, rest of the camera files
-int main(int argc, char* argv[])
-{    
-    std::string ledStr; 
 
-    DriveMode rover(argv + 1, "MJPG", 40);
+void driveToPoll(int id, DriveMode rover, bool finish)
+{
+    double lat, lon;
+    std::string ledStr;
+    bool found;
+    std::vector<std::vector<double>> locations; 
+    
+    while(true)
+    {
+        std::vector<double> point;
+        std::cout<<"Enter lat and lon: " << std::endl;
+        std::cin >> lat;
+        std::cin >> lon;
+        if(lat == -1 && lon == -1)
+            break;
+        point.push_back(lat);
+        point.push_back(lon);
+        locations.push_back(point);
+    }
     
     ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
-    std::vector<std::vector<double>> locations;
-    double lat, lon;
-    while(true)
-    {
-        std::vector<double> point;
-        std::cout<<"Enter lat and lon: " << std::endl;
-        std::cin >> lat;
-        std::cin >> lon;
-        if(lat == -1 && lon == -1)
-            break;
-        point.push_back(lat);
-        point.push_back(lon);
-        locations.push_back(point);
-    }
-    rover.driveAlongCoordinates(locations, 5);
-    rover.trackARTag(5);
+    
+    found = rover.driveAlongCoordinates(locations, id);
+    //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
+    if(found || finish) 
+        rover.trackARTag(id);
+    
     ledStr = rover.out->ledToStr(false, true, false);
     rover.out->sendMessage(&ledStr); //green
-   
-    locations.clear(); 
-    while(true)
-    {
-        std::vector<double> point;
-        std::cout<<"Enter lat and lon: " << std::endl;
-        std::cin >> lat;
-        std::cin >> lon;
-        if(lat == -1 && lon == -1)
-            break;
-        point.push_back(lat);
-        point.push_back(lon);
-        locations.push_back(point);
-    }
-    ledStr = rover.out->ledToStr(true, false, false);
-    rover.out->sendMessage(&ledStr); //red
-    rover.driveAlongCoordinates(locations, 0);
-    rover.trackARTag(0);
-    ledStr = rover.out->ledToStr(false, true, false);
-    rover.out->sendMessage(&ledStr); //green
+}
 
-    locations.clear(); 
-    while(true)
-    {
-        std::vector<double> point;
-        std::cout<<"Enter lat and lon: " << std::endl;
-        std::cin >> lat;
-        std::cin >> lon;
-        if(lat == -1 && lon == -1)
-            break;
-        point.push_back(lat);
-        point.push_back(lon);
-        locations.push_back(point);
-    }
-    ledStr = rover.out->ledToStr(true, false, false);
+//takes arguments mainCamera, rest of the camera files
+int main(int argc, char* argv[])
+{
+    DriveMode rover(argv + 1, "MJPG", 40.0);
+    std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
-    rover.driveAlongCoordinates(locations, 4);
-    rover.trackARTag(4);
-    ledStr = rover.out->ledToStr(false, true, false);
-    rover.out->sendMessage(&ledStr); //green
+    
+    driveToPoll(0, rover, false);
+    driveToPoll(4, rover, false);
+    driveToPoll(5, rover, true);
 
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;

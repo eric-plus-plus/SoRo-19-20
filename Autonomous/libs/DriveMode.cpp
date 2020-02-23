@@ -69,7 +69,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
 	std::vector<double> PIDValues(2);
 	
-	error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
+	/*error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
 	if (baseSpeed < 0)
 	{
 		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
@@ -82,18 +82,19 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 	{
 		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-	}
+	}*/
 
-    /*double kp = .5, ki = .00005;
+    double kp = .5, ki = .00005;
     errorAccumulation += error * time;
     PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
-    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);*/
+    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
 
-    int max = 65;
+    int max = speed + 40; //forces it to arc when driving
+    int min = speed - 40;
     if(PIDValues[0] > max) PIDValues[0] = max;
     if(PIDValues[1] > max) PIDValues[1] = max;
-    if(PIDValues[0] < -max) PIDValues[0] = -max;
-    if(PIDValues[1] < -max) PIDValues[1] = -max;
+    if(PIDValues[0] < min) PIDValues[0] = min;
+    if(PIDValues[1] < min) PIDValues[1] = min;
     return PIDValues;
 }
 
@@ -166,19 +167,17 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackAR(id))
-        {            
-            if(tracker.angleToAR > 30)
+        {    
+            /*if(timesNotFound == -1)
             {
-                std::cout << "turning right" << std::endl;
-                leftWheelSpeed = 45;
-                rightWheelSpeed = -45;
-            }
-            else
-            {
-                std::cout << "turning left" << std::endl;
-                leftWheelSpeed = -45;
-                rightWheelSpeed = 45;
-            }
+                stops for a second to let things settle
+                leftWheelSpeed = 0;
+                rightWheelSpeed = 0;
+                cv::wait(1000);
+            } */       
+            wheelSpeeds = getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
+            leftWheelSpeed = wheelSpeeds[1] * 2;
+            rightWheelSpeed = wheelSpeeds[0] * 2;
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
@@ -205,7 +204,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     time = 0;
     errorAccumulation = 0; 
-    std::cout << "\nWe are locked on and ready to track!\n" << std::endl;
+    std::cout << "We are locked on and ready to track!" << std::endl;
+    
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
         if(tracker.trackAR(id) || timesNotFound < 10)

@@ -17,9 +17,8 @@
 // Caution: This code will not stop you from breaking the arm
 
 
-// TODO: test limit switches
-//       test method for zeroing positions
-//       actually use doubles for the PID stuff (improves accuracy)
+// need to test: actually using doubles for the PID stuff (improves accuracy)
+//               limited max joint speed (by changing PID bounds)
 
 
 // Arduino Mega pins to attach Talon controllers to
@@ -65,6 +64,9 @@
 // Time (ms) between changing encoder position
 #define ZERO_PERIOD 500
 #define DEBUG_PERIOD 750
+
+#define PID_MAP_SERVO 255 // "PID range." If you change this, then you'll have to retune all PID loops
+#define PID_LIMIT 200 // setting PID_LIMIT < PID_MAP_SERVO will cap the PID speeds w/o changing tuning
 
 // encoder positions - updated by interrupt
 volatile int eBase = 0;
@@ -163,29 +165,45 @@ void setup() {
   Serial.println("zero (z) - starts the calibration sequence.");
   
   // setup PID stuff
-  pidBase.SetOutputLimits(-255, 255);
-  pidInBase = map(eBase, MIN_BASE, MAX_BASE, -255, 255); // map encoder range to 0-255
-  pidSetBase = map(0, MIN_BASE, MAX_BASE, -255, 255);
-  pidBase.SetSampleTime(20);
+  pidBase.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
+  pidInBase = mapD(eBase, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
+  pidSetBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
+  pidBase.SetSampleTime(10);
   pidBase.SetMode(AUTOMATIC);
 
-  pidShoulder.SetOutputLimits(-255, 255);
-  pidInShoulder = map(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -255, 255); // map encoder range to 0-255
-  pidSetShoulder = map(0, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
-  pidShoulder.SetSampleTime(20);
+  pidShoulder.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
+  pidInShoulder = mapD(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
+  pidSetShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
+  pidShoulder.SetSampleTime(10);
   pidShoulder.SetMode(AUTOMATIC);
 
-  pidElbow.SetOutputLimits(-255, 255);
-  pidInElbow = map(eWristP, MIN_ELBOW, MAX_ELBOW, -255, 255); // map encoder range to 0-255
-  pidSetElbow = map(0, MIN_ELBOW, MAX_ELBOW, -255, 255);
-  pidElbow.SetSampleTime(20);
+  pidElbow.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
+  pidInElbow = mapD(eWristP, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
+  pidSetElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
+  pidElbow.SetSampleTime(10);
   pidElbow.SetMode(AUTOMATIC);
 
-  pidWristP.SetOutputLimits(-255, 255);
-  pidInWristP = map(eWristP, MIN_WRISTP, MAX_WRISTP, -255, 255); // map encoder range to 0-255
-  pidSetWristP = map(0, MIN_WRISTP, MAX_WRISTP, -255, 255);
-  pidWristP.SetSampleTime(20);
+  pidWristP.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
+  pidInWristP = mapD(eWristP, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
+  pidSetWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
+  pidWristP.SetSampleTime(10);
   pidWristP.SetMode(AUTOMATIC);
+}
+
+/*
+ * Same function as the built in map, except for a couple differences:
+ * Uses doubles to give the PID controllers more precision
+ * Limits the output to not go past out_min or out_max
+ */
+double mapD(double x, double in_min, double in_max, double out_min, double out_max) {
+  //return (double(x)-double(in_min)) * (double(out_max) - double(out_min)) / (double(in_max) - double(in_min)) + double(out_min);
+  double temp;
+  temp = (x-in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  if (temp > out_max)
+    temp = out_max;
+  else if (temp < out_min)
+    temp = out_min;
+  return temp;
 }
 
 /*
@@ -196,26 +214,26 @@ void pid_reset()
 {
   sBase.write(90);
   eBase = 0;
-  pidInBase = map(0, MIN_BASE, MAX_BASE, -255, 255);
-  pidSetBase = map(0, MIN_BASE, MAX_BASE, -255, 255);
+  pidInBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
+  pidSetBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
   pidBase.ResetI();
   
   sShoulder.write(90);
   eShoulder = 0;
-  pidInShoulder = map(0, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
-  pidSetShoulder = map(0, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
+  pidInShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
+  pidSetShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
   pidShoulder.ResetI();
 
   sElbow.write(90);
   eElbow = 0;
-  pidInElbow = map(0, MIN_ELBOW, MAX_ELBOW, -255, 255);
-  pidSetElbow = map(0, MIN_ELBOW, MAX_ELBOW, -255, 255);
+  pidInElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
+  pidSetElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
   pidElbow.ResetI();
 
   sWristP.write(90);
   eWristP = 0;
-  pidInWristP = map(0, MIN_WRISTP, MAX_WRISTP, -255, 255);
-  pidSetWristP = map(0, MIN_WRISTP, MAX_WRISTP, -255, 255);
+  pidInWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
+  pidSetWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
   pidWristP.ResetI();
 }
 
@@ -229,40 +247,52 @@ void pid_update()
 {
   int temp;
   
-  pidInBase = map(eBase, MIN_BASE, MAX_BASE, -255, 255); // map encoder range to 0-255
+  pidInBase = mapD(eBase, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
   pidBase.Compute();
-  sBase.write(map(pidOutBase, -255, 255, 10, 170));
+  sBase.write(map(pidOutBase, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170));
   // TODO: limit switch(?)
   
-  pidInShoulder = map(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -255, 255); // map encoder range to 0-255
+  pidInShoulder = mapD(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
   pidShoulder.Compute();
-  temp = map(pidOutShoulder, -255, 255, 10, 170);
+  temp = map(pidOutShoulder, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170);
   if (digitalRead(PIN_L_SHOULDER_MIN) == LOW)
   {
     // limit switch pressed: reset position. don't let the motor move towards stow.
-    eShoulder = 0;
+    eShoulder = MIN_SHOULDER;
     if (temp > 90)
       temp = 90;
   }
-  // TODO: max limit switch
+  if (digitalRead(PIN_L_SHOULDER_MAX) == LOW)
+  {
+    // limit switch pressed: reset position. don't let the motor move towards stow.
+    eShoulder = MAX_SHOULDER;
+    if (temp < 90)
+      temp = 90;
+  }
   sShoulder.write(temp);
   
-  pidInElbow = map(eElbow, MIN_ELBOW, MAX_ELBOW, -255, 255); // map encoder range to 0-255
+  pidInElbow = mapD(eElbow, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
   pidElbow.Compute();
-  temp = map(pidOutElbow, -255, 255, 10, 170);
+  temp = map(pidOutElbow, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170);
   if (digitalRead(PIN_L_ELBOW_MIN) == LOW)
   {
     // limit switch pressed: reset position. don't let the motor move towards stow.
-    eElbow = 0;
+    eElbow = MIN_ELBOW;
     if (temp > 90)
       temp = 90;
   }
-  // TODO: max limit switch
+  else if (digitalRead(PIN_L_ELBOW_MAX) == LOW)
+  {
+    // limit switch pressed: reset position. don't let the motor move towards stow.
+    eElbow = MAX_ELBOW;
+    if (temp < 90)
+      temp = 90;
+  }
   sElbow.write(temp);
   
-  pidInWristP = map(eWristP, MIN_WRISTP, MAX_WRISTP, -255, 255); // map encoder range to 0-255
+  pidInWristP = mapD(eWristP, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
   pidWristP.Compute();
-  sWristP.write(map(pidOutWristP, -255, 255, 10, 170));
+  sWristP.write(map(pidOutWristP, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170));
   // TODO: limit switch(?)
 }
 
@@ -300,7 +330,7 @@ void loop() {
   {
     timePrint = millis();
     
-    //Serial.println("set: " + String(pidSetShoulder) + "\tin: " + String(pidInShoulder) + "\tout: " + String(pidOutShoulder));
+    Serial.println("set: " + String(pidSetShoulder) + "\tin: " + String(pidInShoulder) + "\tout: " + String(pidOutShoulder));
     
     /*
     Serial.print("B: " + String(pidSetBase) + ", " + String(pidOutBase));
@@ -309,10 +339,12 @@ void loop() {
     Serial.println("\tW: " + String(pidSetWristP) + ", " + String(pidOutWristP));
     */
 
+    /*
     Serial.print("B: " + String(eBase));
     Serial.print("\tS: " + String(eShoulder));
     Serial.print("\tE: " + String(eElbow));
     Serial.println("\tW: " + String(eWristP));
+    */
   }
   
   // read and handle serial terminal commands
@@ -357,16 +389,16 @@ void loop() {
         switch(select)
         {
           case 0: // base
-            pidSetBase = map(temp, MIN_BASE, MAX_BASE, -255, 255);
+            pidSetBase = mapD(temp, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
             break;
           case 1: // shoulder
-            pidSetShoulder = map(temp, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
+            pidSetShoulder = mapD(temp, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
             break;
           case 2: // elbow
-            pidSetElbow = map(temp, MIN_ELBOW, MAX_ELBOW, -255, 255);
+            pidSetElbow = mapD(temp, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
             break;
           case 3: // wrist pitch
-            pidSetWristP = map(temp, MIN_WRISTP, MAX_WRISTP, -255, 255);
+            pidSetWristP = mapD(temp, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
             break;
         }
       }
@@ -376,10 +408,14 @@ void loop() {
         inString.toLowerCase();
         
         // anything that isn't a number changes all setpoints to the current position (should stop them)
-        pidSetBase = map(eBase, MIN_BASE, MAX_BASE, -255, 255);
-        pidSetShoulder = map(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -255, 255);
-        pidSetElbow = map(eElbow, MIN_ELBOW, MAX_ELBOW, -255, 255);
-        pidSetWristP = map(eWristP, MIN_WRISTP, MAX_WRISTP, -255, 255);
+        pidSetBase = mapD(eBase, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
+        pidBase.ResetI();
+        pidSetShoulder = mapD(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
+        pidShoulder.ResetI();
+        pidSetElbow = mapD(eElbow, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
+        pidElbow.ResetI();
+        pidSetWristP = mapD(eWristP, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
+        pidWristP.ResetI();
 
         if (inString == "base" || inString == "b")
         {

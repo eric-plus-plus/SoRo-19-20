@@ -1,5 +1,4 @@
 #include "ARTracker.h"
-
 //Reads the file and sets the variables need in the class
 bool ARTracker::config() 
 {
@@ -29,8 +28,8 @@ bool ARTracker::config()
 
 ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), false)
 {
-	if(!config())
-		std::cout << "Error opening file" << std::endl;
+    if(!config())
+		     std::cout << "Error opening file" << std::endl;
     for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)
