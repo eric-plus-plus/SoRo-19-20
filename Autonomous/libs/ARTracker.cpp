@@ -16,10 +16,10 @@ bool ARTracker::config()
 	}
 	for(int i = 0; i < lines.size(); ++i) 
 	{
-		if(lines[i].find("DEGREES_PER_PIXEL=") != string::npos) 
-			degreesPerPixel = std::stod(lines[i].substr(info.find("DEGREES_PER_PIXEL=") + 18));
-		if(lines[i].find("FOCAL_LENGTH=") != string::npos) 
-			focalLength = std::stod(lines[i].substr(info.find("FOCAL_LENGTH=") + 13));
+		if(lines[i].find("DEGREES_PER_PIXEL=") != std::string::npos) 
+			degreesPerPixel = std::stod(lines[i].substr(lines[i].find("DEGREES_PER_PIXEL=") + 18));
+		if(lines[i].find("FOCAL_LENGTH=") != std::string::npos) 
+			focalLength = std::stod(lines[i].substr(lines[i].find("FOCAL_LENGTH=") + 13));
 	}
 	/*//The numbers there will correctly parse the proper sized substring
 	degreesPerPixel = std::stod(info.substr(info.find("DEGREES_PER_PIXEL=") + 18, info.find("FOCAL_LENGTH=" - 18)));

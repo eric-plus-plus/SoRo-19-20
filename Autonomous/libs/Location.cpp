@@ -18,10 +18,10 @@ bool Location::config() {
 	}
 	for(int i = 0; i < lines.size(); ++i) 
 	{
-		if(lines[i].find("SWIFT_IP=") != string::npos) 
-			swiftIP = lines[i].substr(info.find("SWIFT_IP=") + 9);
-		if(lines[i].find("SWIFT_PORT=") != string::npos) 
-			swiftPort = lines[i].substr(info.find("SWIFT_PORT=") + 11);
+		if(lines[i].find("SWIFT_IP=") != std::string::npos) 
+			swiftIP = lines[i].substr(lines[i].find("SWIFT_IP=") + 9);
+		if(lines[i].find("SWIFT_PORT=") != std::string::npos) 
+			swiftPort = lines[i].substr(lines[i].find("SWIFT_PORT=") + 11);
 	}
 	/*//The numbers there will correctly parse the proper sized substring
 	swiftIP = info.substr(info.find("SWIFT_IP=") + 9, 10);

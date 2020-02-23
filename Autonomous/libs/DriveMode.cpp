@@ -22,14 +22,14 @@ bool DriveMode::config()
 	}
 	for(int i = 0; i < lines.size(); ++i) 
 	{
-		if(lines[i].find("JETSON_IP=") != string::npos) 
-			jetsonIP = lines[i].substr(info.find("JETSON_IP=") + 10).c_str();
-		if(lines[i].find("JETSON_PORT=") != string::npos) 
-			jetsonPort = std::stoi(lines[i].substr(info.find("JETSON_PORT=") + 12));
-		if(lines[i].find("NANO_IP=") != string::npos) 
-			nanoIP = lines[i].substr(info.find("NANO_IP=") + 8).c_str();
-		if(lines[i].find("NANO_PORT=") != string::npos) 
-			nanoPort = std::stoi(lines[i].substr(info.find("NANO_PORT=") + 10));
+		if(lines[i].find("JETSON_IP=") != std::string::npos) 
+			jetsonIP = lines[i].substr(lines[i].find("JETSON_IP=") + 10).c_str();
+		if(lines[i].find("JETSON_PORT=") != std::string::npos) 
+			jetsonPort = std::stoi(lines[i].substr(lines[i].find("JETSON_PORT=") + 12));
+		if(lines[i].find("NANO_IP=") != std::string::npos) 
+			nanoIP = lines[i].substr(lines[i].find("NANO_IP=") + 8).c_str();
+		if(lines[i].find("NANO_PORT=") != std::string::npos) 
+			nanoPort = std::stoi(lines[i].substr(lines[i].find("NANO_PORT=") + 10));
 	}
 	/*//The numbers there will correctly parse the proper sized substring
 	jetsonIP = info.substr(info.find("JETSON_IP=") + 10, 8).c_str();
