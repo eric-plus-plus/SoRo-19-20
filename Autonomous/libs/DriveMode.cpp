@@ -138,7 +138,9 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 rightWheelSpeed = 0;
                 cv::wait(1000);
             } */       
-            getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
+            wheelSpeeds = getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
+            leftWheelSpeed = wheelSpeeds[1] * 2;
+            rightWheelSpeed = wheelSpeeds[0] * 2;
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
