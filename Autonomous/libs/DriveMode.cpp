@@ -41,10 +41,10 @@ bool DriveMode::config()
 
 DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(cameras, format)
 {
-	if(!config())
-		std::cout << "Error opening file" << std::endl;
-	out = new UDPOut(jetsonIP, jetsonPort, nanoIP, nanoPort);    
-	running = true;
+    if(!config())
+    std::cout << "Error opening file" << std::endl;
+    out = new UDPOut(jetsonIP, jetsonPort, nanoIP, nanoPort);    
+    running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
     
@@ -58,10 +58,10 @@ void DriveMode::sendSpeed()
 {
     while(running) 
     {
-	    //send wheel speeds
+        //send wheel speeds
         speedString = out->controlToStr(round(leftWheelSpeed), round(rightWheelSpeed), 0,0);
         out->sendMessage(&speedString);
-	    std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
+        std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
     }
 }
 
@@ -109,7 +109,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
@@ -151,56 +151,6 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     }
     locationInst.stopGPSThread();
     std::cout << "Made it to the gps location without seeing the tag..." << std::endl;
-    return false; //got to gps location without finding the wanted ar tag
-}
-
-bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2) //used for legs 4-7
-{    
-    locationInst.startGPSThread();
-
-    std::cout<<"Waiting for GPS connection..." << std::endl;
-    while(locationInst.allZero); //waits for the GPS to pick something up before starting
-    std::cout << "Connected to GPS" << std::endl; 
-     
-    //Drives for 4 seconds to hopefully get a good angle from the gps
-    leftWheelSpeed = speed;
-    rightWheelSpeed = speed;
-    printSpeeds();
-    cv::waitKey(4000);
-    
-    float bearingTo;
-    std::vector<double> wheelSpeeds;
-    for(int i = 0; i < locations.size(); ++i)
-    {
-        time = 0;
-        errorAccumulation = 0;
-        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
-        {
-            bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
-            wheelSpeeds = getWheelSpeeds(bearingTo, speed);
-            leftWheelSpeed = wheelSpeeds[1];
-            rightWheelSpeed = wheelSpeeds[0];
-            printSpeeds();            
-
-            cv::waitKey(100); //waits for 100ms
-            time += 100; //updates time
-            
-            if(tracker.findARs(id1, id2))
-            {
-                locationInst.stopGPSThread();
-                std::cout << "Found tags!!!" << std::endl;
-                return true;
-            }
-        }
-        if(tracker.findARs(id1, id2))
-        {
-            locationInst.stopGPSThread();
-            std::cout << "Found tags!!!" << std::endl;
-            return true;
-        }
-    }
-    locationInst.stopGPSThread();
-    std::cout << "Made it to the gps location without seeing both tags..." << std::endl;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -289,6 +239,56 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     leftWheelSpeed = 0;
     rightWheelSpeed = 0;
     return true;
+}
+
+bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2) //used for legs 4-7
+{    
+    locationInst.startGPSThread();
+
+    std::cout<<"Waiting for GPS connection..." << std::endl;
+//    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    std::cout << "Connected to GPS" << std::endl; 
+     
+    //Drives for 4 seconds to hopefully get a good angle from the gps
+    leftWheelSpeed = speed;
+    rightWheelSpeed = speed;
+    printSpeeds();
+    cv::waitKey(4000);
+    
+    float bearingTo;
+    std::vector<double> wheelSpeeds;
+    for(int i = 0; i < locations.size(); ++i)
+    {
+        time = 0;
+        errorAccumulation = 0;
+        while(locationInst.distanceTo(locations[i][0], locations[i][1]) > 0.001) //.001km
+        {
+            bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
+            wheelSpeeds = getWheelSpeeds(bearingTo, speed);
+            leftWheelSpeed = wheelSpeeds[1];
+            rightWheelSpeed = wheelSpeeds[0];
+            printSpeeds();            
+
+            cv::waitKey(100); //waits for 100ms
+            time += 100; //updates time
+            
+            if(tracker.findARs(id1, id2))
+            {
+                locationInst.stopGPSThread();
+                std::cout << "Found tags!!!" << std::endl;
+                return true;
+            }
+        }
+        if(tracker.findARs(id1, id2))
+        {
+            locationInst.stopGPSThread();
+            std::cout << "Found tags!!!" << std::endl;
+            return true;
+        }
+    }
+    locationInst.stopGPSThread();
+    std::cout << "Made it to the gps location without seeing both tags..." << std::endl;
+    return false; //got to gps location without finding the wanted ar tag
 }
 
 bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7

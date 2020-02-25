@@ -4,15 +4,15 @@ bool ARTracker::config()
 {
     std::ifstream file;
     std::string line, info;
-	std::vector<std::string> lines;
+    std::vector<std::string> lines;
     file.open("config.txt");
     if(!file.is_open())
-		return false;
+        return false;
     while(getline(file, line)) 
     {
-		//info += line;
-		lines.push_back(line);
-	}
+        //info += line;
+        lines.push_back(line);
+    }
 	for(int i = 0; i < lines.size(); ++i) 
 	{
 		if(lines[i].find("DEGREES_PER_PIXEL=") != std::string::npos) 
@@ -115,9 +115,14 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         Markers = MDetector.detect(image > i);
         if(Markers.size() > 0)
         {
+            if(Markers.size() == 1)
+            {
+                std::cout << "Just found one post" << std::endl;
+                continue;
+            }
             if(writeToFile)
             {
-		        mFrame = image > i; //purely for debug
+                mFrame = image > i; //purely for debug
                 videoWriter.write(mFrame); //purely for debug
             }    
             break;
@@ -132,29 +137,38 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         }
     }
 
-    int index = -1;
+    int index1 = -1, index2 = -1;
     for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
     {
         if(Markers[i].id == id1 || Markers[i].id == id2)
         {
-            ++arCounter;
-            index = i;
-            //break; 
+            if(Markers[i].id == id1)
+                index1 = i;
+            else
+                index2=i;
+            
+            if(index1 != -1 && index2 != -1)
+                break;
         }   
     }
-    if(index == -1) 
+    if(index1 == -1 || index2 == -1) 
     {
         distanceToAR=-1;
         angleToAR=0;
+        if(index1 != -1 || index2 != -1)
+            return 1;
         return 0; //no correct ar tags found
     }
     else
     {
-        widthOfTag = Markers[index][1].x - Markers[index][0].x;
+        widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
+        widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR = (20 * focalLength) / widthOfTag;
+        distanceToAR1 = (20 * focalLength) / widthOfTag2;
+        distanceToAR2 = (20 * focalLength) / widthOfTag2;
+        distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
         
-        centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
+        centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return arCounter;
