@@ -1,10 +1,10 @@
 #! /bin/bash
-#Parses the tempConfig file below
-main=$(cat tempConfig.txt | grep MAIN)
+#Parses the config file below
+main=$(cat config.txt | grep MAIN)
 main=${main: -3}
-left=$(cat tempConfig.txt | grep LEFT)
+left=$(cat config.txt | grep LEFT)
 left=${left: -3}
-right=$(cat tempConfig.txt | grep RIGHT)
+right=$(cat config.txt | grep RIGHT)
 right=${right: -3}
 main_file=$(v4l2-ctl --list-devices | grep -A1 "$main):" | tail -1)
 left_file=$(v4l2-ctl --list-devices | grep -A1 "$left):" | tail -1)

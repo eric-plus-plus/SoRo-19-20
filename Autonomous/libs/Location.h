@@ -3,6 +3,7 @@
 
 
 #include <math.h>
+#include <fstream>
 #include <thread>
 #include <chrono>
 
@@ -11,6 +12,7 @@
 class Location
 {
 private:
+	std::string swiftIP, swiftPort;
 	float oldLatitude = 0.0;
 	float oldLongitude = 0.0;
 	bool running = true;
@@ -18,6 +20,7 @@ private:
 
 	float calcBearing(float lat1, float lon1, float lat2, float lon2);
 	void updateFieldsLoop();
+	bool config();
 
 public:
 	//Current latitude of the Rover

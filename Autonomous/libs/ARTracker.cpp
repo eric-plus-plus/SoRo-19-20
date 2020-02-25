@@ -1,7 +1,35 @@
 #include "ARTracker.h"
-
-ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc('M','J','P','G'), 5, cv::Size(1920,1080), false)
+//Reads the file and sets the variables need in the class
+bool ARTracker::config() 
 {
+    std::ifstream file;
+    std::string line, info;
+	std::vector<std::string> lines;
+    file.open("config.txt");
+    if(!file.is_open())
+		return false;
+    while(getline(file, line)) 
+    {
+		//info += line;
+		lines.push_back(line);
+	}
+	for(int i = 0; i < lines.size(); ++i) 
+	{
+		if(lines[i].find("DEGREES_PER_PIXEL=") != std::string::npos) 
+			degreesPerPixel = std::stod(lines[i].substr(lines[i].find("DEGREES_PER_PIXEL=") + 18));
+		if(lines[i].find("FOCAL_LENGTH=") != std::string::npos) 
+			focalLength = std::stod(lines[i].substr(lines[i].find("FOCAL_LENGTH=") + 13));
+	}
+	/*//The numbers there will correctly parse the proper sized substring
+	degreesPerPixel = std::stod(info.substr(info.find("DEGREES_PER_PIXEL=") + 18, info.find("FOCAL_LENGTH=" - 18)));
+	focalLength = std::stod(info.substr(info.find("FOCAL_LENGTH=") + 13, 4));
+	*/return true;
+}  
+
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), false)
+{
+    if(!config())
+		     std::cout << "Error opening file" << std::endl;
     for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)

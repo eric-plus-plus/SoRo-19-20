@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -33,9 +34,10 @@ class ARTracker
         std::vector<aruco::Marker> Markers;
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
         int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
+		    bool config();
         
         int widthOfTag = 0;
         int centerXTag = 0;
-        float degreesPerPixel = 78.0/1920.0; // fov / horizontal resolution
-        float focalLength = 1380; //611 worked for 640x480, for cm. Found using finalFinalLength.cpp
+        float degreesPerPixel; // fov / horizontal resolution
+        float focalLength; //611 worked for 640x480, for cm. Found using finalFinalLength.cpp
 };
