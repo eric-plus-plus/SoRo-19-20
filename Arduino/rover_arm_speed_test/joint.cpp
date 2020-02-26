@@ -114,7 +114,7 @@ double joint::getSpeed()
 /*
  * Getter for the value written to the servo
  */
-int joint::getServoSpeed()
+double joint::getServoSpeed()
 {
-  return s->read();
+  return speed;
 }

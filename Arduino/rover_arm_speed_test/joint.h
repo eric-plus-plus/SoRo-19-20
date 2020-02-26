@@ -26,7 +26,7 @@ class joint
 
     // getters for debug
     double getSpeed();
-    int getServoSpeed();
+    double getServoSpeed();
 };
 
 #endif

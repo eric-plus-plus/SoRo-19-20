@@ -41,6 +41,10 @@
 // Debug constants
 #define DEBUG_PERIOD 500
 
+// Zeroing constants
+#define ZERO_PERIOD 500
+#define ZERO_SPEED 10
+
 // Servo control constants
 #define SPEED_PERIOD 50 // if you make this too low then the speed accuracy won't be very good
 
@@ -55,7 +59,7 @@ volatile byte port_k_prev = 0x00; // only used by ISR
 String inString = "";
 int select = 3; // 3 - default to elbow
 bool calibrated = true;
-unsigned long timePrint, timeSpeed, timeSpeedPrev;
+unsigned long timePrint, timeSpeed, timeSpeedPrev, timeZero;
 
 // joint objects
 joint *jBase;
@@ -64,6 +68,46 @@ joint *jElbow;
 joint *jWristP;
 Servo sWristR;
 Servo sClaw;
+
+/* 
+ * Moves all joints towards "zero" positions until the corresponding limit switch is pressed.
+ * Needs to be called continuously until complete.
+ * Currently only moves elbow and shoulder joints.
+ */
+void joints_zero() {
+  // periodically add to encoder values to make joints move towards stow position.
+  // set calibrated to true when complete
+  if (millis()-timeZero > ZERO_PERIOD)
+  {
+    Serial.println("Zeroing...");
+    timeZero = millis();
+    calibrated = true;
+    
+    if (digitalRead(PIN_L_SHOULDER_MIN) == HIGH)
+    {
+      // switch not pressed
+      jShoulder->set(eShoulder-ZERO_SPEED); // todo: use a getter for joint->pos
+      calibrated = false;
+    }
+    else
+    {
+      jShoulder->reset();
+      eShoulder = 0;
+    }
+
+    if (digitalRead(PIN_L_ELBOW_MIN) == HIGH)
+    {
+      // switch not pressed
+      jElbow->set(eElbow-ZERO_SPEED); // todo: use a getter for joint->pos
+      calibrated = false;
+    }
+    else
+    {
+      jElbow->reset();
+      eElbow = 0;
+    }
+  }
+}
 
 void setup() {
   jBase = new joint(PIN_S_BASE, MIN_BASE, MAX_BASE, 1.0, 0.5);
@@ -113,9 +157,13 @@ void loop() {
   if (millis()-timePrint > DEBUG_PERIOD)
   {
     timePrint = millis();
+    /*
     Serial.print("enc: " + String(eShoulder));
     Serial.print("\tspd: " + String(jShoulder->getSpeed()));
     Serial.println("\tsrv: " + String(jShoulder->getServoSpeed()));
+    */
+    Serial.print("Shoudler: " + String(jShoulder->getServoSpeed()));
+    Serial.println("\tElbow: " + String(jElbow->getServoSpeed()));
   }
 
   // periodically display encoder positions
@@ -130,6 +178,8 @@ void loop() {
     jElbow->update(eElbow, timeDiff);
     jWristP->update(eWristP, timeDiff);
   }
+
+  // TODO: handle limit switches
   
   // read and handle serial terminal commands
   while (Serial.available() > 0)
@@ -192,6 +242,10 @@ void loop() {
         inString.toLowerCase();
 
         // TODO: stop all motors here
+        jBase->freeze();
+        jShoulder->freeze();
+        jElbow->freeze();
+        jWristP->freeze();
         
         if (inString == "base" || inString == "b")
         {
@@ -215,12 +269,27 @@ void loop() {
         }
         else if (inString == "reset" || inString == "r")
         {
-          // TODO
           Serial.println("Reset positions");
+          jBase->reset();
+          eBase = 0;
+          jShoulder->reset();
+          eShoulder = 0;
+          jElbow->reset();
+          eElbow = 0;
+          jWristP->reset();
+          eWristP = 0;
         }
         else if (inString == "zero" || inString == "z")
         {
-          Serial.println("This isn't implemented yet.");
+          jBase->reset();
+          eBase = 0;
+          jShoulder->reset();
+          eShoulder = 0;
+          jElbow->reset();
+          eElbow = 0;
+          jWristP->reset();
+          eWristP = 0;
+          calibrated = false;
         }
         else
         {
@@ -236,6 +305,9 @@ void loop() {
       inString += (char)inChar;
     }
   }
+
+  if (!calibrated)
+    joints_zero();
 }
 
 ISR(PCINT2_vect) // pin change interrupt for pins A8 to A15 (update encoder positions)
