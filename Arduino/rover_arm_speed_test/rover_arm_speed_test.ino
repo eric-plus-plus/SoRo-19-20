@@ -1,4 +1,4 @@
-#include <Servo.h>
+#include "joint.h"
 
 // Arduino Mega pins to attach Talon controllers to
 #define PIN_S_BASE 30
@@ -39,92 +39,42 @@
 #define MAX_WRISTP 295
 
 // Debug constants
-#define DEBUG_PERIOD 750
+#define DEBUG_PERIOD 500
 
 // Servo control constants
-#define SPEED_PERIOD 20
-#define SPEED_GAIN 1
-#define SPEED_BRAKE 2
-#define SPEED_MAX 100
+#define SPEED_PERIOD 50 // if you make this too low then the speed accuracy won't be very good
 
 // encoder positions (updated by interrupt), speeds
 volatile int eBase = 0;
-int eBaseP = 0;
-double speedBase = 0;
-
 volatile int eShoulder = 0;
-int eShoulderP = 0;
-double speedShoulder = 0;
-int setShoulder = 0;
-
 volatile int eElbow = 0;
-int eElbowP = 0;
-double speedElbow = 0;
-
 volatile int eWristP = 0;
-int eWristPP = 0;
-double speedWristP = 0;
-
 volatile byte port_k_prev = 0x00; // only used by ISR
-
-// servo objects
-Servo sBase;
-Servo sShoulder;
-Servo sElbow;
-Servo sClaw;
-Servo sWristP;
-Servo sWristR;
 
 // test program vars
 String inString = "";
 int select = 3; // 3 - default to elbow
 bool calibrated = true;
-unsigned long timePrint, timeSpeed;
+unsigned long timePrint, timeSpeed, timeSpeedPrev;
 
-
-
-
-/*
- * Stop motors and set encoder positions to 0
- */
-void joints_reset()
-{
-  sBase.write(90);
-  eBase = 0;
-  eBaseP = 0;
-  speedBase = 0;
-  
-  sShoulder.write(90);
-  eShoulder = 0;
-  eShoulderP = 0;
-  speedShoulder = 0;
-
-  sElbow.write(90);
-  eElbow = 0;
-  eElbowP = 0;
-  speedElbow = 0;
-
-  sWristP.write(90);
-  eWristP = 0;
-  eWristPP = 0;
-  speedWristP = 0;
-}
+// joint objects
+joint *jBase;
+joint *jShoulder;
+joint *jElbow;
+joint *jWristP;
+Servo sWristR;
+Servo sClaw;
 
 void setup() {
-  // setup servos
-  sBase.attach(PIN_S_BASE);
-  sShoulder.attach(PIN_S_SHOULDER);
-  sElbow.attach(PIN_S_ELBOW);
-  sClaw.attach(PIN_S_CLAW);
-  sWristP.attach(PIN_S_WRISTP);
-  sWristR.attach(PIN_S_WRISTR);
+  jBase = new joint(PIN_S_BASE, MIN_BASE, MAX_BASE, 1.0, 0.5);
+  jShoulder = new joint(PIN_S_SHOULDER, MIN_SHOULDER, MAX_SHOULDER, 1.0, 0.5);
+  jElbow = new joint(PIN_S_ELBOW, MIN_ELBOW, MAX_ELBOW, 1.0, 0.5);
+  jWristP = new joint(PIN_S_WRISTP, MIN_WRISTP, MAX_WRISTP, 1.0, 0.5);
   
-  sBase.write(90);
-  sShoulder.write(90);
-  sElbow.write(90);
-  sClaw.write(90);
-  sWristP.write(90);
+  sWristR.attach(PIN_S_WRISTR);
   sWristR.write(90);
+  sClaw.attach(PIN_S_CLAW);
+  sClaw.write(90);
 
   // setup encoder pins and interrupts
   cli();
@@ -163,56 +113,22 @@ void loop() {
   if (millis()-timePrint > DEBUG_PERIOD)
   {
     timePrint = millis();
-    Serial.print("\tenc: " + String(eShoulder));
-    Serial.print("\tspd: " + String(speedShoulder));
-    Serial.println("\tsrv: " + String(sShoulder.read()));
+    Serial.print("enc: " + String(eShoulder));
+    Serial.print("\tspd: " + String(jShoulder->getSpeed()));
+    Serial.println("\tsrv: " + String(jShoulder->getServoSpeed()));
   }
 
   // periodically display encoder positions
   if (millis()-timeSpeed > SPEED_PERIOD)
   {
-    unsigned long tempTime = millis();
-    int tempShoulder = eShoulder;
-    
-    int diffTime = tempTime - timeSpeed;
-    int diffShoulder = tempShoulder - eShoulderP;
-    speedShoulder = (diffShoulder*1000.0)/diffTime;
+    timeSpeedPrev = timeSpeed;
+    timeSpeed = millis();
 
-    eShoulderP = tempShoulder;
-    timeSpeed = tempTime;
-
-    int desiredSpeed = setShoulder - eShoulder;
-    if (desiredSpeed > SPEED_MAX)
-      desiredSpeed = SPEED_MAX;
-    if (desiredSpeed < -SPEED_MAX)
-      desiredSpeed = -SPEED_MAX;
-      
-    if (eShoulder < setShoulder)
-    {
-      if (speedShoulder < 0)
-        sShoulder.write(sShoulder.read() - SPEED_BRAKE);
-        
-      if (speedShoulder < desiredSpeed)
-        sShoulder.write(sShoulder.read() - SPEED_GAIN);
-      if (speedShoulder > desiredSpeed)
-        sShoulder.write(sShoulder.read() + SPEED_GAIN);
-      // sShoulder should be < 90
-    }
-    else if (eShoulder > setShoulder)
-    {
-      if (speedShoulder > 0)
-        sShoulder.write(sShoulder.read() + SPEED_BRAKE);
-      
-      if (speedShoulder < desiredSpeed)
-        sShoulder.write(sShoulder.read() - SPEED_GAIN);
-      if (speedShoulder > desiredSpeed)
-        sShoulder.write(sShoulder.read() + SPEED_GAIN);
-      // sShoulder should be > 90
-    }
-    else
-    {
-      sShoulder.write(90);
-    }
+    int timeDiff = timeSpeed-timeSpeedPrev;
+    jBase->update(eBase, timeDiff);
+    jShoulder->update(eShoulder, timeDiff);
+    jElbow->update(eElbow, timeDiff);
+    jWristP->update(eWristP, timeDiff);
   }
   
   // read and handle serial terminal commands
@@ -257,17 +173,16 @@ void loop() {
         switch(select)
         {
           case 0: // base
-            sBase.write(temp);
+            jBase->set(temp);
             break;
           case 1: // shoulder
-            //sShoulder.write(temp);
-            setShoulder = temp;
+            jShoulder->set(temp);
             break;
           case 2: // elbow
-            sElbow.write(temp);
+            jElbow->set(temp);
             break;
           case 3: // wrist pitch
-            sWristP.write(temp);
+            jWristP->set(temp);
             break;
         }
       }
@@ -275,16 +190,8 @@ void loop() {
       {
         // non-number command
         inString.toLowerCase();
-        
-        // anything that isn't a number stops all motors
-        sBase.write(90);
-        sShoulder.write(90);
-        sElbow.write(90);
-        sClaw.write(90);
-        sWristP.write(90);
-        sWristR.write(90);
-        
-        setShoulder = eShoulder;
+
+        // TODO: stop all motors here
         
         if (inString == "base" || inString == "b")
         {
@@ -308,7 +215,7 @@ void loop() {
         }
         else if (inString == "reset" || inString == "r")
         {
-          joints_reset();
+          // TODO
           Serial.println("Reset positions");
         }
         else if (inString == "zero" || inString == "z")
