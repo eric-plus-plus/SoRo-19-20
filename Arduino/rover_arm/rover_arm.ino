@@ -1,31 +1,6 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#include <Servo.h>
-#include "PID.h"
-
-// "PID.h" is a modified version of Brett Beauregard's PID Library (see links below).
-// https://playground.arduino.cc/Code/PIDLibrary/
-// https://github.com/br3ttb/Arduino-PID-Library/
-// All I did was add a function to reset the integral term.
-
-// Advanced PID Rover Arm Tester (incomplete)
-// Written for the Arduino Mega on the rover's arm
-// Open the serial monitor to use
-
-// This program lets you set manually set the position of each joint.
-// Talons should be calibrated to the range of servo inputs 10-170.
-// A position of 0 encoder ticks should be the default position.
-
-// Caution: This code will not stop you from breaking the arm
-
-
-// TODO: communication timeout
-// TODO: figure out whether or not the program is crashing
-// TODO: (not urgent) Increase precision of encoders
-
-// need to test: actually using doubles for the PID stuff (improves accuracy)
-//               limited max joint speed (by changing PID bounds)
-
+#include "joint.h"
 
 // Arduino Mega pins to attach Talon controllers to
 #define PIN_S_BASE 30
@@ -69,11 +44,12 @@
 #define ZERO_SPEED 10
 // Time (ms) between changing encoder position
 #define ZERO_PERIOD 500
-#define DEBUG_PERIOD 750
+#define DEBUG_PERIOD 500
 
-#define PID_MAP_SERVO 255 // "PID range." If you change this, then you'll have to retune all PID loops
-#define PID_LIMIT 200 // setting PID_LIMIT < PID_MAP_SERVO will cap the PID speeds w/o changing tuning
+// joint update period
+#define SPEED_PERIOD 50
 
+// joystick characteristics
 #define JOY_DEADZONE 20
 #define JOY_MAX 863
 #define JOY_ZERO 429
@@ -88,26 +64,13 @@ volatile int eElbow = 0;
 volatile int eWristP = 0;
 volatile byte port_k_prev = 0x00; // only used by ISR
 
-// servo objects
-Servo sBase;
-Servo sShoulder;
-Servo sElbow;
-Servo sClaw;
-Servo sWristP;
+// joint objects
+joint *jBase;
+joint *jShoulder;
+joint *jElbow;
+joint *jWristP;
 Servo sWristR;
-
-// PID stuff
-double pidSetBase, pidInBase, pidOutBase;
-PID pidBase(&pidInBase, &pidOutBase, &pidSetBase, 1, 1, 0, P_ON_E, REVERSE); // numbers are P, I, D
-
-double pidSetShoulder, pidInShoulder, pidOutShoulder;
-PID pidShoulder(&pidInShoulder, &pidOutShoulder, &pidSetShoulder, 1, 1, 0, P_ON_E, REVERSE); // numbers are P, I, D
-
-double pidSetElbow, pidInElbow, pidOutElbow;
-PID pidElbow(&pidInElbow, &pidOutElbow, &pidSetElbow, 1, 1, 0, P_ON_E, REVERSE); // numbers are P, I, D
-
-double pidSetWristP, pidInWristP, pidOutWristP;
-PID pidWristP(&pidInWristP, &pidOutWristP, &pidSetWristP, 1, 1, 0, P_ON_E, REVERSE); // numbers are P, I, D
+Servo sClaw;
 
 // UDP Stuff
 char message[30];  // buffer to hold incoming packet
@@ -119,26 +82,22 @@ const int localPort = 2040;
 
 // test program vars
 bool calibrated = true;
-unsigned long timePrint, timeZero;
+unsigned long timePrint, timeSpeed, timeSpeedPrev, timeZero;
 int jWristR;
 bool bClawO, bClawC;
 
 
 void setup() {
   // setup servos
-  sBase.attach(PIN_S_BASE);
-  sShoulder.attach(PIN_S_SHOULDER);
-  sElbow.attach(PIN_S_ELBOW);
-  sClaw.attach(PIN_S_CLAW);
-  sWristP.attach(PIN_S_WRISTP);
-  sWristR.attach(PIN_S_WRISTR);
+  jBase = new joint(PIN_S_BASE, MIN_BASE, MAX_BASE, 1.0, 0.5);
+  jShoulder = new joint(PIN_S_SHOULDER, MIN_SHOULDER, MAX_SHOULDER, 1.0, 0.5);
+  jElbow = new joint(PIN_S_ELBOW, MIN_ELBOW, MAX_ELBOW, 1.0, 0.5);
+  jWristP = new joint(PIN_S_WRISTP, MIN_WRISTP, MAX_WRISTP, 1.0, 0.5);
   
-  sBase.write(90);
-  sShoulder.write(90);
-  sElbow.write(90);
-  sClaw.write(90);
-  sWristP.write(90);
+  sWristR.attach(PIN_S_WRISTR);
   sWristR.write(90);
+  sClaw.attach(PIN_S_CLAW);
+  sClaw.write(90);
 
   // setup encoder pins and interrupts
   cli();
@@ -170,31 +129,6 @@ void setup() {
   
   // setup serial
   Serial.begin(9600);
-  
-  // setup PID stuff
-  pidBase.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
-  pidInBase = mapD(eBase, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-  pidSetBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-  pidBase.SetSampleTime(10);
-  pidBase.SetMode(AUTOMATIC);
-
-  pidShoulder.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
-  pidInShoulder = mapD(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-  pidSetShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-  pidShoulder.SetSampleTime(10);
-  pidShoulder.SetMode(AUTOMATIC);
-
-  pidElbow.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
-  pidInElbow = mapD(eWristP, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-  pidSetElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-  pidElbow.SetSampleTime(10);
-  pidElbow.SetMode(AUTOMATIC);
-
-  pidWristP.SetOutputLimits(-PID_LIMIT, PID_LIMIT);
-  pidInWristP = mapD(eWristP, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-  pidSetWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-  pidWristP.SetSampleTime(10);
-  pidWristP.SetMode(AUTOMATIC);
 
   // setup ethernet/udp
   Ethernet.init(10);
@@ -267,118 +201,12 @@ bool verify_message()
   return true;
 }
 
-/*
- * Same function as the built in map(), except for a couple differences:
- * Uses doubles to give the PID controllers more precision
- * Limits the output to not go past out_min or out_max
- */
-double mapD(double x, double in_min, double in_max, double out_min, double out_max) {
-  //return (double(x)-double(in_min)) * (double(out_max) - double(out_min)) / (double(in_max) - double(in_min)) + double(out_min);
-  double temp;
-  temp = (x-in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-  if (temp > out_max)
-    temp = out_max;
-  else if (temp < out_min)
-    temp = out_min;
-  return temp;
-}
-
-/*
- * Sets all pid control setpoints and encoder positions to 0.
- * Stop motors.
- */
-void pid_reset()
-{
-  sBase.write(90);
-  eBase = 0;
-  pidInBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-  pidSetBase = mapD(0, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-  pidBase.ResetI();
-  
-  sShoulder.write(90);
-  eShoulder = 0;
-  pidInShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-  pidSetShoulder = mapD(0, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-  pidShoulder.ResetI();
-
-  sElbow.write(90);
-  eElbow = 0;
-  pidInElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-  pidSetElbow = mapD(0, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-  pidElbow.ResetI();
-
-  sWristP.write(90);
-  eWristP = 0;
-  pidInWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-  pidSetWristP = mapD(0, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-  pidWristP.ResetI();
-}
-
-/*
- * Update pid controllers.
- * Handles limit switches.
- * Set motor speeds.
- * Doesn't change setpoints. 
- */
-void pid_update()
-{
-  int temp;
-  
-  pidInBase = mapD(eBase, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-  pidBase.Compute();
-  sBase.write(map(pidOutBase, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170));
-  // TODO: limit switch(?)
-  
-  pidInShoulder = mapD(eShoulder, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-  pidShoulder.Compute();
-  temp = map(pidOutShoulder, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170);
-  if (digitalRead(PIN_L_SHOULDER_MIN) == LOW)
-  {
-    // limit switch pressed: reset position. don't let the motor move towards stow.
-    eShoulder = MIN_SHOULDER;
-    if (temp > 90)
-      temp = 90;
-  }
-  if (digitalRead(PIN_L_SHOULDER_MAX) == LOW)
-  {
-    // limit switch pressed: reset position. don't let the motor move towards stow.
-    eShoulder = MAX_SHOULDER;
-    if (temp < 90)
-      temp = 90;
-  }
-  sShoulder.write(temp);
-  
-  pidInElbow = mapD(eElbow, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-  pidElbow.Compute();
-  temp = map(pidOutElbow, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170);
-  if (digitalRead(PIN_L_ELBOW_MIN) == LOW)
-  {
-    // limit switch pressed: reset position. don't let the motor move towards stow.
-    eElbow = MIN_ELBOW;
-    if (temp > 90)
-      temp = 90;
-  }
-  else if (digitalRead(PIN_L_ELBOW_MAX) == LOW)
-  {
-    // limit switch pressed: reset position. don't let the motor move towards stow.
-    eElbow = MAX_ELBOW;
-    if (temp < 90)
-      temp = 90;
-  }
-  sElbow.write(temp);
-  
-  pidInWristP = mapD(eWristP, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-  pidWristP.Compute();
-  sWristP.write(map(pidOutWristP, -PID_MAP_SERVO, PID_MAP_SERVO, 10, 170));
-  // TODO: limit switch(?)
-}
-
 /* 
  * Moves all joints towards "zero" positions until the corresponding limit switch is pressed.
  * Needs to be called continuously until complete.
  * Currently only moves elbow and shoulder joints.
  */
-void pid_zero() {
+void joints_zero() {
   // periodically add to encoder values to make joints move towards stow position.
   // set calibrated to true when complete
   if (millis()-timeZero > ZERO_PERIOD)
@@ -387,16 +215,28 @@ void pid_zero() {
     timeZero = millis();
     calibrated = true;
     
-    if (digitalRead(PIN_L_SHOULDER_MIN) == HIGH) // switch not pressed
+    if (digitalRead(PIN_L_SHOULDER_MIN) == HIGH)
     {
-      eShoulder += ZERO_SPEED;
+      // switch not pressed
+      jShoulder->set(eShoulder-ZERO_SPEED); // todo: use a getter for joint->pos
       calibrated = false;
+    }
+    else
+    {
+      jShoulder->reset();
+      eShoulder = 0;
     }
 
     if (digitalRead(PIN_L_ELBOW_MIN) == HIGH)
     {
-      eElbow += ZERO_SPEED;
+      // switch not pressed
+      jElbow->set(eElbow-ZERO_SPEED); // todo: use a getter for joint->pos
       calibrated = false;
+    }
+    else
+    {
+      jElbow->reset();
+      eElbow = 0;
     }
   }
 }
@@ -406,28 +246,30 @@ void loop() {
   if (millis()-timePrint > DEBUG_PERIOD)
   {
     timePrint = millis();
-    
-    //Serial.println("set: " + String(pidSetShoulder) + "\tin: " + String(pidInShoulder) + "\tout: " + String(pidOutShoulder));
-    
-    /*
-    Serial.print("B: " + String(pidSetBase) + ", " + String(pidOutBase));
-    Serial.print("\tS: " + String(pidSetShoulder) + ", " + String(pidOutShoulder));
-    Serial.print("\tE: " + String(pidSetElbow) + ", " + String(pidOutElbow));
-    Serial.println("\tW: " + String(pidSetWristP) + ", " + String(pidOutWristP));
-    */
-
-    /*
-    Serial.print("B: " + String(eBase));
-    Serial.print("\tS: " + String(eShoulder));
-    Serial.print("\tE: " + String(eElbow));
-    Serial.println("\tW: " + String(eWristP));
-    */
+    Serial.print("enc: " + String(eBase));
+    Serial.print("\tspd: " + String(jBase->getSpeed()));
+    Serial.println("\tsrv: " + String(jBase->getServoSpeed()));
   }
 
-  // update control variables when a message is received
-  if (verify_message())
+  // periodically update joints
+  if (millis()-timeSpeed > SPEED_PERIOD)
   {
-    
+    timeSpeedPrev = timeSpeed;
+    timeSpeed = millis();
+
+    int timeDiff = timeSpeed-timeSpeedPrev;
+    jBase->update(eBase, timeDiff);
+    jShoulder->update(eShoulder, timeDiff);
+    jElbow->update(eElbow, timeDiff);
+    jWristP->update(eWristP, timeDiff);
+  }
+
+  // todo: handle limit switches
+
+  // update control variables when a message is received
+  if (verify_message() && calibrated)
+  {
+    /*
     // DEBUG:
     for (int i = 0; i < messageSize; i++)
     {
@@ -435,18 +277,18 @@ void loop() {
       Serial.print(", ");
     }
     Serial.print("\n");
-    
+    */
 
     double tempB, tempS, tempE, tempW;
     tempB = (double)((int)(message[2] << 8) + (byte)message[3]);
     tempS = (double)((int)(message[4] << 8) + (byte)message[5]);
     tempE = (double)((int)(message[6] << 8) + (byte)message[7]);
     tempW = (double)((int)(message[8] << 8) + (byte)message[9]);
-    pidSetBase = mapD(tempB, MIN_BASE, MAX_BASE, -PID_LIMIT, PID_LIMIT);
-    pidSetShoulder = mapD(tempS, MIN_SHOULDER, MAX_SHOULDER, -PID_LIMIT, PID_LIMIT);
-    pidSetElbow = mapD(tempE, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
-    pidSetWristP = mapD(tempW, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
-
+    jBase->set(tempB);
+    jShoulder->set(tempS);
+    jElbow->set(tempE);
+    jWristP->set(tempW);
+    
     // wrist roll
     jWristR = ((int)(message[10] << 8) + (byte)message[11]);
     if (jWristR > JOY_MAX)
@@ -459,9 +301,8 @@ void loop() {
       sWristR.write(map(jWristR, JOY_ZERO-JOY_DEADZONE, JOY_MIN, 90, 10));
     else
       sWristR.write(90);
-    //Serial.println(sWristR.read());
-      
-  
+
+    
     // open/close claw
     bClawO = (message[12] & 1);
     bClawC = ((message[12] >> 1) & 1);
@@ -473,11 +314,9 @@ void loop() {
       sClaw.write(90);
   }
 
-  // update pid, motor outputs
-  pid_update();
-
+  // auto-calibrate arm when necessary
   if (!calibrated)
-    pid_zero();
+    joints_zero();
 }
 
 ISR(PCINT2_vect) // pin change interrupt for pins A8 to A15 (update encoder positions)
