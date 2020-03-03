@@ -17,11 +17,9 @@ class ARTracker
         ARTracker(char* cameras[], std::string format); //give the video input source
         bool findAR(int id); //false if nothing found, true else
         bool findARs(int id1, int id2);
-        int findARTags(int id1, int id2); //returns camera that finds the tag if its found
         
         bool trackAR(int id);//just uses one camera to find the tag. More efficient
         bool trackARs(int id1, int id2);
-        int trackARTags(int id1, int id2); 
         
         cv::Mat frame, mFrame; //for use when we're just using one camera. mFrame isn't really used but good to have for debug
         
@@ -34,9 +32,13 @@ class ARTracker
         std::vector<aruco::Marker> Markers;
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
         int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
-		    bool config();
+        bool config();
         
+        int distanceToAR1 = 0;
+        int distanceToAR2 = 0;
         int widthOfTag = 0;
+        int widthOfTag1 = 0;
+        int widthOfTag2 = 0;
         int centerXTag = 0;
         int knownTagWidth, frameWidth = 1920, frameHeight = 1080; //Width and Height are only for the writer
         float degreesPerPixel; // fov / horizontal resolution
