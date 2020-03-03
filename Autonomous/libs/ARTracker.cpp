@@ -5,7 +5,7 @@ bool ARTracker::config()
     std::ifstream file;
     std::string line, info;
 	std::vector<std::string> lines;
-    file.open("config.txt");
+    file.open("../config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
@@ -19,6 +19,8 @@ bool ARTracker::config()
 			degreesPerPixel = std::stod(lines[i].substr(lines[i].find("DEGREES_PER_PIXEL=") + 18));
 		if(lines[i].find("FOCAL_LENGTH=") != std::string::npos) 
 			focalLength = std::stod(lines[i].substr(lines[i].find("FOCAL_LENGTH=") + 13));
+		if(lines[i].find("KNOWN_TAG_WIDTH=") != std::string::npos) 
+			knownTagWidth = std::stoi(lines[i].substr(lines[i].find("KNOWN_TAG_WIDTH=") + 16));
 	}
 	/*//The numbers there will correctly parse the proper sized substring
 	degreesPerPixel = std::stod(info.substr(info.find("DEGREES_PER_PIXEL=") + 18, info.find("FOCAL_LENGTH=" - 18)));
@@ -26,7 +28,7 @@ bool ARTracker::config()
 	*/return true;
 }  
 
-ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), false)
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(frameWidth,frameHeight), false)
 {
     if(!config())
 		     std::cout << "Error opening file" << std::endl;
@@ -40,8 +42,8 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
             std::cout << "Camera " << cameras[i] << " did not open!" << std::endl;
             exit(-1);
         }
-        caps[i]->set(cv::CAP_PROP_FRAME_WIDTH, 1920);
-        caps[i]->set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+        caps[i]->set(cv::CAP_PROP_FRAME_WIDTH, frameWidth);
+        caps[i]->set(cv::CAP_PROP_FRAME_HEIGHT, frameHeight);
         caps[i]->set(cv::CAP_PROP_BUFFERSIZE, 1);
         caps[i]->set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc(format[0], format[1], format[2], format[3]) );
     }
@@ -95,7 +97,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     {
         widthOfTag = Markers[index][1].x - Markers[index][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR = (20 * focalLength) / widthOfTag;
+        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
         
         centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
@@ -152,7 +154,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     {
         widthOfTag = Markers[index][1].x - Markers[index][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR = (20 * focalLength) / widthOfTag;
+        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
         
         centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel

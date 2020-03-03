@@ -38,6 +38,7 @@ class ARTracker
         
         int widthOfTag = 0;
         int centerXTag = 0;
+        int knownTagWidth, frameWidth = 1920, frameHeight = 1080; //Width and Height are only for the writer
         float degreesPerPixel; // fov / horizontal resolution
         float focalLength; //611 worked for 640x480, for cm. Found using finalFinalLength.cpp
 };

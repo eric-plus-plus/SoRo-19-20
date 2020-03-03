@@ -8,7 +8,7 @@ bool Location::config() {
     std::ifstream file;
     std::string line, info;
 	std::vector<std::string> lines;
-    file.open("config.txt");
+    file.open("../config.txt");
     if(!file.is_open())
 		return false;
     while(getline(file, line)) 
