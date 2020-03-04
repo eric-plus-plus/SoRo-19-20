@@ -31,7 +31,7 @@ bool ARTracker::config()
 ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(frameWidth,frameHeight), false)
 {
     if(!config())
-		     std::cout << "Error opening file" << std::endl;
+        std::cout << "Error opening file" << std::endl;
     for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)
@@ -109,7 +109,6 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
-    int arCounter = 0;
     
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
     for(int i = 40; i <= 220; i+=60)
@@ -120,16 +119,20 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
             if(Markers.size() == 1)
             {
                 std::cout << "Just found one post" << std::endl;
-                continue;
             }
-            if(writeToFile)
+
+            else
             {
-                mFrame = image > i; //purely for debug
-                videoWriter.write(mFrame); //purely for debug
-            }    
-            break;
+                if(writeToFile)
+                {
+                    mFrame = image > i; //purely for debug
+                    videoWriter.write(mFrame); //purely for debug
+                }
+                break;
+            }
         }
-        else if(i == 220)
+        
+        if(i == 220)
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -158,26 +161,25 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         distanceToAR=-1;
         angleToAR=0;
         if(index1 != -1 || index2 != -1)
+        {
             return 1;
+        }
         return 0; //no correct ar tags found
     }
     else
     {
         widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
         widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
+       
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-<<<<<<< HEAD
-        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
-=======
-        distanceToAR1 = (20 * focalLength) / widthOfTag2;
-        distanceToAR2 = (20 * focalLength) / widthOfTag2;
+        distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag2;
+        distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag2;
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
->>>>>>> 6a2fea480f4a0bf06931cd57d752968011a938b0
         
         centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
-        return arCounter;
+        return 2;
     }
 }
 
