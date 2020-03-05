@@ -300,6 +300,7 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
+    int stopDistance;
     
     tracker.trackARs(id1, id2); //gets an intial angle from the main camera
     
