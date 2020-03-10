@@ -23,10 +23,7 @@ bool Location::config() {
 		if(lines[i].find("SWIFT_PORT=") != std::string::npos) 
 			swiftPort = lines[i].substr(lines[i].find("SWIFT_PORT=") + 11);
 	}
-	/*//The numbers there will correctly parse the proper sized substring
-	swiftIP = info.substr(info.find("SWIFT_IP=") + 9, 10);
-	swiftPort = info.substr(info.find("SWIFT_PORT=") + 11, 5);
-	*/return true;
+	return true;
 }
 
 //Returns distance in kilometers between current latitude and longitude and parameters

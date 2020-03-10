@@ -7,9 +7,7 @@ private:
     double speed, leftWheelSpeed = 0, rightWheelSpeed = 0;
     int jetsonPort, nanoPort;
     bool onePost, running;
-    std::string speedString;
-    const char* jetsonIP;
-    const char* nanoIP;
+    std::string speedString, jetsonIP, nanoIP;
     std::vector<double> getWheelSpeeds(double error, double baseSpeed);
     ARTracker tracker;
 

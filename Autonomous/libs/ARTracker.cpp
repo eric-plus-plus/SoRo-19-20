@@ -22,10 +22,7 @@ bool ARTracker::config()
 		if(lines[i].find("KNOWN_TAG_WIDTH=") != std::string::npos) 
 			knownTagWidth = std::stoi(lines[i].substr(lines[i].find("KNOWN_TAG_WIDTH=") + 16));
 	}
-	/*//The numbers there will correctly parse the proper sized substring
-	degreesPerPixel = std::stod(info.substr(info.find("DEGREES_PER_PIXEL=") + 18, info.find("FOCAL_LENGTH=" - 18)));
-	focalLength = std::stod(info.substr(info.find("FOCAL_LENGTH=") + 13, 4));
-	*/return true;
+	return true;
 }  
 
 ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(frameWidth,frameHeight), false)
@@ -166,13 +163,10 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
         widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-<<<<<<< HEAD
-        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
-=======
-        distanceToAR1 = (20 * focalLength) / widthOfTag2;
-        distanceToAR2 = (20 * focalLength) / widthOfTag2;
+
+        distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag;
+        distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag;
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
->>>>>>> 6a2fea480f4a0bf06931cd57d752968011a938b0
         
         centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
