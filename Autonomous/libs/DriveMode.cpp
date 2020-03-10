@@ -159,6 +159,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     tracker.trackAR(id); //gets an intial angle from the main camera
     
+    errorAccumulation = 0;
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
     while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
@@ -292,7 +293,7 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    int stopDistance;
     
     tracker.trackARs(id1, id2); //gets an intial angle from the main camera
     
