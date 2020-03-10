@@ -63,7 +63,7 @@ void driveToPolls(int id1,int id2, DriveMode rover)
     ledStr = rover.out->ledToStr(false, true, false);
     rover.out->sendMessage(&ledStr); //green
 }
-
+ 
 //takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
 {
@@ -71,9 +71,9 @@ int main(int argc, char* argv[])
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    /*driveToPoll(0, rover, false);
+    driveToPoll(0, rover, false);
     driveToPoll(4, rover, false);
-    driveToPoll(5, rover, true);*/
+    driveToPoll(5, rover, true);
     
     driveToPolls(4,5,rover);  
   
@@ -81,4 +81,6 @@ int main(int argc, char* argv[])
     std::cout << "\ndon't worry about the next error" << std::endl;
     rover.locationInst.stopGPS();
     return 0;
-}  
+}
+
+ 

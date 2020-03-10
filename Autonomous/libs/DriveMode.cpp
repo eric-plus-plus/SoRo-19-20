@@ -38,13 +38,18 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
 {
     if(!config())
          std::cout << "Error opening file" << std::endl;
-    std::cout << jetsonIP << "   " << nanoIP << std::endl;
     out = new UDPOut(jetsonIP.c_str(), jetsonPort, nanoIP.c_str(), nanoPort);    
     running = true;
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
     
+    rightWheelSpeed = (double*)malloc(sizeof(double));
+    leftWheelSpeed = (double*)malloc(sizeof(double));
+
     //starts sending the speeds here
+    *rightWheelSpeed = 0;
+    *leftWheelSpeed = 0;
+    std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
     std::thread speedThread(&DriveMode::sendSpeed, this);
     speedThread.detach();
 }
@@ -55,7 +60,8 @@ void DriveMode::sendSpeed()
     while(running) 
     {
         //send wheel speeds
-        speedString = out->controlToStr(round(leftWheelSpeed), round(rightWheelSpeed), 0,0);
+        //std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
+        speedString = out->controlToStr(round(*leftWheelSpeed), round(*rightWheelSpeed), 0,0);
         out->sendMessage(&speedString);
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
     }
@@ -96,8 +102,8 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 
 void DriveMode::printSpeeds()
 {
-    std::cout << "Left Wheels: " << round(leftWheelSpeed) << std::endl;
-    std::cout << "Right Wheels: " << round(rightWheelSpeed) << std::endl;
+    std::cout << "Left Wheels: " << round(*leftWheelSpeed) << std::endl;
+    std::cout << "Right Wheels: " << round(*rightWheelSpeed) << std::endl;
 }
 
 bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id) //used for legs 1-3
@@ -109,8 +115,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
-    leftWheelSpeed = speed;
-    rightWheelSpeed = speed;
+    *leftWheelSpeed = speed;
+    *rightWheelSpeed = speed;
     printSpeeds();
     cv::waitKey(4000);
     
@@ -124,8 +130,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
-            leftWheelSpeed = wheelSpeeds[1];
-            rightWheelSpeed = wheelSpeeds[0];
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             printSpeeds();            
 
             cv::waitKey(100); //waits for 100ms
@@ -173,15 +179,15 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 cv::wait(1000);
             } */       
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
-            leftWheelSpeed = wheelSpeeds[1] * 2;
-            rightWheelSpeed = wheelSpeeds[0] * 2;
+            *leftWheelSpeed = wheelSpeeds[1] * 2;
+            *rightWheelSpeed = wheelSpeeds[0] * 2;
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            leftWheelSpeed = -45;
-            rightWheelSpeed = 45;
+            *leftWheelSpeed = -45;
+            *rightWheelSpeed = 45;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
@@ -191,8 +197,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         }
         else
         {
-            leftWheelSpeed = 0;
-            rightWheelSpeed = 0;
+            *leftWheelSpeed = 0;
+            *rightWheelSpeed = 0;
             std::cout << "we lost it..." << std::endl;
             return false; //TODO: do something about this
         }
@@ -218,23 +224,23 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 timesNotFound++;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            leftWheelSpeed = wheelSpeeds[1];
-            rightWheelSpeed = wheelSpeeds[0];
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             printSpeeds();
         }
         else
         {
             //Stops the rover
-            leftWheelSpeed = 0;
-            rightWheelSpeed = 0;
+            *leftWheelSpeed = 0;
+            *rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
             return false; //TODO: do something about this
         }
         cv::waitKey(100); //waits for 100ms    
         time += 100;
     }
-    leftWheelSpeed = 0;
-    rightWheelSpeed = 0;
+    *leftWheelSpeed = 0;
+    *rightWheelSpeed = 0;
     return true;
 }
 
@@ -247,8 +253,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
-    leftWheelSpeed = speed;
-    rightWheelSpeed = speed;
+    *leftWheelSpeed = speed;
+    *rightWheelSpeed = speed;
     printSpeeds();
     cv::waitKey(4000);
     
@@ -262,8 +268,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
         {
             bearingTo = locationInst.bearingTo(locations[i][0], locations[i][1]);
             wheelSpeeds = getWheelSpeeds(bearingTo, speed);
-            leftWheelSpeed = wheelSpeeds[1];
-            rightWheelSpeed = wheelSpeeds[0];
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             printSpeeds();            
 
             cv::waitKey(100); //waits for 100ms
@@ -305,22 +311,22 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
             if(tracker.angleToAR > 30)
             {
                 std::cout << "turning right" << std::endl;
-                leftWheelSpeed = 45;
-                rightWheelSpeed = -45;
+                *leftWheelSpeed = 45;
+                *rightWheelSpeed = -45;
             }
             else
             {
                 std::cout << "turning left" << std::endl;
-                leftWheelSpeed = -45;
-                rightWheelSpeed = 45;
+                *leftWheelSpeed = -45;
+                *rightWheelSpeed = 45;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            leftWheelSpeed = -45;
-            rightWheelSpeed = 45;
+            *leftWheelSpeed = -45;
+            *rightWheelSpeed = 45;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
@@ -330,8 +336,8 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
         }
         else
         {
-            leftWheelSpeed = 0;
-            rightWheelSpeed = 0;
+            *leftWheelSpeed = 0;
+            *rightWheelSpeed = 0;
             std::cout << "we lost it..." << std::endl;
             return false; //TODO: do something about this
         }
@@ -356,22 +362,22 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
                 timesNotFound++;
             }
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            leftWheelSpeed = wheelSpeeds[1];
-            rightWheelSpeed = wheelSpeeds[0];
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             printSpeeds();
         }
         else
         {
             //Stops the rover
-            leftWheelSpeed = 0;
-            rightWheelSpeed = 0;
+            *leftWheelSpeed = 0;
+            *rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
             return false; //TODO: do something about this
         }
         cv::waitKey(100); //waits for 100ms    
         time += 100;
     }
-    leftWheelSpeed = 0;
-    rightWheelSpeed = 0;
+    *leftWheelSpeed = 0;
+    *rightWheelSpeed = 0;
     return true;
 }

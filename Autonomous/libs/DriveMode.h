@@ -4,7 +4,9 @@
 class DriveMode
 {
 private:
-    double speed, leftWheelSpeed = 0, rightWheelSpeed = 0;
+    double speed;
+    double* leftWheelSpeed;
+    double* rightWheelSpeed;
     int jetsonPort, nanoPort;
     bool onePost, running;
     std::string speedString, jetsonIP, nanoIP;

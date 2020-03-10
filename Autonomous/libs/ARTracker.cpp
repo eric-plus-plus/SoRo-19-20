@@ -25,7 +25,8 @@ bool ARTracker::config()
 	return true;
 }  
 
-ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(frameWidth,frameHeight), false)
+//The writer size is hard coded here. You've been warned
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), false)
 {
     if(!config())
         std::cout << "Error opening file" << std::endl;

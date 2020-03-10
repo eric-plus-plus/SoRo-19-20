@@ -104,7 +104,7 @@ void Location::updateFieldsLoop()
 		}
 		else allZero = true;
 		std::this_thread::sleep_for(std::chrono::seconds(waitDuration));
-		std::cout << pos_llh.lat << " " << pos_llh.lon << std::endl;
+		std::cout << "Lat: " <<  pos_llh.lat << ", Lon: " << pos_llh.lon << std::endl;
 	}
 }
 
