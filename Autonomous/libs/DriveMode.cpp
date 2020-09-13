@@ -43,13 +43,13 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
     this->speed = speed; //probably going to want more ways to change the speed...
     locationInst.startGPS();
     
-    rightWheelSpeed = (double*)malloc(sizeof(double));
+    rightWheelSpeed = (double*)malloc(sizeof(double)); //idk why but this program was breaking without a malloc here
     leftWheelSpeed = (double*)malloc(sizeof(double));
 
     //starts sending the speeds here
     *rightWheelSpeed = 0;
     *leftWheelSpeed = 0;
-    std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
+    //std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
     std::thread speedThread(&DriveMode::sendSpeed, this);
     speedThread.detach();
 }

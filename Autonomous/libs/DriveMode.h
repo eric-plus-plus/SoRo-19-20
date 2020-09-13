@@ -10,7 +10,7 @@ private:
     int jetsonPort, nanoPort;
     bool onePost, running;
     std::string speedString, jetsonIP, nanoIP;
-    std::vector<double> getWheelSpeeds(double error, double baseSpeed);
+    std::vector<double> getWheelSpeeds(double error, double baseSpeed); //returns the speeds the wheels should be using at based on the given error with PID algorithms
     ARTracker tracker;
 
     //variables to be used for the i in getWheelSpeeds

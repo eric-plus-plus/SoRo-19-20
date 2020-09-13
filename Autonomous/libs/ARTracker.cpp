@@ -1,4 +1,5 @@
 #include "ARTracker.h"
+
 //Reads the file and sets the variables need in the class
 bool ARTracker::config() 
 {
@@ -42,7 +43,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
         }
         caps[i]->set(cv::CAP_PROP_FRAME_WIDTH, frameWidth);
         caps[i]->set(cv::CAP_PROP_FRAME_HEIGHT, frameHeight);
-        caps[i]->set(cv::CAP_PROP_BUFFERSIZE, 1);
+        caps[i]->set(cv::CAP_PROP_BUFFERSIZE, 1); //greatly speeds up the program but the writer is a bit wack because of this
         caps[i]->set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc(format[0], format[1], format[2], format[3]) );
     }
     
@@ -53,10 +54,10 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
     
-    //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
+    //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(image > i);
+        Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
         if(Markers.size() > 0)
         {
             if(writeToFile)
@@ -66,7 +67,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             }    
             break;
         }
-        else if(i == 220)
+        else if(i == 220) //did not find any AR tags with any b&w cutoff
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -77,7 +78,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     }
 
     int index = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
+    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
     {
         if(Markers[i].id == id)
         {
@@ -89,10 +90,13 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     {
         distanceToAR=-1;
         angleToAR=0;
+        std::cout << "Found a tag but was not the correct one" << std::endl;
         return false; //correct ar tag not found
-    }
+    }  
+
     else
     {
+        
         widthOfTag = Markers[index][1].x - Markers[index][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
@@ -130,7 +134,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
             }
         }
         
-        if(i == 220)
+        if(i == 220) //did not ever find two ars. TODO add something for if it finds one tag
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -141,7 +145,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     }
 
     int index1 = -1, index2 = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag
+    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tags
     {
         if(Markers[i].id == id1 || Markers[i].id == id2)
         {

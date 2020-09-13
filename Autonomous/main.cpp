@@ -2,6 +2,8 @@
 #include <iostream>
 #include <libs/DriveMode.h>
 
+//id of the tag, a DriveMode object, and whether or not the rover should search for a tag if it doesn't see before arriving at the GPS coords
+//finish should be false for the first two legs where the GPS coords are right at the AR tag, true otherwise
 void driveToPoll(int id, DriveMode rover, bool finish)
 {
     double lat, lon;
@@ -9,6 +11,7 @@ void driveToPoll(int id, DriveMode rover, bool finish)
     bool found;
     std::vector<std::vector<double>> locations; 
     
+    //gets lists of coords to drive to
     while(true)
     {
         std::vector<double> point;
@@ -34,12 +37,15 @@ void driveToPoll(int id, DriveMode rover, bool finish)
     rover.out->sendMessage(&ledStr); //green
 }
 
+//for the gates
+//takes the two ids of the gates and a DriveMode object
 void driveToPolls(int id1,int id2, DriveMode rover)
 {
     double lat, lon;
     std::string ledStr;
     std::vector<std::vector<double>> locations; 
     
+    //gets the coords to drive along
     while(true)
     {
         std::vector<double> point;
@@ -57,7 +63,7 @@ void driveToPolls(int id1,int id2, DriveMode rover)
     rover.out->sendMessage(&ledStr); //red
     
     rover.driveAlongCoordinates(locations, id1, id2);
-    //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
+    //always tracks for the gates because we have to drive through them to get points
     rover.trackARTags(id1,id2);
     
     ledStr = rover.out->ledToStr(false, true, false);
@@ -79,7 +85,7 @@ int main(int argc, char* argv[])
   
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
-    rover.locationInst.stopGPS();
+    rover.locationInst.stopGPS(); //just crashes the program even though its supposed to clean up the GPS threads
     return 0;
 }
 

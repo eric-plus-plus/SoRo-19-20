@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-//Reads the file and sets the variables need in the class
+//Reads the file and sets the variables needed in the class
 bool Location::config() {
     std::ifstream file;
     std::string line, info;
@@ -80,7 +80,7 @@ void Location::startGPS()
 void Location::stopGPS()
 {
     running = false;
-    gps_finish();
+    gps_finish(); //this breaks the code. For that reason, this function is depracated in favor of stopGPSThread.
 }
 
 //Updates all fields from the auto-filled struct defined in navigation.h
@@ -97,14 +97,14 @@ void Location::updateFieldsLoop()
 			longitude = pos_llh.lon;
 			height = pos_llh.height;
 			time = pos_llh.tow;
-			error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0;
+			error = (pos_llh.h_accuracy + pos_llh.v_accuracy) / 2.0; //not currently used
 			bearing = calcBearing(oldLatitude, oldLongitude, latitude, longitude);
 
 			allZero = false;
 		}
 		else allZero = true;
 		std::this_thread::sleep_for(std::chrono::seconds(waitDuration));
-		std::cout << "Lat: " <<  pos_llh.lat << ", Lon: " << pos_llh.lon << std::endl;
+		std::cout << "Lat: " <<  pos_llh.lat << ", Lon: " << pos_llh.lon << std::endl; //comment this line out if lat and lons shouldn't be printed
 	}
 }
 
