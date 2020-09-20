@@ -5,8 +5,6 @@ project(autonomous)
 include_directories("${PROJECT_SOURCE_DIR}")
 add_subdirectory("${PROJECT_SOURCE_DIR}/gps")
 
-SET("OpenCV_DIR" "/usr/share/opencv4")
-
 set(HEADER_FILES libs/DriveMode.cpp libs/DriveMode.h libs/Location.cpp libs/Location.h libs/ARTracker.cpp libs/ARTracker.h libs/UDPOut.cpp libs/UDPOut.cpp)
 
 find_package( OpenCV REQUIRED )
