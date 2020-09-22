@@ -3,7 +3,8 @@ Code for the Autonomous portion of the Mars University Rover Challenge.
 
 ## How to Compile and Run:
 ### Install Dependencies:
-Install OpenCV following https://askubuntu.com/questions/1123955/install-opencv4-in-ubuntu-16 <br>
+This guide assumes that you are using a linux environment and can install things with apt. 
+Install OpenCV with "sudo apt install libopencv-dev" <br>
 Install Aruco following http://miloq.blogspot.com/2012/12/install-aruco-ubuntu-linux.html <br>
 
 ### Build the Project:
