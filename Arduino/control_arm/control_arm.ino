@@ -15,7 +15,7 @@
 #define MIN_BASE -500          // update this!
 #define MAX_BASE 500           // update this!
 #define MIN_SHOULDER 0
-#define MAX_SHOULDER 470
+#define MAX_SHOULDER 1100
 #define MIN_ELBOW 0
 #define MAX_ELBOW 310
 #define MIN_WRISTP -278
@@ -27,7 +27,7 @@
 #define PIN_J_ROLL A7
 
 // program control values
-#define MESSAGE_PERIOD 250
+#define MESSAGE_PERIOD 100
 #define MESSAGE_LENGTH 14
 #define DEVICE_ID 1
 #define DEBUG_PERIOD 500
@@ -123,9 +123,9 @@ void loop() {
   message[11] = (char)(jWristR);
   // buttons - each bit is one button
   message[12] = 0x00;
-  if(bClawO)
+  if (bClawO)
     message[12] |= 0x01;
-  if(bClawC)
+  if (bClawC)
     message[12] |= 0x02;
   // hash - (average of bytes [2...12])
   message[13] = (message[2] + message[3] + message[4] + message[5] + message[6] + message[7] + message[8] + message[9] + message[10] + message[11] + message[12]) / 11;

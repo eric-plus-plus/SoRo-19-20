@@ -19,6 +19,10 @@
 // Caution: This code will not stop you from breaking the arm
 
 
+// TODO: communication timeout
+// TODO: figure out whether or not the program is crashing
+// TODO: (not urgent) Increase precision of encoders
+
 // need to test: actually using doubles for the PID stuff (improves accuracy)
 //               limited max joint speed (by changing PID bounds)
 
@@ -55,7 +59,7 @@
 #define MIN_BASE -500          // update this!
 #define MAX_BASE 500           // update this!
 #define MIN_SHOULDER 0
-#define MAX_SHOULDER 470
+#define MAX_SHOULDER 1100
 #define MIN_ELBOW 0
 #define MAX_ELBOW 310
 #define MIN_WRISTP -278
@@ -69,6 +73,11 @@
 
 #define PID_MAP_SERVO 255 // "PID range." If you change this, then you'll have to retune all PID loops
 #define PID_LIMIT 200 // setting PID_LIMIT < PID_MAP_SERVO will cap the PID speeds w/o changing tuning
+
+#define JOY_DEADZONE 20
+#define JOY_MAX 863
+#define JOY_ZERO 429
+#define JOY_MIN 0
 
 #define DEVICE_ID 1
 
@@ -400,12 +409,12 @@ void loop() {
     
     //Serial.println("set: " + String(pidSetShoulder) + "\tin: " + String(pidInShoulder) + "\tout: " + String(pidOutShoulder));
     
-    
+    /*
     Serial.print("B: " + String(pidSetBase) + ", " + String(pidOutBase));
     Serial.print("\tS: " + String(pidSetShoulder) + ", " + String(pidOutShoulder));
     Serial.print("\tE: " + String(pidSetElbow) + ", " + String(pidOutElbow));
     Serial.println("\tW: " + String(pidSetWristP) + ", " + String(pidOutWristP));
-    
+    */
 
     /*
     Serial.print("B: " + String(eBase));
@@ -418,7 +427,7 @@ void loop() {
   // update control variables when a message is received
   if (verify_message())
   {
-    /*
+    
     // DEBUG:
     for (int i = 0; i < messageSize; i++)
     {
@@ -426,7 +435,7 @@ void loop() {
       Serial.print(", ");
     }
     Serial.print("\n");
-    */
+    
 
     double tempB, tempS, tempE, tempW;
     tempB = (double)((int)(message[2] << 8) + (byte)message[3]);
@@ -438,10 +447,30 @@ void loop() {
     pidSetElbow = mapD(tempE, MIN_ELBOW, MAX_ELBOW, -PID_LIMIT, PID_LIMIT);
     pidSetWristP = mapD(tempW, MIN_WRISTP, MAX_WRISTP, -PID_LIMIT, PID_LIMIT);
 
-    // TODO: use these inputs
+    // wrist roll
     jWristR = ((int)(message[10] << 8) + (byte)message[11]);
+    if (jWristR > JOY_MAX)
+      jWristR = JOY_MAX;
+    else if (jWristR < JOY_MIN)
+      jWristR = JOY_MIN;
+    if (jWristR > JOY_ZERO+JOY_DEADZONE)
+      sWristR.write(map(jWristR, JOY_ZERO+JOY_DEADZONE, JOY_MAX, 90, 170));
+    else if (jWristR < JOY_ZERO-JOY_DEADZONE)
+      sWristR.write(map(jWristR, JOY_ZERO-JOY_DEADZONE, JOY_MIN, 90, 10));
+    else
+      sWristR.write(90);
+    //Serial.println(sWristR.read());
+      
+  
+    // open/close claw
     bClawO = (message[12] & 1);
     bClawC = ((message[12] >> 1) & 1);
+    if (bClawO && !bClawC)
+      sClaw.write(170);
+    else if (bClawC && !bClawO)
+      sClaw.write(10);
+    else
+      sClaw.write(90);
   }
 
   // update pid, motor outputs
