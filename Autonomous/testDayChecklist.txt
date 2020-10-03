@@ -1,0 +1,3 @@
+1. Make sure wheels turn
+2. Connect to GPS
+3. Find an ar tag
