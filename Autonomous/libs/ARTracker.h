@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -11,28 +12,36 @@ class ARTracker
 {
     public:
         float angleToAR = 0; //to the single post for findAR, to the center for findARPosts
-        float distanceToAR = -1; //see above. Should be in centimeters
+        float distanceToAR = -1; //distance to a single post for findAR or to the center for findARPosts. Should be in centimeters
         
         ARTracker(char* cameras[], std::string format); //give the video input source
-        bool findAR(int id); //false if nothing found, true else
-        int findARTags(int id1, int id2); //returns camera that finds the tag if its found
+        bool findAR(int id); //false if nothing found, true else. Updates angleToAR and distanceToAR
+        bool findARs(int id1, int id2); //same as above except looking for the gate instead of a single post
         
-        bool trackAR(int id);//just uses one camera to find the tag. More efficient
-        int trackARTags(int id1, int id2); 
+        bool trackAR(int id);//findAR but just uses one camera to find the tag. More efficient and all that is needed for the tracking phase
+        bool trackARs(int id1, int id2); //same as findARs except looking for a gate instead of a single post
         
-        cv::Mat frame, mFrame; //for use when we're just using one camera. mFrame isn't really used but good to have for debug
+        cv::Mat frame, mFrame; //mFrame isn't really used but good to have for debug
         
-        cv::VideoWriter videoWriter;
+        cv::VideoWriter videoWriter; //gives way of writting the video to disk
         
         
     private:
         std::vector<cv::VideoCapture*> caps; 
         aruco::MarkerDetector MDetector; 
         std::vector<aruco::Marker> Markers;
-        bool arFound(int id, cv::Mat image, bool writeToFile);
+        bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
+        int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
+        bool config();
         
+        int distanceToAR1 = 0;
+        int distanceToAR2 = 0;
         int widthOfTag = 0;
+        int widthOfTag1 = 0;
+        int widthOfTag2 = 0;
         int centerXTag = 0;
-        float degreesPerPixel = 78.0/1920.0; // fov / horizontal resolution
-        float focalLength = 1380; //611 worked for 640x480, for cm. Found using finalFinalLength.cpp
+        int frameWidth = 1920, frameHeight = 1080; //Width and Height are only for the writer.
+        int knownTagWidth; //known physical width of the AR tag. Gotten from config
+        float degreesPerPixel; // fov / horizontal resolution. Gotten from config
+        float focalLength; //611 worked for 640x480, for cm. Gotten from the config which is found using finalFinalLength.cpp
 };

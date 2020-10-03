@@ -17,9 +17,10 @@ class UDPOut
     public:
         UDPOut(const char* host_ip, int host_port, const char* dest_ip, int dest_port);
         ~UDPOut();
-        void sendMessage(std::string* str);
-        std::string controlToStr(int leftWheels, int rightWheels, int gimbalTilt, int gimbalPan);
-        std::string ledToStr(bool red, bool green, bool blue);
+        void sendMessage(std::string* str); //sends the string returned from the two methods below
+        std::string controlToStr(int leftWheels, int rightWheels, int gimbalTilt, int gimbalPan); //gets string to control the wheels and gimble when its implimented
+        std::string ledToStr(bool red, bool green, bool blue); //gets string to change the color of the leds
+    
     private:
         char* myIp;
         int myPort;

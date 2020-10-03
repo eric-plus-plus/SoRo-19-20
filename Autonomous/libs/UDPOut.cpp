@@ -28,6 +28,7 @@ UDPOut::UDPOut(const char* host_ip, int host_port, const char* dest_ip, int dest
 
 std::string UDPOut::controlToStr(int leftWheels, int rightWheels, int gimbalTilt, int gimbalPan)
 {
+   // printf("TEMP left: %d right: %d\n", leftWheels, rightWheels);
     std::string str = "";
     str += char(-127);
     str += char(0);
