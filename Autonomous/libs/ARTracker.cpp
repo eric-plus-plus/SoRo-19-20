@@ -35,7 +35,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     {
         if(cameras[i] == NULL)
             break;
-        caps.push_back(new cv::VideoCapture(cameras[i]));
+        caps.push_back(new cv::VideoCapture(cameras[i], cv::CAP_V4L2));
         if(!caps[i]->isOpened())
         {
             std::cout << "Camera " << cameras[i] << " did not open!" << std::endl;
