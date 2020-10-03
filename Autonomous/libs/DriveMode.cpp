@@ -86,7 +86,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
 	}*/
 
-    double kp = .5, ki = .00005;
+    double kp = .2, ki = .000005;
     errorAccumulation += error * time;
     PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
     PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
