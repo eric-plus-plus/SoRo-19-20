@@ -69,30 +69,33 @@ void DriveMode::sendSpeed()
 
 std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
 {
-	std::vector<double> PIDValues(2);
-	
-	/*error /= .00015; //THIS IS A STUPID FIX FOR THE FIRST VERSION OF THE FORMULA. Get rid of this line if we need to retune. Same with the /15s
-	if (baseSpeed < 0)
-	{
-		//this formula works by taking the baseSpeed and increasing or decreasing it by a percent based off of error
-		//this formula is still almost certainly going to need to be adjusted
-		PIDValues[0] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-		PIDValues[1] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-	}
-
-	else
-	{
-		PIDValues[0] = baseSpeed - baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-		PIDValues[1] = baseSpeed + baseSpeed * (1.045443e-16 + 0.00001087878 * error - 1.0889139999999999e-27 * pow(error, 2) + 7.591631000000001e-17 * pow(error, 3) - 7.105946999999999e-38 * pow(error, 4)) / 15;
-	}*/
-
-    double kp = .2, ki = .000005;
+    std::vector<double> PIDValues(2);
+    double kp, ki;
+    if(baseSpeed != 0)
+    {
+        kp = .2;
+        ki = .000005;
+    }
+    else
+    {
+        kp =.75;
+       	ki =.000005;
+    }
     errorAccumulation += error * time;
-    PIDValues[0] = speed - (error * kp + errorAccumulation * ki);
-    PIDValues[1] = speed + (error * kp + errorAccumulation * ki);
+    PIDValues[0] = baseSpeed - (error * kp + errorAccumulation * ki);
+    PIDValues[1] = baseSpeed + (error * kp + errorAccumulation * ki);
 
-    int max = speed + 40; //forces it to arc when driving
-    int min = speed - 40;
+    int max, min;
+    if(baseSpeed != 0) //not a pivot turn
+    {
+        max = baseSpeed + 40; //forces it to arc when driving
+        min = baseSpeed - 40;
+    }
+    else
+    {
+        max = baseSpeed + 60;
+	min = baseSpeed- 60;
+    }
     if(PIDValues[0] > max) PIDValues[0] = max;
     if(PIDValues[1] > max) PIDValues[1] = max;
     if(PIDValues[0] < min) PIDValues[0] = min;
@@ -111,7 +114,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
@@ -167,7 +170,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     
     errorAccumulation = 0;
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
-    while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
+    while(tracker.angleToAR > 25 || tracker.angleToAR < -20 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackAR(id))
         {    
@@ -179,15 +182,15 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 cv::wait(1000);
             } */       
             wheelSpeeds = getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
-            *leftWheelSpeed = wheelSpeeds[1] * 2;
-            *rightWheelSpeed = wheelSpeeds[0] * 2;
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = -45;
-            *rightWheelSpeed = 45;
+            *leftWheelSpeed = -50;
+            *rightWheelSpeed = 50;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
@@ -202,6 +205,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             std::cout << "we lost it..." << std::endl;
             return false; //TODO: do something about this
         }
+	printSpeeds();
         cv::waitKey(100);
     }
     

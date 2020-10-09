@@ -57,12 +57,12 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
+       	Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
         if(Markers.size() > 0)
         {
             if(writeToFile)
             {
-		        mFrame = image > i; //purely for debug
+                mFrame = image > i; //purely for debug
                 videoWriter.write(mFrame); //purely for debug
             }    
             break;
