@@ -3,7 +3,6 @@
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <aruco/markerdetector.h>
 #include <opencv2/flann.hpp>
 #include <opencv2/aruco.hpp>
 #include <unistd.h>
@@ -21,8 +20,8 @@
 //this program takes a picture of an artag at 100cm away that is 20cm wide and returns the focal length for cm
 int main()
 {   
-    aruco::MarkerDetector MDetector; 
-    std::vector<aruco::Marker> Markers;
+    cd::aruco::MarkerDetector MDetector; 
+    std::vector<cd::aruco::Marker> Markers;
     MDetector.setDictionary("../urc.dict");
     
     cv::VideoCapture cap("/dev/video0"); 
