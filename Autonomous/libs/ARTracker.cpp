@@ -47,7 +47,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
         caps[i]->set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc(format[0], format[1], format[2], format[3]) );
     }
     
-    MDetector.setDictionary("../urc.dict");
+    //MDetector.setDictionary("../urc.dict");
 }
 
 bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
@@ -57,8 +57,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
-        if(Markers.size() > 0)
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs); //detects all of the tags in the current b&w cutoff
+        if(MarkerIDs.size() > 0)
         {
             if(writeToFile)
             {
@@ -78,9 +78,9 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     }
 
     int index = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
+    for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
     {
-        if(Markers[i].id == id)
+        if(MarkerIDs[i] == id)
         {
             index = i;
             break; 
@@ -97,11 +97,11 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     else
     {
         
-        widthOfTag = Markers[index][1].x - Markers[index][0].x;
+        widthOfTag = corners[index][1].x - corners[index][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
         
-        centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
+        centerXTag = (corners[index][1].x + corners[index][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return true;

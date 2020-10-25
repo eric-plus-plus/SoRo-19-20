@@ -28,8 +28,10 @@ class ARTracker
         
     private:
         std::vector<cv::VideoCapture*> caps; 
-        cv::aruco::MarkerDetector MDetector; 
-        std::vector<cv::aruco::Marker> Markers;
+        //cv::aruco::MarkerDetector MDetector;
+        std::vector<std::vector<cv::Point2f>> corners;
+        cv::aruco::Dictionary::Dictionary urcDict; 
+        std::vector<int> MarkerIDs;
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
         int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
         bool config();
