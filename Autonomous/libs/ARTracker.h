@@ -28,7 +28,6 @@ class ARTracker
         
     private:
         std::vector<cv::VideoCapture*> caps; 
-        //cv::aruco::MarkerDetector MDetector;
         std::vector<std::vector<cv::Point2f>> corners;
         cv::aruco::Dictionary::Dictionary urcDict; 
         std::vector<int> MarkerIDs;

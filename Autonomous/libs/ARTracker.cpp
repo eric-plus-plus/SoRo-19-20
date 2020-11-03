@@ -115,10 +115,10 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(image > i);
-        if(Markers.size() > 0)
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs);
+        if(MarkerIDs.size() > 0)
         {
-            if(Markers.size() == 1)
+            if(MarkerIDs.size() == 1)
             {
                 std::cout << "Just found one post" << std::endl;
             }
@@ -145,11 +145,11 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     }
 
     int index1 = -1, index2 = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tags
+    for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tags
     {
-        if(Markers[i].id == id1 || Markers[i].id == id2)
+        if(MarkerIDs[i] == id1 || MarkerIDs[i] == id2)
         {
-            if(Markers[i].id == id1)
+            if(MarkerIDs[i] == id1)
                 index1 = i;
             else
                 index2=i;
@@ -170,15 +170,15 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     }
     else
     {
-        widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
-        widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
+        widthOfTag1 = corners[index1][1].x - corners[index1][0].x;
+        widthOfTag2 = corners[index2][1].x - corners[index2][0].x;
        
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag;
         distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag;
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
         
-        centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
+        centerXTag = (corners[index1][1].x + corners[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return 2;
