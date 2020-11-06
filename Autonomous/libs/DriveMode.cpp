@@ -73,12 +73,12 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     double kp, ki;
     if(baseSpeed != 0)
     {
-        kp = .2;
-        ki = .000005;
+        kp = .30;
+        ki = .000001;
     }
     else
     {
-        kp =.75;
+        kp =.5;
        	ki =.000005;
     }
     errorAccumulation += error * time;
@@ -88,13 +88,13 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     int max, min;
     if(baseSpeed != 0) //not a pivot turn
     {
-        max = baseSpeed + 40; //forces it to arc when driving
-        min = baseSpeed - 40;
+        max = baseSpeed + 30; //forces it to arc when driving
+        min = baseSpeed - 30;
     }
     else
     {
-        max = baseSpeed + 60;
-	min = baseSpeed- 60;
+        max = baseSpeed + 50;
+	min = baseSpeed- 50;
     }
     if(PIDValues[0] > max) PIDValues[0] = max;
     if(PIDValues[1] > max) PIDValues[1] = max;
@@ -114,7 +114,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
@@ -156,6 +156,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     }
     locationInst.stopGPSThread();
     std::cout << "Made it to the gps location without seeing the tag..." << std::endl;
+    *leftWheelSpeed = 0;
+    *rightWheelSpeed = 0;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -189,8 +191,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = -50;
-            *rightWheelSpeed = 50;
+            *leftWheelSpeed = -40;
+            *rightWheelSpeed = 40;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
