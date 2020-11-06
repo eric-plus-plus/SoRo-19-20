@@ -100,6 +100,18 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     if(PIDValues[1] > max) PIDValues[1] = max;
     if(PIDValues[0] < min) PIDValues[0] = min;
     if(PIDValues[1] < min) PIDValues[1] = min;
+ 
+    //makes sure that the values are at least -10, 10 (should only be relevant for baseSpeed=0
+    if(PIDValues[0] < 0 && PIDValues[0] > -10)
+        PIDValues[0] = -10;
+    else if(PIDValues[0] => 0 && PIDValues[0] < 10)
+        PIDValues[0] = 10;
+
+    if(PIDValues[1] <= 0 && PIDValues[1] > -10)
+        PIDValues[1] = -10;
+    else if(PIDValues[1] > 0 && PIDValues[1] < 10)
+        PIDValues[1] = 10;
+   
     return PIDValues;
 }
 
@@ -114,7 +126,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
