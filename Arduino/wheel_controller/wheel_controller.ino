@@ -40,8 +40,8 @@
 #define SERVO_TILT A1
 #define SERVO_BRAKE A3
 
-#define LED_R A5
-#define LED_G 9
+#define LED_R 9
+#define LED_G A5
 #define LED_B 8
 
 
