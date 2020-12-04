@@ -104,7 +104,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     //makes sure that the values are at least -10, 10 (should only be relevant for baseSpeed=0
     if(PIDValues[0] < 0 && PIDValues[0] > -10)
         PIDValues[0] = -10;
-    else if(PIDValues[0] => 0 && PIDValues[0] < 10)
+    else if(PIDValues[0] > 0 && PIDValues[0] < 10)
         PIDValues[0] = 10;
 
     if(PIDValues[1] <= 0 && PIDValues[1] > -10)

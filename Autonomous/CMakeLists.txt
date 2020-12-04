@@ -9,7 +9,7 @@ set(HEADER_FILES libs/DriveMode.cpp libs/DriveMode.h libs/Location.cpp libs/Loca
 
 find_package( OpenCV REQUIRED )
 
-add_executable(autonomous main.cpp ${HEADER_FILES})
+add_executable(autonomous findFocalLength.cpp ${HEADER_FILES})
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
 

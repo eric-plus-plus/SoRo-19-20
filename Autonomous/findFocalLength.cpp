@@ -25,8 +25,8 @@ int main()
     std::vector<aruco::Marker> Markers;
     MDetector.setDictionary("../urc.dict");
     
-    cv::VideoCapture cap("/dev/video0"); 
-    cap.set(cv::CAP_PROP_FRAME_WIDTH,1920); //resolution set at 640x480
+    cv::VideoCapture cap("/dev/video1"); 
+    cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     
     cv::Mat image;
