@@ -309,6 +309,8 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     }
     locationInst.stopGPSThread();
     std::cout << "Made it to the gps location without seeing both tags..." << std::endl;
+    *leftWheelSpeed = 0;
+    *rightWheelSpeed = 0;
     return false; //got to gps location without finding the wanted ar tag
 }
 
@@ -317,34 +319,33 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    int stopDistance;
+    int stopDistance = 250;
     
     tracker.trackARs(id1, id2); //gets an intial angle from the main camera
     
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
-    while(tracker.angleToAR > 30 || tracker.angleToAR < -25 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
+    errorAccumulation = 0;
+    while(tracker.angleToAR > 25 || tracker.angleToAR < -20 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackARs(id1, id2))
-        {            
-            if(tracker.angleToAR > 30)
+        {    
+            /*if(timesNotFound == -1)
             {
-                std::cout << "turning right" << std::endl;
-                *leftWheelSpeed = 45;
-                *rightWheelSpeed = -45;
-            }
-            else
-            {
-                std::cout << "turning left" << std::endl;
-                *leftWheelSpeed = -45;
-                *rightWheelSpeed = 45;
-            }
+                stops for a second to let things settle
+                leftWheelSpeed = 0;
+                rightWheelSpeed = 0;
+                cv::wait(1000);
+            } */       
+            wheelSpeeds = getWheelSpeeds(tracker.angleToAR, 0); //pivot turn with pid. May need to multiply this by a constant
+            *leftWheelSpeed = wheelSpeeds[1];
+            *rightWheelSpeed = wheelSpeeds[0];
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
             timesNotFound = 0;
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = -45;
-            *rightWheelSpeed = 45;
+            *leftWheelSpeed = -40;
+            *rightWheelSpeed = 40;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
@@ -359,6 +360,7 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
             std::cout << "we lost it..." << std::endl;
             return false; //TODO: do something about this
         }
+	    printSpeeds();
         cv::waitKey(100);
     }
     
