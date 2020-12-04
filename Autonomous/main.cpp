@@ -77,11 +77,12 @@ int main(int argc, char* argv[])
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    driveToPoll(0, &rover, false);
-    driveToPoll(5, &rover, false);
-    driveToPoll(0, &rover, true);
+    //driveToPoll(0, &rover, false);
+    //driveToPoll(5, &rover, false);
+    //driveToPoll(0, &rover, true);
     
-    driveToPolls(4,5,&rover);  
+    driveToPolls(0,5,&rover);  
+    driveToPolls(0,5,&rover);  
   
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
