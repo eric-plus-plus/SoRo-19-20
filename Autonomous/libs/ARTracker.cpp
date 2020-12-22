@@ -162,6 +162,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     {
         distanceToAR=-1;
         angleToAR=0;
+	std::cout << "index1: " << index1 << "\nindex2: " << index2 << std::endl;
         if(index1 != -1 || index2 != -1)
         {
             return 1;
@@ -172,11 +173,14 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     {
         widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
         widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
-       
+
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag;
-        distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag;
+        distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag1;
+        distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag2;
+	std::cout << "1: " << distanceToAR1 << "\n2: " << distanceToAR2 << std::endl;
+	std::cout << "focal: " << focalLength << "\nwidth: " << widthOfTag << std::endl;
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
+	std::cout << distanceToAR << std::endl;
         
         centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
