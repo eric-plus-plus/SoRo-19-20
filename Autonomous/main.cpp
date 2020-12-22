@@ -28,7 +28,7 @@ void driveToPoll(int id, DriveMode *rover, bool finish)
     ledStr = rover->out->ledToStr(true, false, false);
     rover->out->sendMessage(&ledStr); //red
     
-    found = rover->driveAlongCoordinates(locations, id);
+    found = rover->driveAlongCoordinates(locations, id, -1);
     //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
     if(found || finish) 
         rover->trackARTag(id);
