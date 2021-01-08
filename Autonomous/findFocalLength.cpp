@@ -20,9 +20,19 @@
 //this program takes a picture of an artag at 100cm away that is 20cm wide and returns the focal length for cm
 int main()
 {   
+    // Set the necessary variables for aruco
     std::vector<std::vector<cv::Point2f>> corners;
-    cv::aruco::Dictionary::Dictionary urcDict; 
     std::vector<int> MarkerIDs;
+    
+    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
+    int markerSize, maxCorrBits;
+    cv::Mat bits;
+    fs["MarkerSize"] >> markerSize;
+    fs["MaxCorrectionBits"] >> maxCorrBits;
+    fs["ByteList"] >> bits;
+    fs.release();
+    cv::aruco::Dictionary urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
+    
     
     cv::VideoCapture cap("/dev/video0"); 
     cap.set(cv::CAP_PROP_FRAME_WIDTH,1920); //resolution set at 640x480

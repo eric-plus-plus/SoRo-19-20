@@ -32,169 +32,14 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     if(!config())
         std::cout << "Error opening file" << std::endl;
     
-    // MANUALLY ADD EACH MARKER
-    urcDict.markerSize = 5;
-    urcDict.maxCorrectionBits = 0;
-    std::vector<int> row01 = {1,1,0,1,1};
-    std::vector<int> row02 = {1,1,0,1,1};
-    std::vector<int> row03 = {1,0,1,0,1};
-    std::vector<int> row04 = {1,1,1,1,1};
-    std::vector<int> row05 = {1,1,1,1,1};
-    cv::Mat markerBits0 = cv::Mat(0, 0, CV_8UC1);
-    markerBits0.push_back(row01);
-    markerBits0.push_back(row02);
-    markerBits0.push_back(row03);
-    markerBits0.push_back(row04);
-    markerBits0.push_back(row05);
-    cv::Mat markerCompressed0 = cv::aruco::Dictionary::getByteListFromBits(markerBits0);
-    urcDict.bytesList.push_back(markerCompressed0);
-
-    std::vector<int> row11 = {1,1,0,1,1};
-    std::vector<int> row12 = {1,1,0,1,1};
-    std::vector<int> row13 = {1,0,1,0,1};
-    std::vector<int> row14 = {0,0,1,1,0};
-    std::vector<int> row15 = {1,1,1,0,1};
-    cv::Mat markerBits1 = cv::Mat(0, 0, CV_8UC1);
-    markerBits1.push_back(row11);
-    markerBits1.push_back(row12);
-    markerBits1.push_back(row13);
-    markerBits1.push_back(row14);
-    markerBits1.push_back(row15);
-    cv::Mat markerCompressed1 = cv::aruco::Dictionary::getByteListFromBits(markerBits1);
-    urcDict.bytesList.push_back(markerCompressed1);
-
-    std::vector<int> row21 = {1,1,0,1,1};
-    std::vector<int> row22 = {1,1,0,1,1};
-    std::vector<int> row23 = {1,0,1,0,1};
-    std::vector<int> row24 = {1,0,1,1,0};
-    std::vector<int> row25 = {1,0,1,1,0};
-    cv::Mat markerBits2 = cv::Mat(0, 0, CV_8UC1);
-    markerBits2.push_back(row21);
-    markerBits2.push_back(row22);
-    markerBits2.push_back(row23);
-    markerBits2.push_back(row24);
-    markerBits2.push_back(row25);
-    cv::Mat markerCompressed2 = cv::aruco::Dictionary::getByteListFromBits(markerBits2);
-    urcDict.bytesList.push_back(markerCompressed2);
-
-    std::vector<int> row31 = {1,1,0,1,1};
-    std::vector<int> row32 = {1,1,0,1,1};
-    std::vector<int> row33 = {1,0,1,0,1};
-    std::vector<int> row34 = {0,1,1,1,1};
-    std::vector<int> row35 = {1,0,1,0,0};
-    cv::Mat markerBits3 = cv::Mat(0, 0, CV_8UC1);
-    markerBits3.push_back(row31);
-    markerBits3.push_back(row32);
-    markerBits3.push_back(row33);
-    markerBits3.push_back(row34);
-    markerBits3.push_back(row35);
-    cv::Mat markerCompressed3 = cv::aruco::Dictionary::getByteListFromBits(markerBits3);
-    urcDict.bytesList.push_back(markerCompressed3);
-
-    std::vector<int> row41 = {1,1,0,1,1};
-    std::vector<int> row42 = {1,1,0,1,1};
-    std::vector<int> row43 = {1,0,1,0,1};
-    std::vector<int> row44 = {0,1,1,1,0};
-    std::vector<int> row45 = {0,1,1,1,0};
-    cv::Mat markerBits4 = cv::Mat(0, 0, CV_8UC1);
-    markerBits4.push_back(row41);
-    markerBits4.push_back(row42);
-    markerBits4.push_back(row43);
-    markerBits4.push_back(row44);
-    markerBits4.push_back(row45);
-    cv::Mat markerCompressed4 = cv::aruco::Dictionary::getByteListFromBits(markerBits4);
-    urcDict.bytesList.push_back(markerCompressed4);
-
-    std::vector<int> row51 = {1,1,0,1,1};
-    std::vector<int> row52 = {1,1,0,1,1};
-    std::vector<int> row53 = {1,0,1,0,1};
-    std::vector<int> row54 = {1,0,1,1,1};
-    std::vector<int> row55 = {0,1,1,0,0};
-    cv::Mat markerBits5 = cv::Mat(0, 0, CV_8UC1);
-    markerBits5.push_back(row51);
-    markerBits5.push_back(row52);
-    markerBits5.push_back(row53);
-    markerBits5.push_back(row54);
-    markerBits5.push_back(row55);
-    cv::Mat markerCompressed5 = cv::aruco::Dictionary::getByteListFromBits(markerBits5);
-    urcDict.bytesList.push_back(markerCompressed5);
-
-    std::vector<int> row61 = {1,1,0,1,1};
-    std::vector<int> row62 = {1,1,0,1,1};
-    std::vector<int> row63 = {1,0,1,0,1};
-    std::vector<int> row64 = {0,0,1,1,1};
-    std::vector<int> row65 = {0,0,1,1,1};
-    cv::Mat markerBits6 = cv::Mat(0, 0, CV_8UC1);
-    markerBits6.push_back(row61);
-    markerBits6.push_back(row62);
-    markerBits6.push_back(row63);
-    markerBits6.push_back(row64);
-    markerBits6.push_back(row65);
-    cv::Mat markerCompressed6 = cv::aruco::Dictionary::getByteListFromBits(markerBits6);
-    urcDict.bytesList.push_back(markerCompressed6);
-
-    std::vector<int> row71 = {1,1,0,1,1};
-    std::vector<int> row72 = {1,1,0,1,1};
-    std::vector<int> row73 = {1,0,1,0,1};
-    std::vector<int> row74 = {1,1,1,1,0};
-    std::vector<int> row75 = {0,0,1,0,1};
-    cv::Mat markerBits7 = cv::Mat(0, 0, CV_8UC1);
-    markerBits7.push_back(row71);
-    markerBits7.push_back(row72);
-    markerBits7.push_back(row73);
-    markerBits7.push_back(row74);
-    markerBits7.push_back(row75);
-    cv::Mat markerCompressed7 = cv::aruco::Dictionary::getByteListFromBits(markerBits7);
-    urcDict.bytesList.push_back(markerCompressed7);
-
-    std::vector<int> row81 = {1,1,0,1,1};
-    std::vector<int> row82 = {1,1,0,1,1};
-    std::vector<int> row83 = {1,0,1,0,1};
-    std::vector<int> row84 = {0,0,1,0,1};
-    std::vector<int> row85 = {1,1,1,1,0};
-    cv::Mat markerBits8 = cv::Mat(0, 0, CV_8UC1);
-    markerBits8.push_back(row81);
-    markerBits8.push_back(row82);
-    markerBits8.push_back(row83);
-    markerBits8.push_back(row84);
-    markerBits8.push_back(row85);
-    cv::Mat markerCompressed8 = cv::aruco::Dictionary::getByteListFromBits(markerBits8);
-    urcDict.bytesList.push_back(markerCompressed8);
-
-    std::vector<int> row91 = {1,1,0,1,1};
-    std::vector<int> row92 = {1,1,0,1,1};
-    std::vector<int> row93 = {1,0,1,0,1};
-    std::vector<int> row94 = {1,1,1,0,0};
-    std::vector<int> row95 = {1,1,1,0,0};
-    cv::Mat markerBits9 = cv::Mat(0, 0, CV_8UC1);
-    markerBits9.push_back(row91);
-    markerBits9.push_back(row92);
-    markerBits9.push_back(row93);
-    markerBits9.push_back(row94);
-    markerBits9.push_back(row95);
-    cv::Mat markerCompressed9 = cv::aruco::Dictionary::getByteListFromBits(markerBits9);
-    urcDict.bytesList.push_back(markerCompressed9);
-
-    std::vector<int> row101 = {1,1,0,1,1};
-    std::vector<int> row102 = {1,1,0,1,1};
-    std::vector<int> row103 = {1,0,1,0,1};
-    std::vector<int> row104 = {0,1,1,0,0};
-    std::vector<int> row105 = {1,0,1,1,1};
-    cv::Mat markerBits10 = cv::Mat(0, 0, CV_8UC1);
-    markerBits10.push_back(row101);
-    markerBits10.push_back(row102);
-    markerBits10.push_back(row103);
-    markerBits10.push_back(row104);
-    markerBits10.push_back(row105);
-    cv::Mat markerCompressed10 = cv::aruco::Dictionary::getByteListFromBits(markerBits10);
-    urcDict.bytesList.push_back(markerCompressed10);
-
-    // PRINT DICTIONARY FOR FURTHER USE
-    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::WRITE);
-    fs << "MarkerSize" << urcDict.markerSize;
-    fs << "MaxCorrectionBits" << urcDict.maxCorrectionBits;
-    fs << "ByteList" << urcDict.bytesList;
+    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
+    int markerSize, maxCorrBits;
+    cv::Mat bits;
+    fs["MarkerSize"] >> markerSize;
+    fs["MaxCorrectionBits"] >> maxCorrBits;
+    fs["ByteList"] >> bits;
     fs.release();
+    urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
 
     for(int i = 0; true; i++) //initializes the cameras
     {
@@ -211,8 +56,6 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
         caps[i]->set(cv::CAP_PROP_BUFFERSIZE, 1); //greatly speeds up the program but the writer is a bit wack because of this
         caps[i]->set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc(format[0], format[1], format[2], format[3]) );
     }
-    
-    //MDetector.setDictionary("../urc.dict");
 }
 
 bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
