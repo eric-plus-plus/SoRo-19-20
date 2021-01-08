@@ -6,6 +6,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco.hpp>
 #include <opencv2/flann.hpp>
+#include <opencv2/imgproc.hpp>
 #include <unistd.h>
 
 class ARTracker
@@ -29,7 +30,7 @@ class ARTracker
     private:
         std::vector<cv::VideoCapture*> caps; 
         std::vector<std::vector<cv::Point2f>> corners;
-        cv::aruco::Dictionary::Dictionary urcDict; 
+        cv::aruco::Dictionary urcDict; 
         std::vector<int> MarkerIDs;
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
         int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
