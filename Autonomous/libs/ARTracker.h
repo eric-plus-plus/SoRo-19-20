@@ -46,5 +46,5 @@ class ARTracker
         int frameWidth = 1920, frameHeight = 1080; //Width and Height are only for the writer.
         int knownTagWidth; //known physical width of the AR tag. Gotten from config
         float degreesPerPixel; // fov / horizontal resolution. Gotten from config
-        float focalLength; //611 worked for 640x480, for cm. Gotten from the config which is found using finalFinalLength.cpp
+        float focalLength; //611 worked for 640x480, for cm. Gotten from the config which is found using findFocalLength.cpp
 };
