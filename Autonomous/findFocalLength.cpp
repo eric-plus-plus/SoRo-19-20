@@ -21,8 +21,9 @@
 int main()
 {   
     // Set the necessary variables for aruco
-    std::vector<std::vector<cv::Point2f>> corners;
+    std::vector<std::vector<cv::Point2f>> corners, rejects;
     std::vector<int> MarkerIDs;
+    cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
     
     cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
     int markerSize, maxCorrBits;
@@ -43,7 +44,8 @@ int main()
     while(true)
     {
         cap >> image;
-        cv::aruco::detectMarkers(image, &urcDict, corners, MarkerIDs);
+        parameters->markerBorderBits = 2;
+        cv::aruco::detectMarkers(image, &urcDict, corners, MarkerIDs, parameters, rejects);
         
         double widthOfTag = 0;
         if(MarkerIDs.size() > 0)

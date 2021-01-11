@@ -32,6 +32,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     if(!config())
         std::cout << "Error opening file" << std::endl;
     
+    // Read in the dictionary from the file
     cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
     int markerSize, maxCorrBits;
     cv::Mat bits;
@@ -65,7 +66,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs); //detects all of the tags in the current b&w cutoff
+        parameters->markerBorderBits = 2; 
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         if(MarkerIDs.size() > 0)
         {
             if(writeToFile)
@@ -123,7 +125,8 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
     for(int i = 40; i <= 220; i+=60)
     {
-        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs);
+        parameters->markerBorderBits = 2; 
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects);
         if(MarkerIDs.size() > 0)
         {
             if(MarkerIDs.size() == 1)
