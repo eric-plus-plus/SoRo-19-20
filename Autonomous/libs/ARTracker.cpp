@@ -31,6 +31,17 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
 {
     if(!config())
         std::cout << "Error opening file" << std::endl;
+    
+    // Read in the dictionary from the file
+    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
+    int markerSize, maxCorrBits;
+    cv::Mat bits;
+    fs["MarkerSize"] >> markerSize;
+    fs["MaxCorrectionBits"] >> maxCorrBits;
+    fs["ByteList"] >> bits;
+    fs.release();
+    urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
+
     for(int i = 0; true; i++) //initializes the cameras
     {
         if(cameras[i] == NULL)
@@ -46,8 +57,6 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
         caps[i]->set(cv::CAP_PROP_BUFFERSIZE, 1); //greatly speeds up the program but the writer is a bit wack because of this
         caps[i]->set(cv::CAP_PROP_FOURCC ,cv::VideoWriter::fourcc(format[0], format[1], format[2], format[3]) );
     }
-    
-    MDetector.setDictionary("../urc.dict");
 }
 
 bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
@@ -57,8 +66,9 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-       	Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
-        if(Markers.size() > 0)
+        parameters->markerBorderBits = 2; 
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
+        if(MarkerIDs.size() > 0)
         {
             if(writeToFile)
             {
@@ -78,9 +88,9 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     }
 
     int index = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
+    for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
     {
-        if(Markers[i].id == id)
+        if(MarkerIDs[i] == id)
         {
             index = i;
             break; 
@@ -97,11 +107,11 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     else
     {
         
-        widthOfTag = Markers[index][1].x - Markers[index][0].x;
+        widthOfTag = corners[index][1].x - corners[index][0].x;
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
         
-        centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
+        centerXTag = (corners[index][1].x + corners[index][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return true;
@@ -115,10 +125,11 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
     for(int i = 40; i <= 220; i+=60)
     {
-        Markers = MDetector.detect(image > i);
-        if(Markers.size() > 0)
+        parameters->markerBorderBits = 2; 
+        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects);
+        if(MarkerIDs.size() > 0)
         {
-            if(Markers.size() == 1)
+            if(MarkerIDs.size() == 1)
             {
                 std::cout << "Just found one post" << std::endl;
             }
@@ -145,11 +156,11 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     }
 
     int index1 = -1, index2 = -1;
-    for(int i = 0; i < Markers.size(); i++) //this just checks to make sure that it found the right tags
+    for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tags
     {
-        if(Markers[i].id == id1 || Markers[i].id == id2)
+        if(MarkerIDs[i] == id1 || MarkerIDs[i] == id2)
         {
-            if(Markers[i].id == id1)
+            if(MarkerIDs[i] == id1)
                 index1 = i;
             else
                 index2=i;
@@ -171,8 +182,8 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     }
     else
     {
-        widthOfTag1 = Markers[index1][1].x - Markers[index1][0].x;
-        widthOfTag2 = Markers[index2][1].x - Markers[index2][0].x;
+        widthOfTag1 = corners[index1][1].x - corners[index1][0].x;
+        widthOfTag2 = corners[index2][1].x - corners[index2][0].x;
 
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag1;
@@ -182,7 +193,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
 	std::cout << distanceToAR << std::endl;
         
-        centerXTag = (Markers[index1][1].x + Markers[index2][0].x) / 2;
+        centerXTag = (corners[index1][1].x + corners[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
         
         return 2;

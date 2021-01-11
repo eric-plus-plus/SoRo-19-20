@@ -4,8 +4,9 @@
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <aruco/markerdetector.h>
+#include <opencv2/aruco.hpp>
 #include <opencv2/flann.hpp>
+#include <opencv2/imgproc.hpp>
 #include <unistd.h>
 
 class ARTracker
@@ -28,8 +29,10 @@ class ARTracker
         
     private:
         std::vector<cv::VideoCapture*> caps; 
-        aruco::MarkerDetector MDetector; 
-        std::vector<aruco::Marker> Markers;
+        std::vector<std::vector<cv::Point2f>> corners, rejects; // rejects will likely be unused
+        cv::aruco::Dictionary urcDict; 
+        std::vector<int> MarkerIDs;
+        cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
         int countValidARs(int id1, int id2, cv::Mat image, bool writeToFile); //returns number (0, 1, or 2) of tags found w/ correct ids
         bool config();

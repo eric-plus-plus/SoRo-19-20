@@ -3,7 +3,6 @@
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <aruco/markerdetector.h>
 #include <opencv2/flann.hpp>
 #include <opencv2/aruco.hpp>
 #include <unistd.h>
@@ -21,9 +20,20 @@
 //this program takes a picture of an artag at 100cm away that is 20cm wide and returns the focal length for cm
 int main()
 {   
-    aruco::MarkerDetector MDetector; 
-    std::vector<aruco::Marker> Markers;
-    MDetector.setDictionary("../urc.dict");
+    // Set the necessary variables for aruco
+    std::vector<std::vector<cv::Point2f>> corners, rejects;
+    std::vector<int> MarkerIDs;
+    cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
+    
+    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
+    int markerSize, maxCorrBits;
+    cv::Mat bits;
+    fs["MarkerSize"] >> markerSize;
+    fs["MaxCorrectionBits"] >> maxCorrBits;
+    fs["ByteList"] >> bits;
+    fs.release();
+    cv::aruco::Dictionary urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
+    
     
     cv::VideoCapture cap("/dev/video1"); 
     cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
@@ -34,11 +44,12 @@ int main()
     while(true)
     {
         cap >> image;
-        Markers = MDetector.detect(image);
+        parameters->markerBorderBits = 2;
+        cv::aruco::detectMarkers(image, &urcDict, corners, MarkerIDs, parameters, rejects);
         
         double widthOfTag = 0;
-        if(Markers.size() > 0)
-            widthOfTag = Markers[0][1].x - Markers[0][0].x;
+        if(MarkerIDs.size() > 0)
+            widthOfTag = corners[0][1].x - corners[0][0].x;
         else
             std::cout << "nothing found" << std::endl;
             
