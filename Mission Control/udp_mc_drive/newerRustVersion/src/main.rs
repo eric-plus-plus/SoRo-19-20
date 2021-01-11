@@ -76,6 +76,12 @@ fn main() {
         }
     };
 
+    let split_config: Vec<&str> = config_file.strip_prefix("target=").unwrap().split(":").collect();
+    let arduino_ip = split_config.get(0).expect("Could not find ip from split confi");
+    let arduino_port = split_config.get(1).expect("Could not find port from split config");
+    println!("Will send to {}:{}", arduino_ip, arduino_port);
+    
+
     // Iterate over all connected gamepads
     for (_id, gamepad) in gilrs.gamepads() {
         println!("Using controller: {:?}", gamepad.name());
@@ -130,6 +136,8 @@ fn main() {
                 > 100
             {
                 time_of_last_send = SystemTime::now();
+                let left_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0);
+                let right_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0);
                 let mut buf = [
                     255 - 127 + 1,
                     0,
@@ -140,11 +148,11 @@ fn main() {
                     0,
                     255, //dummy value, will be overwritten with the hash
                 ];
-                //this overwrite is nice so that we can reference elements of buf instead of copy
+                //this overwrite is nice so that we can reference elements of buf instead of copyf
                 //pasting format_axis_to_send calls twice.
-                buf[buf.len() - 1] = ((buf[1] + buf[2] + buf[3] + buf[4] + buf[5]) / 5) as u8;
+                buf[buf.len() - 1] = (buf[1] + buf[2] + left_stick_y_value.floor() as u8 + right_stick_y_value.floor() as u8 + buf[5]) as u8;
                 socket
-                    .send_to(&buf, "192.168.1.231:4242")
+                    .send_to(&buf, format!("{}:{}", arduino_ip, arduino_port))
                     .expect("Couldn't send data");
             }
         }
