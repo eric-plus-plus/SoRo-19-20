@@ -30,7 +30,8 @@ class ARTracker
     private:
         std::vector<cv::VideoCapture*> caps; 
         std::vector<std::vector<cv::Point2f>> corners, rejects; // rejects will likely be unused
-        cv::aruco::Dictionary urcDict; 
+        cv::Ptr<cv::aruco::Dictionary> dictPtr; //detectMarkers() needs an opencv Ptr for the dict
+        cv::aruco::Dictionary urcDict; //this is a semi-temp var, the dict is read from the file and then put into dictPtr
         std::vector<int> MarkerIDs;
         cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
         bool arFound(int id, cv::Mat image, bool writeToFile); //returns true when tag w/ correct id is found
