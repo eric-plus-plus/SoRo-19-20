@@ -18,6 +18,14 @@ fn alert_about_malformed_config(message: &str) {
 //And if the number is negative, will subtract it from 256 to
 //send the two's complement instead
 
+
+fn to_twos_complement(n: i32) -> u8 {
+    if n < 0 {
+        return (256 + n) as u8;
+    }
+    return n as u8;
+}
+
 #[allow(overflowing_literals)]
 fn format_axis_to_send(axis: Axis, map: &HashMap<&Axis, f32>) -> u8 {
     let motor_value = (map.get(&axis).unwrap_or(&0.0) * 90.0).floor() as i16;
@@ -136,8 +144,8 @@ fn main() {
                 > 100
             {
                 time_of_last_send = SystemTime::now();
-                let left_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0);
-                let right_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0);
+                let left_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0) * 90.0;
+                let right_stick_y_value = map.get(&Axis::RightStickY).unwrap_or(&0.0) * 90.0;
                 let mut buf = [
                     255 - 127 + 1,
                     0,
@@ -150,7 +158,10 @@ fn main() {
                 ];
                 //this overwrite is nice so that we can reference elements of buf instead of copyf
                 //pasting format_axis_to_send calls twice.
-                buf[buf.len() - 1] = (buf[1] + buf[2] + left_stick_y_value.floor() as u8 + right_stick_y_value.floor() as u8 + buf[5]) as u8;
+                let mut hash: i32 = left_stick_y_value.floor() as i32 + right_stick_y_value.floor() as i32;  
+                let hash = to_twos_complement(hash / 5);
+                println!("Hash is {:}, from {:}, {:}", hash, left_stick_y_value, right_stick_y_value);
+                buf[buf.len() - 1] = (hash) as u8;
                 socket
                     .send_to(&buf, format!("{}:{}", arduino_ip, arduino_port))
                     .expect("Couldn't send data");
