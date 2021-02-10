@@ -1,5 +1,5 @@
-use gilrs::{Axis, Button, Event, Gilrs};
-use std::{collections::HashMap, fs};
+use gilrs::{Axis, Button, Event, Gamepad, Gilrs};
+use std::{collections::HashMap, convert::TryInto, fs};
 use std::{net::UdpSocket, time::SystemTime};
 
 const DEFAULT_CONFIG: &str = "target=192.168.1.101:1237";
@@ -18,7 +18,6 @@ fn alert_about_malformed_config(message: &str) {
 //And if the number is negative, will subtract it from 256 to
 //send the two's complement instead
 
-
 fn to_twos_complement(n: i32) -> u8 {
     if n < 0 {
         return (256 + n) as u8;
@@ -27,17 +26,34 @@ fn to_twos_complement(n: i32) -> u8 {
 }
 
 #[allow(overflowing_literals)]
-fn format_axis_to_send(axis: Axis, map: &HashMap<&Axis, f32>) -> u8 {
-    let motor_value = (map.get(&axis).unwrap_or(&0.0) * 90.0).floor() as i16;
-    println!("Given motor value {}", motor_value);
-    if motor_value < 0 {
-        //plus motor value because motor value is negative.
-        //so this will subtract the absolute value of motor value from 256
-        return (256 + motor_value) as u8;
-    } else {
-        //value is positive, so we don't need to do anything special
-        return motor_value as u8;
+fn get_i32_motor_value(axis: Axis, map: &HashMap<&Axis, f32>) -> i32 {
+    let motor_value = (map.get(&axis).unwrap_or(&0.0) * 90.0).floor() as i32;
+    
+    return motor_value;
+}
+
+fn calculate_gimbal_value(gamepad: Gamepad, positive_button: Button, negative_button: Button) -> i32 {
+    let mut value = 0;
+
+    if gamepad.is_pressed(positive_button) {
+        value += 1;
     }
+
+    if gamepad.is_pressed(negative_button) {
+        value -= 1;
+    }
+
+    return value;
+}
+
+fn calculate_modifiers(gamepad: Gamepad) -> i32{
+    let axle_break_bit: i32 = gamepad.is_pressed(Button::South) as i32;
+    let front_wheels_only_bit: i32 = (gamepad.is_pressed(Button::RightTrigger) || gamepad.is_pressed(Button::LeftTrigger)) as i32;
+    let back_wheels_only_bit: i32 = (gamepad.is_pressed(Button::RightTrigger2) || gamepad.is_pressed(Button::LeftTrigger2)) as i32;
+    let reset_camera_bit: i32 = gamepad.is_pressed(Button::Mode) as i32;
+
+
+    return 1 * axle_break_bit + 2 * front_wheels_only_bit + 4 * back_wheels_only_bit + 8 * reset_camera_bit;
 }
 
 fn main() {
@@ -84,11 +100,18 @@ fn main() {
         }
     };
 
-    let split_config: Vec<&str> = config_file.strip_prefix("target=").unwrap().split(":").collect();
-    let arduino_ip = split_config.get(0).expect("Could not find ip from split confi");
-    let arduino_port = split_config.get(1).expect("Could not find port from split config");
+    let split_config: Vec<&str> = config_file
+        .strip_prefix("target=")
+        .unwrap()
+        .split(":")
+        .collect();
+    let arduino_ip = split_config
+        .get(0)
+        .expect("Could not find ip from split confi");
+    let arduino_port = split_config
+        .get(1)
+        .expect("Could not find port from split config");
     println!("Will send to {}:{}", arduino_ip, arduino_port);
-    
 
     // Iterate over all connected gamepads
     for (_id, gamepad) in gilrs.gamepads() {
@@ -146,24 +169,41 @@ fn main() {
                 time_of_last_send = SystemTime::now();
                 let left_stick_y_value = map.get(&Axis::LeftStickY).unwrap_or(&0.0) * 90.0;
                 let right_stick_y_value = map.get(&Axis::RightStickY).unwrap_or(&0.0) * 90.0;
-                let mut buf = [
-                    255 - 127 + 1,
+
+                let mut unconverted_values = [
+                    -127,
                     0,
-                    0,
-                    format_axis_to_send(Axis::LeftStickY, &map),
-                    format_axis_to_send(Axis::RightStickY, &map),
-                    0,
-                    0,
+                    calculate_modifiers(gamepad),
+                    get_i32_motor_value(Axis::LeftStickY, &map),
+                    get_i32_motor_value(Axis::RightStickY, &map),
+                    calculate_gimbal_value(gamepad, Button::DPadUp, Button::DPadDown),
+                    calculate_gimbal_value(gamepad, Button::DPadRight, Button::DPadLeft),
                     255, //dummy value, will be overwritten with the hash
                 ];
                 //this overwrite is nice so that we can reference elements of buf instead of copyf
                 //pasting format_axis_to_send calls twice.
-                let mut hash: i32 = left_stick_y_value.floor() as i32 + right_stick_y_value.floor() as i32;  
-                let hash = to_twos_complement(hash / 5);
-                println!("Hash is {:}, from {:}, {:}", hash, left_stick_y_value, right_stick_y_value);
-                buf[buf.len() - 1] = (hash) as u8;
+                let mut hash: i32 = unconverted_values[2] + unconverted_values[3] + unconverted_values[4] + unconverted_values[5] + unconverted_values[6];
+                hash /= 5;
+                unconverted_values[unconverted_values.len() - 1] = hash;
+                println!(
+                    "Hash is {:}, from {:}, {:}",
+                    hash, left_stick_y_value, right_stick_y_value
+                );
+                println!(
+                    "Gimbal values are tilt: {:}, pan: {:}",
+                    unconverted_values[5], unconverted_values[6]
+                );
+
+                println!("{:#06b}", unconverted_values[2]);
+
+                let mapped_vec: Vec<u8> = unconverted_values.iter().map(|&x| to_twos_complement(x)).collect();
+                let converted_message: [u8; 8] = mapped_vec.try_into().unwrap_or([0; 8]);
+
+
+                // println!("{:#?}", converted_message);
+
                 socket
-                    .send_to(&buf, format!("{}:{}", arduino_ip, arduino_port))
+                    .send_to(&converted_message, format!("{}:{}", arduino_ip, arduino_port))
                     .expect("Couldn't send data");
             }
         }
