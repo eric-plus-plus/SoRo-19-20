@@ -1,4 +1,4 @@
-release/
+release/**
 
-!release/rover_controller
-!debug/rover_controller
+# !release/rover_controller
+# !debug/rover_controller
