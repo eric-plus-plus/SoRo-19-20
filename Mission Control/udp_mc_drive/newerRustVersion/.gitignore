@@ -1,0 +1,5 @@
+target/release/**
+!target/release/rover_controller
+
+target/debug/**
+!target/debug/rover_controller
