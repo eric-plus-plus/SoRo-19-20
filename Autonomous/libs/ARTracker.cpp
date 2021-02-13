@@ -64,13 +64,14 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
     
-    int index; 
+    int index = -1; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
-        if(MarkerIDs.size() > 0)
+ 
+ 	if(MarkerIDs.size() > 0)
         {
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
@@ -84,12 +85,12 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             
             if(index == -1) 
             {
-                distanceToAR=-1;
-                angleToAR=0;
                 std::cout << "Found a tag but was not the correct one" << std::endl;
+		return false;
             } 
             else
             {
+		std::cout << "Found the correct tag!" << std::endl;
                 if(writeToFile)
                 {
                     mFrame = image > i; //purely for debug
@@ -108,6 +109,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         }
     }
 
+    std::cout << "got here" << std::endl;
         
     widthOfTag = corners[index][1].x - corners[index][0].x;
     //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
