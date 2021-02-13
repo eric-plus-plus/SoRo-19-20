@@ -33,6 +33,7 @@ int main()
     fs["ByteList"] >> bits;
     fs.release();
     cv::aruco::Dictionary urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
+    cv::Ptr<cv::aruco:Dictionary> dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
     
     
     cv::VideoCapture cap("/dev/video1"); 
@@ -45,7 +46,7 @@ int main()
     {
         cap >> image;
         parameters->markerBorderBits = 2;
-        cv::aruco::detectMarkers(image, &urcDict, corners, MarkerIDs, parameters, rejects);
+        cv::aruco::detectMarkers(image, dictPtr, corners, MarkerIDs, parameters, rejects);
         
         double widthOfTag = 0;
         if(MarkerIDs.size() > 0)

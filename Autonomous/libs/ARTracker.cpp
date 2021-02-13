@@ -41,6 +41,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     fs["ByteList"] >> bits;
     fs.release();
     urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
+    dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
 
     for(int i = 0; true; i++) //initializes the cameras
     {
@@ -67,7 +68,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
-        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
+        cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         if(MarkerIDs.size() > 0)
         {
             if(writeToFile)
@@ -126,7 +127,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
-        cv::aruco::detectMarkers((image > i), &urcDict, corners, MarkerIDs, parameters, rejects);
+        cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects);
         if(MarkerIDs.size() > 0)
         {
             if(MarkerIDs.size() == 1)
