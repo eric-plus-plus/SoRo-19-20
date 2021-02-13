@@ -64,6 +64,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
     
+    int index; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
@@ -71,12 +72,31 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         if(MarkerIDs.size() > 0)
         {
-            if(writeToFile)
+            index = -1;
+            for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
-                mFrame = image > i; //purely for debug
-                videoWriter.write(mFrame); //purely for debug
-            }    
-            break;
+                if(MarkerIDs[i] == id)
+                {
+                    index = i;
+                    break; 
+                }   
+            }
+            
+            if(index == -1) 
+            {
+                distanceToAR=-1;
+                angleToAR=0;
+                std::cout << "Found a tag but was not the correct one" << std::endl;
+            } 
+            else
+            {
+                if(writeToFile)
+                {
+                    mFrame = image > i; //purely for debug
+                    videoWriter.write(mFrame); //purely for debug
+                }    
+                break;
+            }
         }
         else if(i == 220) //did not find any AR tags with any b&w cutoff
         {
@@ -88,35 +108,15 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         }
     }
 
-    int index = -1;
-    for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
-    {
-        if(MarkerIDs[i] == id)
-        {
-            index = i;
-            break; 
-        }   
-    }
-    if(index == -1) 
-    {
-        distanceToAR=-1;
-        angleToAR=0;
-        std::cout << "Found a tag but was not the correct one" << std::endl;
-        return false; //correct ar tag not found
-    }  
-
-    else
-    {
         
-        widthOfTag = corners[index][1].x - corners[index][0].x;
-        //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
-        
-        centerXTag = (corners[index][1].x + corners[index][0].x) / 2;
-        angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
-        
-        return true;
-    }
+    widthOfTag = corners[index][1].x - corners[index][0].x;
+    //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
+    distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
+    
+    centerXTag = (corners[index][1].x + corners[index][0].x) / 2;
+    angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
+    
+    return true;
 }
 
 int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
@@ -174,7 +174,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     {
         distanceToAR=-1;
         angleToAR=0;
-	std::cout << "index1: " << index1 << "\nindex2: " << index2 << std::endl;
+        std::cout << "index1: " << index1 << "\nindex2: " << index2 << std::endl;
         if(index1 != -1 || index2 != -1)
         {
             return 1;
@@ -189,10 +189,10 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
         //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
         distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag1;
         distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag2;
-	std::cout << "1: " << distanceToAR1 << "\n2: " << distanceToAR2 << std::endl;
-	std::cout << "focal: " << focalLength << "\nwidth: " << widthOfTag << std::endl;
+        std::cout << "1: " << distanceToAR1 << "\n2: " << distanceToAR2 << std::endl;
+        std::cout << "focal: " << focalLength << "\nwidth: " << widthOfTag << std::endl;
         distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
-	std::cout << distanceToAR << std::endl;
+        std::cout << distanceToAR << std::endl;
         
         centerXTag = (corners[index1][1].x + corners[index2][0].x) / 2;
         angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
