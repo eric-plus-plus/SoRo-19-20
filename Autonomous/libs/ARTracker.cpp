@@ -86,11 +86,10 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             if(index == -1) 
             {
                 std::cout << "Found a tag but was not the correct one" << std::endl;
-		return false;
             } 
             else
             {
-		std::cout << "Found the correct tag!" << std::endl;
+		        std::cout << "Found the correct tag!" << std::endl;
                 if(writeToFile)
                 {
                     mFrame = image > i; //purely for debug
@@ -108,8 +107,6 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             return false;
         }
     }
-
-    std::cout << "got here" << std::endl;
         
     widthOfTag = corners[index][1].x - corners[index][0].x;
     //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
