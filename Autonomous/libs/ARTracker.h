@@ -40,10 +40,10 @@ class ARTracker
         
         int distanceToAR1 = 0;
         int distanceToAR2 = 0;
-        int widthOfTag = 0;
+        float widthOfTag = 0;
         int widthOfTag1 = 0;
         int widthOfTag2 = 0;
-        int centerXTag = 0;
+        float centerXTag = 0;
         int frameWidth = 1920, frameHeight = 1080; //Width and Height are only for the writer.
         int knownTagWidth; //known physical width of the AR tag. Gotten from config
         float degreesPerPixel; // fov / horizontal resolution. Gotten from config
