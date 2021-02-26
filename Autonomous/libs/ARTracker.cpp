@@ -42,6 +42,8 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     fs.release();
     urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
     dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
+    //dictPtr = getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+    
 
     for(int i = 0; true; i++) //initializes the cameras
     {
@@ -63,19 +65,28 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
 bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
+
     
     int index = -1; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
-        parameters->markerBorderBits = 2; 
+        parameters->markerBorderBits = 2;
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
+        cv::Mat outputImage = image.clone();
+        cv::aruco::drawDetectedMarkers(outputImage, corners, MarkerIDs);
+        cv::imwrite("marker0.png", outputImage);
  
- 	if(MarkerIDs.size() > 0)
+ 	    //if(rejects.size() > 0 && MarkerIDs.size() == 0) 
+        //{
+        //  std::cout << "Found a tag but was not the correct one" << std::endl;
+        //} 
+ 	    if(MarkerIDs.size() > 0)
         {
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
+                std::cout << i << "," << MarkerIDs[i] << "\n";
                 if(MarkerIDs[i] == id)
                 {
                     index = i;
@@ -98,7 +109,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 break;
             }
         }
-        else if(i == 220) //did not find any AR tags with any b&w cutoff
+        if(i == 220) //did not find any AR tags with any b&w cutoff
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -107,8 +118,12 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             return false;
         }
     }
-        
+    std::cout << "got to width calc\n" ;
+    for(int i = 0; i < corners[index].size(); ++i) {
+        std::cout << corners[index][i].x << "\n";
+    }
     widthOfTag = corners[index][1].x - corners[index][0].x;
+    std::cout << "got past width calc\n" ; 
     //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
     distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
     
