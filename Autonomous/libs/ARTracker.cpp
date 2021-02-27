@@ -66,7 +66,6 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
 
-    
     int index = -1; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
@@ -75,14 +74,14 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         cv::Mat outputImage = image.clone();
         cv::aruco::drawDetectedMarkers(outputImage, corners, MarkerIDs);
-        cv::imwrite("marker0.png", outputImage);
+        //cv::imwrite("marker0.png", outputImage);
         
         if(MarkerIDs.size() > 0)
         {
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
-                std::cout << i << "," << MarkerIDs[i] << "\n";
+      //          std::cout << i << "," << MarkerIDs[i] << "\n";
                 if(MarkerIDs[i] == id)
                 {
                     index = i;
@@ -90,12 +89,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 }   
             }
             
-            if(index == -1) 
-            {
-                continue;
-                //std::cout << "Found a tag but was not the correct one" << std::endl;
-            } 
-            else
+            if(index != -1)
             {
                 std::cout << "Found the correct tag!" << std::endl;
                 if(writeToFile)
@@ -105,6 +99,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 }    
                 break;
             }
+	    //else
+            //    std::cout << "Found a tag but was not the correct one" << std::endl;
         }
         if(i == 220) //did not find any AR tags with any b&w cutoff
         {
@@ -115,7 +111,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             return false;
         }
     }
-    //std::cout << "got to width calc\n" ;
+    //std::cout << "got to width calc, index: " << index << std::endl;
     //for(int i = 0; i < corners[index].size(); ++i) 
     //    std::cout << corners[index][i].x << "\n";
     widthOfTag = corners[index][1].x - corners[index][0].x;

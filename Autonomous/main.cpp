@@ -79,9 +79,9 @@ int main(int argc, char* argv[])
     
     driveToPoll(5, &rover, false);
     //driveToPoll(5, &rover, false);
-    //driveToPoll(0, &rover, true);
+    driveToPoll(0, &rover, true);
     
-    driveToPolls(0,4,&rover);  
+    //driveToPolls(0,4,&rover);  
     //driveToPolls(5,0,&rover);  
   
     std::cout << "Finished everything!" << std::endl;
