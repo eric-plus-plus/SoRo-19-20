@@ -13,3 +13,9 @@ build/
 .runAutonomous.sh.swo
 .runAutonomous.sh.swp
 .DriveMode.cpp.swp
+pyvenv.cfg
+lib
+lib64
+share
+bin
+settings.json
