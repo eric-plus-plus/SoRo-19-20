@@ -76,12 +76,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         cv::Mat outputImage = image.clone();
         cv::aruco::drawDetectedMarkers(outputImage, corners, MarkerIDs);
         cv::imwrite("marker0.png", outputImage);
- 
- 	    //if(rejects.size() > 0 && MarkerIDs.size() == 0) 
-        //{
-        //  std::cout << "Found a tag but was not the correct one" << std::endl;
-        //} 
- 	    if(MarkerIDs.size() > 0)
+        
+        if(MarkerIDs.size() > 0)
         {
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
@@ -96,11 +92,12 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             
             if(index == -1) 
             {
-                std::cout << "Found a tag but was not the correct one" << std::endl;
+                continue;
+                //std::cout << "Found a tag but was not the correct one" << std::endl;
             } 
             else
             {
-		        std::cout << "Found the correct tag!" << std::endl;
+                std::cout << "Found the correct tag!" << std::endl;
                 if(writeToFile)
                 {
                     mFrame = image > i; //purely for debug
@@ -118,12 +115,11 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             return false;
         }
     }
-    std::cout << "got to width calc\n" ;
-    for(int i = 0; i < corners[index].size(); ++i) {
-        std::cout << corners[index][i].x << "\n";
-    }
+    //std::cout << "got to width calc\n" ;
+    //for(int i = 0; i < corners[index].size(); ++i) 
+    //    std::cout << corners[index][i].x << "\n";
     widthOfTag = corners[index][1].x - corners[index][0].x;
-    std::cout << "got past width calc\n" ; 
+    //std::cout << "got past width calc\n" ; 
     //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
     distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
     
