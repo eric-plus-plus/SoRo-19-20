@@ -2,16 +2,19 @@ from threading import Thread
 import cv2
 
 class VideoStream:
-    def __init__(self, src, name="VideoStream"):
+    def __init__(self, src=0, name="VideoStream"):
         self.stream = cv2.VideoCapture(src)
-        (self.grabbed, self.frame) = self.read()
+        (self.grabbed, self.frame) = self.stream.read()
+
+        self.name = name
 
         self.stopped = False
     
     def start(self):
-        t = Thread(target=self.update, args=())
+        t = Thread(target=self.update, name=self.name, args=())
         t.daemon = True
         t.start()
+        print('thread started')
         return self
     
     def update(self):
@@ -31,4 +34,3 @@ class VideoStream:
     
     def get(self, property):
         return self.stream.get(property)
-    

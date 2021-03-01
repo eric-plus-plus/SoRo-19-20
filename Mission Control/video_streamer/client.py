@@ -4,18 +4,17 @@ from flask import render_template
 import threading
 import argparse
 import datetime
-# import numpy as np
+from videostream import VideoStream
+from threading import Thread
 import imutils
-from python import VideoStream
 import time
 import cv2
+
 
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful for multiple browsers/tabs
 # are viewing tthe stream)
-outputFrame = None
 # lock = threading.Lock()
-vslist = None
 
 # initialize a flask object
 app = Flask(__name__)
@@ -24,7 +23,8 @@ app = Flask(__name__)
 # initialize the video stream and allow the camera sensor to
 # warmup
 def startStream(src):
-	return VideoStream.start(src)
+	print('stream started')
+	return VideoStream(src).start()
 
 @app.route("/")
 def index():
@@ -35,9 +35,9 @@ def get_frame(vs):
 	
 	while vs is not None:
 		frame = vs.read()
-		frame = imutils.resize(frame, width=600)
+		# frame = imutils.resize(frame, width=600)
 
-		print("frame has been read")
+		# print("frame has been read")
 
 		# grab the current timestamp and draw it on the frame
 		# may not be useful and can be disabled
@@ -62,7 +62,7 @@ def generate():
 	while True:
 
 		for vs in vslist:
-			framelist.append(get_frame(vs))
+			framelist.append(vs.read())
 
 		# wait until the lock is acquired
 		# with lock:
@@ -79,7 +79,9 @@ def generate():
 		if not flag:
 			continue
 
-		# send = False
+		# send = Falsehreading.Thread(target=get_frame, args=(vs))
+		# t.daemon = True
+		# t.star
 		# yield the output frame in the byte format
 		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
 			bytearray(encodedImage) + b'\r\n')
@@ -94,8 +96,6 @@ def video_feed():
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
-
-	global vs, vs2
 
 	# construct the argument parser and parse command line arguments
 	ap = argparse.ArgumentParser()
@@ -121,14 +121,20 @@ if __name__ == '__main__':
 		vs3 = startStream(args["source3"])
 		vslist.append(vs3)
 
+	# vs.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
 
+	print(vs.get(cv2.CAP_PROP_FOURCC))
+	print(vs.get(cv2.CAP_PROP_FPS))
+
+	print(vs.stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+	print(vs.stream.get(cv2.CAP_PROP_FRAME_WIDTH))
 
 	for vs in vslist:
-		vs.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
-		vs.set(cv2.CAP_PROP_FPS, 5)
-		t = threading.Thread(target=get_frame, args=(vs))
-		t.daemon = True
-		t.start()
+		pass
+		# vs.set(cv2.CAP_PROP_FPS, 5)
+		# t = threading.Thread(target=get_frame, args=(vs))
+		# t.daemon = True
+		# t.start()
 
 	# start the flask app
 	app.run(host=args["ip"], port=args["port"], debug=True,
@@ -136,4 +142,6 @@ if __name__ == '__main__':
 
 # release the video stream pointer
 for vs in vslist:
-	vs.release()
+	vs.stop()
+
+    
