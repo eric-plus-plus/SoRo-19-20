@@ -1,6 +1,6 @@
 # RoverCam Python
 
-This is the python video streamer. It requires python3 version >3.8.5, 3 libraries, and creation of a virtual environment. This works on the rover with a few extra steps which are detailed below.
+The video streamer is written in python. It requires python3 version >=3.8.5, 4 libraries, and creation of a virtual environment.
 
 ## Setting Up A Virtual Environment
 
@@ -10,13 +10,13 @@ To create a virtual environment, first install virtual environments with
 sudo apt-get install python3-venv
 ```
 
-Make sure you are in /RoverCam/ then run
+Make sure you are in SoRo-19-20/Mission Control/video_streamer/ then run
 
 ```bash
 python3 -m venv .
 ```
 
-This will create a new virtual environment in /RoverCam/. The virtual environment must be activated every time the program needs to be run which can be done (on Linux) with:
+This will create a new virtual environment in /video_streamer/. The virtual environment must be activated every time the program needs to be run which can be done with:
 
 ```bash
 source ./bin/activate
@@ -39,10 +39,10 @@ install these with
 pip install wheel opencv-contrib-python flask
 ```
 
-The imutils package needs to be installed using the flag --no-cache-dir like so:
+The imutils package needs to be installed after wheel:
 
 ```bash
-pip install imutils --no-cache-dir
+pip install imutils
 ```
 
 ---
@@ -52,15 +52,7 @@ pip install imutils --no-cache-dir
 To run, use
 
 ```bash
-python3 client.py -i [ip that you want to run on] -o [port] -s [camera index]
+python3 client.py -i [ip of the device] -o [port] -s1 [camera index] (optionally -s2 [camera index 2] -s3 [camera index 3]) -f [fps]
 ```
 
 and navigate to that ip from another device.
-
----
-Note, I ran into an issue with numpy 1.19.4 on Windows where the script would not start. This can be fixed by uninstalling version 1.19.4 and reinstalling version 1.19.3
-
-```bash
-pip uninstall numpy
-pip install numpy=1.19.3
-```
