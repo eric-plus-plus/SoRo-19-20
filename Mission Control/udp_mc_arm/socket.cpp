@@ -8,9 +8,9 @@ socket::socket(QObject *parent) : QObject(parent)
 {
     socketIn = new QUdpSocket(this);
     socketOut = new QUdpSocket(this);//"192.168.1.103"), 1237))
-    if(socketIn->bind(QHostAddress("127.0.0.1"), 1234))
+    if(socketIn->bind(QHostAddress("10.0.0.3"), 1234))
     {
-        qDebug() << "Bound to port 1237";
+        qDebug() << "Bound to port 1234";
     } else {
         qDebug() << "Error binding to port:" << socketIn->errorString();
     }
@@ -38,7 +38,7 @@ void socket::sendUDP(QByteArray Data)
 {
     if(!resetTimer->isActive())
     {
-        socketOut->writeDatagram(Data, QHostAddress("127.0.0.1"), 1237);//"192.168.1.102"), 1234);
+        socketOut->writeDatagram(Data, QHostAddress("10.0.0.102"), 1002);//"192.168.1.102"), 1234);
     }
 }
 
