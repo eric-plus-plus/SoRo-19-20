@@ -5,13 +5,6 @@ from videostream import VideoStream
 import imutils
 import cv2
 
-# initialize the output frame and a lock used to ensure thread-safe
-# exchanges of the output frames (useful for multiple browsers/tabs
-# are viewing tthe stream)
-# benton note: maybe this might be important to put back in at some point
-# but it seems to work fine without it so i'll leave it as a comment for now
-# lock = threading.Lock()
-
 # initialize a flask object
 app = Flask(__name__)
 
@@ -20,23 +13,35 @@ def startstream(src, fps, name):
 		print('stream started')
 		return VideoStream(src, fps, name).start()
 
+def findactivestreams(vslist):
+	activestreams = 0
+	for vs in vslist:
+		if vs.stopped == False:
+			activestreams += 1
+	return activestreams
+
 # define the root url to be index.html
 # in other words, when the user accesses http://[ip]:[port]/
 # they will see index.html
 @app.route("/", methods=['GET','POST'])
 def index():
+		# find active streams for limiting new streams
+		activestreams = findactivestreams(vslist)
+
 		# add button handlers depending on number of cameras
 		camerasconnected = vslist.__len__()
 		for i in range(0, camerasconnected):
 			if 'stopvs{}'.format(i+1) in request.form:
 				vslist[i].stop()
-			if 'startvs{}'.format(i+1) in request.form:
+			if 'relaunchvs{}'.format(i+1) in request.form:
+				vslist[i].relaunch()
+			if 'startvs{}'.format(i+1) in request.form and activestreams <= 3:
 				vslist[i].start()
+		
+		# find number of active video streams
+		activestreams = findactivestreams(vslist)
+
 		# return the rendered template
-		activestreams = 0
-		for vs in vslist:
-			if vs.stopped == False:
-				activestreams += 1
 		return render_template("index.html", 
 				camerasconnected=camerasconnected,
 				activestreams=activestreams)
@@ -61,10 +66,6 @@ def generate():
 				for vs in vslist:
 						if vs.isreadable():
 							framelist.append(vs.read())
-						# else:
-						# 	t = Thread(target=vs.relaunch, args=())
-						# 	t.daemon = True
-						# 	t.start()
 
 				if framelist.__len__() == 0:
 					continue
@@ -73,9 +74,6 @@ def generate():
 				for frame in framelist:
 						frame = imutils.resize(frame, width=600)
 					
-				# wait until the lock is acquired
-				# with lock:
-
 				# merge each of the three frames into one image
 				mergedim = cv2.hconcat(framelist)
 

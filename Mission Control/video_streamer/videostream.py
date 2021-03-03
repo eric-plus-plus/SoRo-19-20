@@ -24,13 +24,17 @@ class VideoStream:
     
     # create a new thread to continuously call update() and read frames
     def start(self):
-        print('starting ' + self.name)
-        self.stopped = False
-        t = Thread(target=self.update, name=self.name, args=())
-        t.daemon = True
-        t.start()
-        # print('thread started')
-        return self
+        if self.stopped is True:
+            print('starting ' + self.name)
+            self.stopped = False
+            t = Thread(target=self.update, name=self.name, args=())
+            t.daemon = True
+            t.start()
+            # print('thread started')
+            return self
+        else:
+            print(self.name + " is already running")
+
     
     # read a frame from the camera unless stopped is true
     def update(self):
@@ -65,14 +69,16 @@ class VideoStream:
     def getsrc(self):
         return self.src
     
-    # releases video capture object, doesn't work lol
+    # releases video capture object
     def release(self):
         self.stop()
         self.stream.release()
 
-    # also doesn't work, just don't touch this for now
+    # releases old VideoCapture object and creates a new one
+    # use this if there's a hardware error with the camera such
+    # as it being unplugged while the program is running
     def relaunch(self):
         print('relaunch has been called')
         self.release()
-        self.__init__(self.src, self.fps)
+        self.__init__(self.src, self.fps, self.name)
 
