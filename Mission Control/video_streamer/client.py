@@ -33,6 +33,10 @@ def index():
 			if 'startvs{}'.format(i+1) in request.form:
 				vslist[i].start()
 		# return the rendered template
+		activestreams = 0
+		for vs in vslist:
+			if vs.stopped == False:
+				activestreams += 1
 		return render_template("index.html", 
 				camerasconnected=camerasconnected,
 				activestreams=activestreams)
@@ -48,15 +52,14 @@ def timestampframe(frame):
 def generate():
 		# grab global references to the list of video streams
 		# and create list for frames to be stored in
-		global vslist, activestreams, framelist
+		global vslist
+		framelist = []
 		# loop over frames from the output stream
 		while True:
 				# read a frame from each vs in vslist and add it
 				# to framelist if it is readable
-				activestreams = 0
 				for vs in vslist:
 						if vs.isreadable():
-							activestreams+=1
 							framelist.append(vs.read())
 						# else:
 						# 	t = Thread(target=vs.relaunch, args=())
@@ -137,8 +140,6 @@ if __name__ == '__main__':
 
 		# create a list of video streams to reference in generate()
 		vslist = [vs]
-		activestreams = 1
-		framelist = []
 
 		# if a second source has been defined, start a new video stream 
 		if args["source2"] != -1:

@@ -20,7 +20,7 @@ class VideoStream:
         self.name = name
 
         # define a variable to indicate whether the thread should be stopped
-        self.stopped = False
+        self.stopped = True
     
     # create a new thread to continuously call update() and read frames
     def start(self):
