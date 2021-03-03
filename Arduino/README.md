@@ -5,6 +5,8 @@ Required libraries (install them from the built in library manager):
   * Only needed for using the Arduino Nano ethernet shield. The Uno-style shield (on the Megas) uses the built in ethernet library.
   * [GitHub](https://github.com/njh/EtherCard)
 
+The "capstone arm" folder is full of other Arduino programs that were indended for the belt driven arm we did not end up using.
+
 ## Testing Programs
 
 ### servo_test.ino
@@ -22,4 +24,4 @@ This should be uploaded to the Arduino Nano in the e-box. The macro `#define DEB
 
 ### arm_controller.ino
 
-This is the code for the Arduino Nano controlling the currently used arm (the one with linear actuators). It currently communicates over serial, so it would be nice to change this over to ethernet at some point. It is designed to be used with the udp_rover program in it's current state.
+This is the code for the Arduino Nano controlling the currently used arm (the one with linear actuators). Like the wheel controller, it also has the optional debug macro.

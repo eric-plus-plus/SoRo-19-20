@@ -1,233 +1,257 @@
+#include <EtherCard.h>
+#include <IPAddress.h>
 #include <Servo.h>
 
+//Set equal to 1 for serial debugging
+#define DEBUG_MODE 1
+
+// Note: analogWrite() can not be used on pins 9 or 10 because of the servo library.
+// Servos can still be used on those pins though
+
+// The ethernet adapter uses pins 10, 11, 12, and 13
+
+// 3, 5, 6
 #define BASE_PIN A0
-#define SHOULDER_PIN A5
-#define ELBOW_PIN 4
-#define CLAW_L_PIN 7
-#define CLAW_R_PIN 8
-#define ENC_L_PIN 10
-#define ENC_R_PIN 12
+#define SHOULDER_PIN A1
+#define ELBOW_PIN A2
+#define CLAW_L_PIN A3
+#define CLAW_R_PIN A4
 
-const char DEVICE_ID = 1;
+#define WRIST_L1_PIN 3
+#define WRIST_L2_PIN 4
+#define WRIST_L_SPEED_PIN 5
 
-// pin mapping
+#define WRIST_R1_PIN 8
+#define WRIST_R2_PIN 7
+#define WRIST_R_SPEED_PIN 6
+
+#define DEVICE_ID 1
+
+// ethernet interface ip address (static ip)
+static byte myip[] = { 10, 0, 0, 102 };
+static int myport = 1002;
+// gateway ip address
+static byte gwip[] = { 10, 0, 0, 1 };
+// ethernet mac address - must be unique on your network
+static byte mymac[] = { 0x72, 0x69, 0xFF, 0xFF, 0x30, 0x31 };
+// tcp/ip send and receive buffer
+byte Ethernet::buffer[500];
+
+//
+unsigned char base_speed = 90;
+unsigned char shoulder_pos = 135;
+unsigned char elbow_pos = 119;
+char wristTheta_speed = 0;
+char wristPhi_speed = 0;
+unsigned char clawL_pos = 75;
+unsigned char clawR_pos = 150;
+
+unsigned char serialHash = 0;
+unsigned char myHash = 81;
+
+unsigned long timeOut = 0;
+
+// talon/servo
 Servo base, shoulder, elbow, clawL, clawR;
-// pin  3, 5, 6, 9, 10, and 11 are for analogWrite
-const int wristL1 = 5, wirstL2 = 6, wristR1 = 3, wristR2 = 11;
-
-// math constants
-const float ticksPerRev = 1669656;
-const float ticksRatio = 360.0 / ticksPerRev;
-const int wristTopSpeed = 127;// 255 max for analog write
-const int motorDeadZone = 1;
-
-char myHash = 90;
-int elbow_pos = 135;
-int wristTheta_dest = 0;
-int wristPhi_dest = 0;
-int clawR_pos = 120;
-int clawL_pos = 58;
-int shoulder_pos = 135;
-int base_pos = 0;
-long lTicks = 0; // ticks since last update
-long rTicks = 0;
-bool rForward = true;
-bool lForward = true;
-
-int wristTheta = 0;
-int wristPhi = 0;
 
 
-char incomingByte;
-int bytesRead = 0;
+//callback that prints received packets to the serial port
+void udpSerialPrint(uint16_t dest_port, uint8_t src_ip[IP_LEN], uint16_t src_port, const char *data, uint16_t len) {
+  IPAddress src(src_ip[0], src_ip[1], src_ip[2], src_ip[3]);
 
-char serResp[] = "1,190,200!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-char serialHash;
-bool inTransmission = false;
+  // serial transmission blueprints:
+  
+  // wheels
+  // [start transmission = -127 or 255] [0] [overdrive] [left wheels]...
+  // ...[right wheels] [gimble tilt] [gimble pan] [hash]
+  
+  // hash = (sum of data bytes--no start or id) / (num of bytes)
 
-//setup wheels
+#if DEBUG_MODE == 1
+  for (int i = 0; i < len; i++)
+  {
+    Serial.print(int(data[i]));
+    Serial.print(", ");
+  }
+  Serial.print("\n");
+#endif
+
+  // check for -127, message type
+  if (len >= 2)
+  {
+    if (data[0] != -127)
+    {
+      #if DEBUG_MODE == 1
+      Serial.println("Message does not start with -127!");
+      #endif
+      return;
+    }
+    
+    if (data[1] == DEVICE_ID)
+    {
+      if (len != 10)
+      {
+        #if DEBUG_MODE == 1
+        Serial.println("Message is wrong length!");
+        #endif
+        return;
+      }
+    
+      base_speed = uint8_t(data[2]);
+      shoulder_pos = uint8_t(data[3]);
+      elbow_pos = uint8_t(data[4]);
+      wristTheta_speed = data[5];
+      wristPhi_speed = data[6];
+      clawL_pos = uint8_t(data[7]);
+      clawR_pos = uint8_t(data[8]);
+      
+      serialHash = uint8_t(data[9]);
+      myHash = (base_speed+shoulder_pos+elbow_pos+wristTheta_speed+wristPhi_speed+clawL_pos+clawR_pos) / 7;
+      if (myHash == serialHash)
+      {
+        updateServos();
+        timeOut = millis();
+      }
+      #if DEBUG_MODE == 1
+      else
+      {
+        Serial.println("Bad hash!");
+      }
+      #endif
+    }
+
+    else // unknown type
+    {
+      #if DEBUG_MODE == 1
+      Serial.println("Unknown device id!");
+      #endif
+      return;
+    }
+  }
+}
+
 void setup() {
+#if DEBUG_MODE == 1
+  Serial.begin(9600);
+  if (ether.begin(sizeof Ethernet::buffer, mymac, 10) == 0)
+    Serial.println(F("Failed to access Ethernet controller"));
+#else
+  ether.begin(sizeof Ethernet::buffer, mymac, 10);
+#endif
+
+  ether.staticSetup(myip, gwip);
+
+  ether.printIp("IP:  ", ether.myip);
+  ether.printIp("GW:  ", ether.gwip);
+  ether.printIp("DNS: ", ether.dnsip);
+
+  //register udpSerialPrint()
+  ether.udpServerListenOnPort(&udpSerialPrint, myport);
+
+  // servo/talon pins
   base.attach(BASE_PIN);
   shoulder.attach(SHOULDER_PIN);
   elbow.attach(ELBOW_PIN);
   clawL.attach(CLAW_L_PIN);
   clawR.attach(CLAW_R_PIN);
+  
+  base.write(base_speed);
   shoulder.write(shoulder_pos);
   elbow.write(elbow_pos);
   clawL.write(clawL_pos);
   clawR.write(clawR_pos);
 
-  attachInterrupt(digitalPinToInterrupt(ENC_L_PIN), leftEncoder, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENC_R_PIN), rightEncoder, RISING);
-  Serial.begin(9600);
-  delay(10);
+  // wrist motor pins
+  pinMode(WRIST_L1_PIN, OUTPUT);
+  pinMode(WRIST_L2_PIN, OUTPUT);
+  pinMode(WRIST_L_SPEED_PIN, OUTPUT);
+  pinMode(WRIST_R1_PIN, OUTPUT);
+  pinMode(WRIST_R2_PIN, OUTPUT);
+  pinMode(WRIST_R_SPEED_PIN, OUTPUT);
+
+  digitalWrite(WRIST_L1_PIN, LOW);
+  digitalWrite(WRIST_L2_PIN, LOW);
+  analogWrite(WRIST_L_SPEED_PIN, 0);
+  digitalWrite(WRIST_R1_PIN, LOW);
+  digitalWrite(WRIST_R2_PIN, LOW);
+  analogWrite(WRIST_R_SPEED_PIN, 0);
 }
 
 void loop() {
-  if (Serial.available() > 4) // trying to read from an empty buffer usually breaks stuff
-  { /*
+  // this must be called for ethercard functions to work.
+  ether.packetLoop(ether.packetReceive());
 
-      incomingByte = Serial.read();
-      if(incomingByte == -127)
-      {
-      Serial.println("start flag");
-      if(Serial.read() != DEVICE_ID)
-      {
-       Serial.println("incorrect id");
-       // transmission is invalid, clear buffer and then reply with device id
-       Serial.flush();
-       Serial.write(-126);
-       Serial.write(DEVICE_ID);
-      }
-      else{
-       Serial.println("reading message");
-       shoulder_pos = uint8_t(Serial.read());
-       elbow_pos = uint8_t(Serial.read());
-       clawL_pos = uint8_t(Serial.read());
-       clawR_pos = uint8_t(Serial.read());
-       serialHash = Serial.read();
-       myHash = (shoulder_pos + elbow_pos+clawL_pos+ clawR_pos)/4;
-       if(myHash == serialHash)
-       {
-         sprintf(serResp, "%d\t%d\t%d\t%d", shoulder_pos, elbow_pos, clawL_pos, clawR_pos);
-         Serial.println(serResp);
-         updateServos();
-       } else {
-         sprintf(serResp, "%d\t%d\t%d\t%d!!!!!!!", shoulder_pos, elbow_pos, clawL_pos, clawR_pos);
-         Serial.println(serResp);
-       }
-      }
-      }
-      }
-      else
-      {
-      //Serial.println("no bytes to read");
-      //Serial.read();// dispose packets untill the start flag(-127)
-      }
+  // stop all motors after 1 second of no messages
+  if ( millis() - timeOut >= 1000)
+  {
+    timeOut = millis();
+    
+    base.write(90);
+    digitalWrite(WRIST_L1_PIN, LOW);
+    digitalWrite(WRIST_L2_PIN, LOW);
+    analogWrite(WRIST_L_SPEED_PIN, 0);
+    digitalWrite(WRIST_R1_PIN, LOW);
+    digitalWrite(WRIST_R2_PIN, LOW);
+    analogWrite(WRIST_R_SPEED_PIN, 0);
 
-      /**/
-    incomingByte = Serial.read();
-    if (incomingByte == -127 && !inTransmission) {
-      inTransmission = true;
-      bytesRead = 0;
-    } else if (inTransmission) {
-      switch (bytesRead) {
-        case 0: // device id
-          if (incomingByte != DEVICE_ID) {
-            // transmission is invalid, clear buffer and then reply with device id
-            Serial.flush();
-            Serial.write(-126);
-            Serial.write(DEVICE_ID);
-            inTransmission = false;
-          }
-          break;
-        case 1:
-          base_pos = uint8_t(incomingByte);
-          break;
-        case 2: // shoulder
-          shoulder_pos = uint8_t(incomingByte);
-          break;
-        case 3: // elbow
-          elbow_pos = uint8_t(incomingByte);
-          break;
-        case 4:
-          wristTheta_dest = int8_t(incomingByte);// converts from int to float. change the transmission
-          break;
-        case 5:
-          wristPhi_dest = int8_t( incomingByte);// TODO change the transmission to be a float for precision
-          break;
-        case 6:
-          clawL_pos = uint8_t(incomingByte);
-          break;
-        case 7:
-          clawR_pos = uint8_t(incomingByte);
-          break;
-        case 8: // hash (last byte recieved in transmission)
-          serialHash = incomingByte;
-          inTransmission = false;
-          myHash = (base_pos + shoulder_pos + elbow_pos + wristTheta_dest + (wristPhi_dest) + clawL_pos + clawR_pos) / 7;
-          if (myHash == serialHash) {
-            sprintf(serResp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d", base_pos, shoulder_pos, elbow_pos, (int8_t)wristTheta_dest, (int8_t)wristPhi_dest, clawL_pos, clawR_pos, myHash);
-            Serial.println(serResp);
-            updateServos();
-          } else {
-            sprintf(serResp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d!!!!!!!", base_pos, shoulder_pos, elbow_pos, (int8_t)wristTheta_dest, (int8_t)wristPhi_dest, clawL_pos, clawR_pos, myHash);
-            Serial.println(serResp);
-          }
-          break;
-      }
-      bytesRead++;
-    }
-  }/**/
+#if DEBUG_MODE == 1
+    Serial.println("Stopped motors");
+#endif
+  }
 }
 
 void updateServos() {
-
-  base.write(base_pos);
+  base.write(base_speed);
   shoulder.write(shoulder_pos);
   elbow.write(elbow_pos);
   clawL.write(clawL_pos);
   clawR.write(clawR_pos);
 
   // Right now we can't rotate and tilt ar the same time we'll need to fix this later
-  if (wristPhi_dest > 0) {
-    // rotate right
-    //Serial.println(wristPhi_dest);
-    analogWrite(5, 200);//wristPhi_dest << 1);
-    analogWrite(6, 0);
-    analogWrite(3, 0);
-    analogWrite(11, 200);//wristPhi_dest << 1);
+  if (wristPhi_speed > 0) {
+    digitalWrite(WRIST_L1_PIN, HIGH);
+    digitalWrite(WRIST_L2_PIN, LOW);
+    analogWrite(WRIST_L_SPEED_PIN, 200); //abs(wristPhi_speed)*2);
+    digitalWrite(WRIST_R1_PIN, LOW);
+    digitalWrite(WRIST_R2_PIN, HIGH);
+    analogWrite(WRIST_R_SPEED_PIN, 200); //abs(wristPhi_speed)*2);
+    
     return;
   }
-  if (wristPhi_dest < 0) {
-
-    analogWrite(5, 0);
-    analogWrite(6, 200);//abs(wristPhi_dest)*2);
-    analogWrite(3, 200);//abs(wristPhi_dest)*2);
-    analogWrite(11, 0);
+  if (wristPhi_speed < 0) {
+    digitalWrite(WRIST_L1_PIN, LOW);
+    digitalWrite(WRIST_L2_PIN, HIGH);
+    analogWrite(WRIST_L_SPEED_PIN, 200); //abs(wristPhi_speed)*2);
+    digitalWrite(WRIST_R1_PIN, HIGH);
+    digitalWrite(WRIST_R2_PIN, LOW);
+    analogWrite(WRIST_R_SPEED_PIN, 200); //abs(wristPhi_speed)*2);
     return;
   }
-  if (wristTheta_dest > 0) {
-    // rotate right
-    analogWrite(5, 200);//wristTheta_dest << 1);
-    analogWrite(6, 0);
-    analogWrite(3, 200);//wristTheta_dest << 1);
-    analogWrite(11, 0);
+  if (wristTheta_speed > 0) {
+    digitalWrite(WRIST_L1_PIN, HIGH);
+    digitalWrite(WRIST_L2_PIN, LOW);
+    analogWrite(WRIST_L_SPEED_PIN, 200); //abs(wristTheta_speed)*2);
+    digitalWrite(WRIST_R1_PIN, HIGH);
+    digitalWrite(WRIST_R2_PIN, LOW);
+    analogWrite(WRIST_R_SPEED_PIN, 200); //abs(wristTheta_speed)*2);
+    
     return;
   }
-  if (wristTheta_dest < 0) {
-    // rotate right
-    analogWrite(5, 0);
-    analogWrite(6, 200);//abs(wristTheta_dest)*2);
-    analogWrite(3, 0);
-    analogWrite(11, 200);//abs(wristTheta_dest)*2);
+  if (wristTheta_speed < 0) {
+    digitalWrite(WRIST_L1_PIN, LOW);
+    digitalWrite(WRIST_L2_PIN, HIGH);
+    analogWrite(WRIST_L_SPEED_PIN, 200); //abs(wristTheta_speed)*2);
+    digitalWrite(WRIST_R1_PIN, LOW);
+    digitalWrite(WRIST_R2_PIN, HIGH);
+    analogWrite(WRIST_R_SPEED_PIN, 200); //abs(wristTheta_speed)*2);
     return;
   }
-  if (wristPhi_dest == 0 && wristTheta_dest == 0) {
-    analogWrite(5, 0);
-    analogWrite(6, 0);
-    analogWrite(3, 0);
-    analogWrite(11, 0);
+  if (wristPhi_speed == 0 && wristTheta_speed == 0) {
+    digitalWrite(WRIST_L1_PIN, LOW);
+    digitalWrite(WRIST_L2_PIN, LOW);
+    analogWrite(WRIST_L_SPEED_PIN, 0);
+    digitalWrite(WRIST_R1_PIN, LOW);
+    digitalWrite(WRIST_R2_PIN, LOW);
+    analogWrite(WRIST_R_SPEED_PIN, 0);
   }
-
-
-}
-/*
-   this interuptes the processor to count the number of pulses that come from the encoder.
-
-   Warning this can happen as much as 1,669,656 times a second, and the arduino clock is only 16mhz
-*/
-void leftEncoder() {
-  lTicks++;
-}
-/*
-   same as left encoder
-*/
-void rightEncoder() {
-  rTicks++;
-}
-
-void calibrate() {
-
-
 }
