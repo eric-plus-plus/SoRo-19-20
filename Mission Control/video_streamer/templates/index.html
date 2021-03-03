@@ -1,12 +1,41 @@
-<html>
+<!doctype html>
   <head>
     <title>Webcam Streamer</title>
   </head>
   <body>
     <h1>Stream</h1>
-    <img src="{{ url_for('video_feed') }}">
-    <p></p>
+    <div>
+      <img src="{{ url_for('video_feed') }}">
+    </div>
     Cameras Connected: {{ camerasconnected }}
-    <p><input type="submit" name="submit"/></p>
+    Active Streams: {{ activestreams }}
+    <form method="post" action='/'>
+      <div>
+        <input type="submit" name="stopvs1" value="Stop VS 1">
+        <input type="submit" name="startvs1" value="Start VS 1">
+        {% if camerasconnected>=2 %}
+        <input type="submit" name="stopvs2" value="Stop VS 2">
+        <input type="submit" name="startvs2" value="Start VS 2">
+        {% endif %}
+        {% if camerasconnected>=3 %}
+        <input type="submit" name="stopvs3" value="Stop VS 3">
+        <input type="submit" name="startvs3" value="Start VS 3">
+        {% endif %}
+      </div>
+      <div>
+        {% if camerasconnected>=4 %}
+        <input type="submit" name="stopvs4" value="Stop VS 4">
+        <input type="submit" name="startvs4" value="Start VS 4">
+        {% endif %}
+        {% if camerasconnected>=5 %}
+        <input type="submit" name="stopvs5" value="Stop VS 5">
+        <input type="submit" name="startvs5" value="Start VS 5">
+        {% endif %}
+        {% if camerasconnected>=6 %}
+        <input type="submit" name="stopvs6" value="Stop VS 6">
+        <input type="submit" name="startvs6" value="Start VS 6">
+        {% endif %}
+      </div>
+    </form>
   </body>
 </html>
