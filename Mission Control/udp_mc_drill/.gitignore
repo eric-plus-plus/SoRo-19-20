@@ -1,3 +1,7 @@
+target/.*
+
+target/*
+
 target/release/**
 !target/release/drill_controller
 
