@@ -35,7 +35,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     {
         if(cameras[i] == NULL)
             break;
-        caps.push_back(new cv::VideoCapture(cameras[i], cv::CAP_V4L2));
+        caps.push_back(new cv::VideoCapture(cameras[i]));//, cv::CAP_V4L2));
         if(!caps[i]->isOpened())
         {
             std::cout << "Camera " << cameras[i] << " did not open!" << std::endl;
@@ -63,6 +63,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             if(writeToFile)
             {
 		        mFrame = image > i; //purely for debug
+		        Markers[i].draw(mFrame);
                 videoWriter.write(mFrame); //purely for debug
             }    
             break;
@@ -191,7 +192,7 @@ bool ARTracker::findAR(int id)
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(arFound(id, frame, false)) return true;
+        if(arFound(id, frame, true)) return true;
     }
     return false;
 }
