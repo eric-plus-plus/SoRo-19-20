@@ -2,10 +2,11 @@ from threading import Thread
 import cv2
 import datetime
 import time
+import os
 
 class VideoStream:
 	# initialize self with defined source and fps
-	def __init__(self, src=0, fps=15,  name="VideoStream"):
+	def __init__(self, src=0, fps=30,  name="VideoStream"):
 		# set grabbed to false
 		self.grabbed = False
 
@@ -35,16 +36,17 @@ class VideoStream:
 
 		# creates a new VideoWriter to save the recording
 		currenttime = datetime.datetime.now()
-		self.writer = cv2.VideoWriter('./recordings/{}_{}.avi'.format(
-			currenttime.strftime("%Y%m%d_%H-%M-%S")
-			,self.name),
+		self.filename = './recordings/{}_{}.avi'.format(currenttime.strftime("%Y%m%d_%H-%M-%S"),self.name)
+		self.writer = cv2.VideoWriter(self.filename,
 			cv2.VideoWriter_fourcc('M','J','P','G'),self.fps,(self.width,self.height))
 
 		# saves the index of the webcam for relaunching
 		self.src = src
-		
+		self.totaldifference = 0
+		self.recordedframes = 0
 		# time in milliseconds between each frame
-		self.waittime = 1000/self.fps
+		if self.fps != 0:
+			self.waittime = 1000/self.fps
 
 
 	
@@ -99,8 +101,12 @@ class VideoStream:
 	# releases video capture object
 	def release(self):
 		self.stop()
-		self.stream.release()
 		self.writer.release()
+		self.stream.release()
+		time.sleep(.1)
+		if os.path.exists(self.filename) and os.stat(self.filename).st_size < 10000:
+			os.remove(self.filename)
+		
 
 	# releases old VideoCapture object and creates a new one
 	# use this if there's a hardware error with the camera such
@@ -109,6 +115,7 @@ class VideoStream:
 		print('relaunch has been called')
 		self.release()
 		self.__init__(self.src, self.fps, self.name)
+
 
 	# starts the thread that handles recording
 	def recordstart(self):
@@ -130,13 +137,14 @@ class VideoStream:
 				return
 			if self.stopped == False:
 				self.writer.write(VideoStream.timestampframe(self.read()))
-
-				# essentially all this does is calculate the amount of time to wait
-				# before grabbing the next frame
 				currenttime = time.time()
 				difference = (currenttime-lasttime)*1000
 				lasttime = currenttime
-				timetosleep = lastwait-((difference-self.waittime)/4)
+				# debugging stuff
+				# self.totaldifference += difference
+				# self.recordedframes += 1
+
+				timetosleep = VideoStream.calcwait(difference, self.waittime, lastwait)
 				lastwait = timetosleep
 				# print('difference: ' + str(difference) + ' going to wait ' + str(timetosleep) + 'ms')
 				time.sleep(timetosleep/1000)
@@ -145,6 +153,8 @@ class VideoStream:
 	def recordstop(self):
 		if self.recording == True:
 			print('recording stopped')
+			# print('recorded frames: ' + str(self.recordedframes))
+			# print('average difference: ' + str(self.totaldifference/self.recordedframes))
 			self.recording = False
 		else:
 			print('recording is already stopped')
@@ -158,3 +168,14 @@ class VideoStream:
 			  "%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
 			  cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 		return copiedframe
+	
+	# essentially all this does is calculate the amount of time to wait
+	# before grabbing the next frame
+	@staticmethod
+	def calcwait(difference, targettime, lastwait):
+		timetosleep = lastwait - (difference-targettime)
+		if timetosleep < 0:
+			timetosleep = 0
+		if timetosleep > targettime:
+			timetosleep = targettime
+		return timetosleep

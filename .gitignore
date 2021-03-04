@@ -25,3 +25,4 @@ settings.json
 build-*
 Scripts
 *.avi
+.vscode/launch.json

@@ -3,10 +3,17 @@ import argparse
 from videostream import VideoStream
 import imutils
 import cv2
+import time
+
+# global variables to keep track of encoding quality and the targeted time between frames
+encodingquality = 50 
+targetfps = 30	 # 30 FPS as a default
+targetwait = 1/targetfps
 
 # initialize a flask object
 app = Flask(__name__)
 
+# find the number of streams actively providing frames
 def findactivestreams(vslist):
 	activestreams = 0
 	for vs in vslist:
@@ -19,44 +26,89 @@ def findactivestreams(vslist):
 # they will see index.html
 @app.route("/", methods=['GET','POST'])
 def index():
+		global encodingquality, targetwait, targetfps
+
+		# add button handler for the quality selector
+		if 'qualitysubmit' in request.form:
+			encodingquality = int(request.form['qualityslider'])
+		# add button handler for the FPS buttons
+		for i in [30,20,15,12,10,8,5,4,3,2,1]:
+			if 'fps_{}'.format(i) in request.form:
+				targetwait = 1000/i
+				targetfps = i
+
 		# find active streams for limiting new streams
 		activestreams = findactivestreams(vslist)
-
-		# add button handlers depending on number of cameras
 		camerasconnected = vslist.__len__()
-		for i in range(0, camerasconnected):
-			if 'stopvs{}'.format(i+1) in request.form:
-				vslist[i].stop()
-			if 'stoprecordvs{}'.format(i+1) in request.form:
-				vslist[i].recordstop()
-			if 'startrecordvs{}'.format(i+1) in request.form:
-				vslist[i].recordstart()				
-			if 'relaunchvs{}'.format(i+1) in request.form:
-				vslist[i].relaunch()
-			if 'startvs{}'.format(i+1) in request.form and activestreams <= 3:
-				vslist[i].start()
+		handlecamops(activestreams, camerasconnected)
 		
-		# find number of active video streams
+		# find number of active video streams for rendering
 		activestreams = findactivestreams(vslist)
-
+		recordingstreams = findrecording(vslist)
+		print(recordingstreams)
 		# return the rendered template
 		return render_template("index.html", 
 				camerasconnected=camerasconnected,
-				activestreams=activestreams)
+				activestreams=activestreams,
+				encodingquality=encodingquality,
+				responsewait=targetwait,
+				fps=targetfps,
+				recordingstreams=recordingstreams)
+
+# handlers for the currently connected cameras
+def handlecamops(activestreams, camerasconnected):
+      for i in range(0, camerasconnected):
+       if 'stopvs{}'.format(i+1) in request.form:
+        vslist[i].stop()
+       if 'stoprecordvs{}'.format(i+1) in request.form:
+        vslist[i].recordstop()
+       if 'startrecordvs{}'.format(i+1) in request.form:
+        vslist[i].recordstart()
+       if 'relaunchvs{}'.format(i+1) in request.form:
+        vslist[i].relaunch()
+       if 'startvs{}'.format(i+1) in request.form and activestreams <= 3:
+        vslist[i].start()
+
+# find number of video streams actively recording
+def findrecording(vslist):
+	recording = []
+	for vs in vslist:
+		recording.append(vs.recording)
+	return recording
 
 def generate():
 		# grab global references to the list of video streams
 		# and create list for frames to be stored in
 		global vslist
 		framelist = []
+
+		# declare variables for calculating time differences
+		lastwait = 0
+		lasttime = time.time()
+
 		# loop over frames from the output stream
 		while True:
+				# find difference in times between iterations
+				currenttime=time.time() # in seconds
+				difference = (currenttime-lasttime)*1000 # in milliseconds
+				lasttime = currenttime
+
+				# calculate the projected time this function will take to execute
+				calculatedwait = VideoStream.calcwait(difference, targetwait, lastwait) # in milliseconds
+				lastwait = calculatedwait
+
+				# debugging stuff, dont delete yet lol
+				# print('difference is ' + str(difference) + 'ms, trying to wait ' + str(targetwait) + 'ms, waiting ' + str(calculatedwait) + 'ms')
+
+				time.sleep(calculatedwait/1000) # sleep takes an argument in seconds
+
 				# read a frame from each vs in vslist and add it
 				# to framelist if it is readable
 				for vs in vslist:
 						if vs.isreadable():
 							framelist.append(vs.read())
 
+				# continue if there are no frames to read
 				if framelist.__len__() == 0:
 					continue
 				
@@ -74,7 +126,7 @@ def generate():
 				framelist.clear()
 
 				# encode the frame in JPEG format
-				encoding_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
+				encoding_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), encodingquality]
 				(flag, encodedimage) = cv2.imencode(".jpg", mergedim, encoding_parameters)
 
 				# ensure the frame was successfully encoded
@@ -117,38 +169,24 @@ if __name__ == '__main__':
 				help="index of sixth camera to use")
 
 		# choose fps
-		ap.add_argument("-f", "--fps", type=int, default=15,
+		ap.add_argument("-f", "--fps", type=int, default=30,
 				help="fps of stream")
 
 		# parse arguments
 		args = vars(ap.parse_args())
 		fps = args["fps"]
+
 		# start a thread that will grab frames from camera
 		vs = VideoStream(args["source1"], fps, 'vs1').start()
 
 		# create a list of video streams to reference in generate()
 		vslist = [vs]
 
-		# if a second source has been defined, start a new video stream 
-		if args["source2"] != -1:
-				vs2 = VideoStream(args["source2"], fps, 'vs2')
-				vslist.append(vs2)
-
-		# if a third source has been defined, start a new video stream 
-		if args["source3"] != -1:
-				vs3 = VideoStream(args["source3"], fps, 'vs3')
-				vslist.append(vs3)
-
-		# and so on...
-		if args["source4"] != -1:
-				vs4 = VideoStream(args["source4"], fps, 'vs4')
-				vslist.append(vs4)
-		if args["source5"] != -1:
-				vs5 = VideoStream(args["source5"], fps, 'vs5')
-				vslist.append(vs5)
-		if args["source6"] != -1:
-				vs6 = VideoStream(args["source6"], fps, 'vs6')
-				vslist.append(vs6)
+		# if up to 5 other video sources have been defined, start that many streams 
+		for i in range(2,6):
+			if args["source{}".format(i)] != -1:
+				newvs = VideoStream(args["source{}".format(i)], fps, 'vs{}'.format(i))
+				vslist.append(newvs)
 
 		# start the flask app
 		app.run(host=args["ip"], port=args["port"], debug=True,
