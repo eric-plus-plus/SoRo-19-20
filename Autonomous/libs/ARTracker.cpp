@@ -27,7 +27,7 @@ bool ARTracker::config()
 }  
 
 //The writer size is hard coded here. You've been warned
-ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), false)
+ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonomous.avi", cv::VideoWriter::fourcc(format[0],format[1],format[2],format[3]), 5, cv::Size(1920,1080), true)
 {
     if(!config())
         std::cout << "Error opening file" << std::endl;
@@ -53,25 +53,23 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
 bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
-    
+    int cutoff = 0;
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
     for(int i = 40; i <= 220; i+=60)
     {
         Markers = MDetector.detect(image > i); //detects all of the tags in the current b&w cutoff
         if(Markers.size() > 0)
-        {
-            if(writeToFile)
-            {
-		        mFrame = image > i; //purely for debug
-		        Markers[i].draw(mFrame);
-                videoWriter.write(mFrame); //purely for debug
-            }    
+        {    
+	    cutoff = i;
             break;
         }
         else if(i == 220) //did not find any AR tags with any b&w cutoff
         {
             if(writeToFile)
-                videoWriter.write(image);
+            {
+		    cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
+		    videoWriter.write(image);
+            }
             distanceToAR = -1;
             angleToAR = 0;
             return false;
@@ -84,29 +82,38 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         if(Markers[i].id == id)
         {
             index = i;
-            break; 
+            widthOfTag = Markers[index][1].x - Markers[index][0].x;
+            //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
+            distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
+        
+            centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
+            angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
+        
+	    if(writeToFile)
+            {
+                mFrame = image > cutoff; //purely for debug
+	        cv::cvtColor(mFrame, mFrame, cv::COLOR_GRAY2BGR);	
+		cv::line(mFrame, cv::Point(Markers[i][0].x, Markers[i][0].y), cv::Point(Markers[i][1].x, Markers[i][1].y), cv::Scalar(0,0,255), 2, 8);
+		cv::line(mFrame, cv::Point(Markers[i][1].x, Markers[i][1].y), cv::Point(Markers[i][2].x, Markers[i][2].y), cv::Scalar(0,0,255), 2, 8);
+		cv::line(mFrame, cv::Point(Markers[i][2].x, Markers[i][2].y), cv::Point(Markers[i][3].x, Markers[i][3].y), cv::Scalar(0,0,255), 2, 8);
+		cv::line(mFrame, cv::Point(Markers[i][3].x, Markers[i][3].y), cv::Point(Markers[i][0].x, Markers[i][0].y), cv::Scalar(0,0,255), 2, 8);
+
+		std::string distance = "Distance (cm): " + std::to_string(distanceToAR); 
+		std::string angle = "Angle: " + std::to_string(angleToAR) + " degrees";
+		cv::putText(mFrame, distance, cv::Point(Markers[i][0].x, Markers[i][0].y), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0,255,0), 2);
+		cv::putText(mFrame, angle, cv::Point(Markers[i][0].x, Markers[i][0].y + 30), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0,255,0), 2);
+		videoWriter.write(mFrame); //purely for debug
+            }
+        
+	    return true;
         }   
     }
-    if(index == -1) 
-    {
-        distanceToAR=-1;
-        angleToAR=0;
-        std::cout << "Found a tag but was not the correct one" << std::endl;
-        return false; //correct ar tag not found
-    }  
+    
+    distanceToAR=-1;
+    angleToAR=0;
+    std::cout << "Found a tag but was not the correct one" << std::endl;
+    return false; //correct ar tag not found
 
-    else
-    {
-        
-        widthOfTag = Markers[index][1].x - Markers[index][0].x;
-        //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
-        distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
-        
-        centerXTag = (Markers[index][1].x + Markers[index][0].x) / 2;
-        angleToAR = degreesPerPixel * (centerXTag - 960); //takes the pixels from the tag to the center of the image and multiplies it by the degrees per pixel
-        
-        return true;
-    }
 }
 
 int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
