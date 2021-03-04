@@ -11,43 +11,55 @@
     Active Streams: {{ activestreams }}
     <form method="post" action='/'>
       <div>
-        <input type="submit" name="stopvs1" value="Stop VS 1">
         <input type="submit" name="startvs1" value="Start VS 1">
+        <input type="submit" name="stopvs1" value="Stop VS 1">
         <input type="submit" name="relaunchvs1" value="Relaunch VS 1">
+        <input type="submit" name="startrecordvs1" value="Start Recording VS 1">
+        <input type="submit" name="stoprecordvs1" value="Stop Recording VS 1">
       </div>
       <div>
         {% if camerasconnected>=2 %}
-        <input type="submit" name="stopvs2" value="Stop VS 2">
         <input type="submit" name="startvs2" value="Start VS 2">
+        <input type="submit" name="stopvs2" value="Stop VS 2">
         <input type="submit" name="relaunchvs2" value="Relaunch VS 2">
+        <input type="submit" name="startrecordvs2" value="Start Recording VS 2">
+        <input type="submit" name="stoprecordvs2" value="Stop Recording VS 2">
         {% endif %}
       </div>
       <div>
         {% if camerasconnected>=3 %}
-        <input type="submit" name="stopvs3" value="Stop VS 3">
         <input type="submit" name="startvs3" value="Start VS 3">
+        <input type="submit" name="stopvs3" value="Stop VS 3">
         <input type="submit" name="relaunchvs3" value="Relaunch VS 3">
+        <input type="submit" name="startrecordvs3" value="Start Recording VS 3">
+        <input type="submit" name="stoprecordvs3" value="Stop Recording VS 3">
         {% endif %}
       </div>
       <div>
         {% if camerasconnected>=4 %}
-        <input type="submit" name="stopvs4" value="Stop VS 4">
         <input type="submit" name="startvs4" value="Start VS 4">
+        <input type="submit" name="stopvs4" value="Stop VS 4">
         <input type="submit" name="relaunchvs4" value="Relaunch VS 4">
+        <input type="submit" name="startrecordvs4" value="Start Recording VS 4">
+        <input type="submit" name="stoprecordvs4" value="Stop Recording VS 4">
         {% endif %}
       </div>
       <div>
         {% if camerasconnected>=5 %}
-        <input type="submit" name="stopvs5" value="Stop VS 5">
         <input type="submit" name="startvs5" value="Start VS 5">
+        <input type="submit" name="stopvs5" value="Stop VS 5">
         <input type="submit" name="relaunchvs5" value="Relaunch VS 5">
+        <input type="submit" name="startrecordvs5" value="Start Recording VS 5">
+        <input type="submit" name="stoprecordvs5" value="Stop Recording VS 5">
         {% endif %}
       </div>
       <div>
         {% if camerasconnected>=6 %}
-        <input type="submit" name="stopvs6" value="Stop VS 6">
         <input type="submit" name="startvs6" value="Start VS 6">
+        <input type="submit" name="stopvs6" value="Stop VS 6">
         <input type="submit" name="relaunchvs6" value="Relaunch VS 6">
+        <input type="submit" name="startrecordvs6" value="Start Recording VS 6">
+        <input type="submit" name="stoprecordvs6" value="Stop Recording VS 6">
         {% endif %}
       </div>
     </form>

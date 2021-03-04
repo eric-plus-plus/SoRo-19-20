@@ -1,84 +1,160 @@
 from threading import Thread
 import cv2
+import datetime
+import time
 
 class VideoStream:
-    # initialize self with defined source and fps
-    def __init__(self, src=0, fps=15,  name="VideoStream"):
-        self.stream = cv2.VideoCapture(src)
-        self.src = src
-        self.fps = fps
-        # set the capture codec to MJPG
-        self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
+	# initialize self with defined source and fps
+	def __init__(self, src=0, fps=15,  name="VideoStream"):
+		# set grabbed to false
+		self.grabbed = False
 
-        # set fps to argument
-        self.stream.set(cv2.CAP_PROP_FPS, fps)
+		# define a variable to indeicate whether recording should happen
+		self.recording = False
 
-        # set grabbed to false
-        self.grabbed = False
+		# set the name of the object
+		self.name = name
 
-        # set the name of the object
-        self.name = name
+		# define a variable to indicate whether the thread should be stopped
+		self.stopped = True
 
-        # define a variable to indicate whether the thread should be stopped
-        self.stopped = True
-    
-    # create a new thread to continuously call update() and read frames
-    def start(self):
-        if self.stopped is True:
-            print('starting ' + self.name)
-            self.stopped = False
-            t = Thread(target=self.update, name=self.name, args=())
-            t.daemon = True
-            t.start()
-            # print('thread started')
-            return self
-        else:
-            print(self.name + " is already running")
+		# initialize the VideoCapture object with the source
+		self.stream = cv2.VideoCapture(src)
+		# set the capture codec to MJPG
+		self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
 
-    
-    # read a frame from the camera unless stopped is true
-    def update(self):
-        while True:
-            if self.stopped:
-                self.grabbed = False
-                return
-            (self.grabbed, self.frame) = self.stream.read()
-    
-    # return the most recent frame grabbed from the camera
-    def read(self):
-        return self.frame
+		# tries to set fps to argument
+		self.stream.set(cv2.CAP_PROP_FPS, fps)
 
-    # set stopped to True which will halt the thread
-    def stop(self):
-        print('stopping ' + self.name)
-        self.stopped = True
+		# gets actual width and height from camera
+		self.width = int(self.stream.get(cv2.CAP_PROP_FRAME_WIDTH))
+		self.height = int(self.stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # sets the property of the VideoCapture object
-    def set(self, property, value):
-        self.stream.set(property, value)
-    
-    # returns the property of the VideoCapture object
-    def get(self, property):
-        return self.stream.get(property)
+		# gets actual fps value from camera
+		self.fps = self.stream.get(cv2.CAP_PROP_FPS)
 
-    # returns whether a frame can be read
-    def isreadable(self):
-        return self.grabbed
+		# creates a new VideoWriter to save the recording
+		currenttime = datetime.datetime.now()
+		self.writer = cv2.VideoWriter('./recordings/{}_{}.avi'.format(
+			currenttime.strftime("%Y%m%d_%H-%M-%S")
+			,self.name),
+			cv2.VideoWriter_fourcc('M','J','P','G'),self.fps,(self.width,self.height))
 
-    # returns index of camera
-    def getsrc(self):
-        return self.src
-    
-    # releases video capture object
-    def release(self):
-        self.stop()
-        self.stream.release()
+		# saves the index of the webcam for relaunching
+		self.src = src
+		
+		# time in milliseconds between each frame
+		self.waittime = 1000/self.fps
 
-    # releases old VideoCapture object and creates a new one
-    # use this if there's a hardware error with the camera such
-    # as it being unplugged while the program is running
-    def relaunch(self):
-        print('relaunch has been called')
-        self.release()
-        self.__init__(self.src, self.fps, self.name)
 
+	
+	# create a new thread to continuously call update() and read frames
+	def start(self):
+		if self.stopped is True:
+			print('starting ' + self.name)
+			self.stopped = False
+			t = Thread(target=self.update, name=self.name, args=())
+			t.daemon = True
+			t.start()
+			# print('thread started')
+			return self
+		else:
+			print(self.name + " is already running")
+
+	
+	# read a frame from the camera unless stopped is true
+	def update(self):
+		while True:
+			if self.stopped:
+				self.grabbed = False
+				return
+			(self.grabbed, self.frame) = self.stream.read()
+	
+	# return the most recent frame grabbed from the camera
+	def read(self):
+		return self.frame
+
+	# set stopped to True which will halt the thread
+	def stop(self):
+		print('stopping ' + self.name)
+		self.recordstop()
+		self.stopped = True
+
+	# sets the property of the VideoCapture object
+	def set(self, property, value):
+		self.stream.set(property, value)
+	
+	# returns the property of the VideoCapture object
+	def get(self, property):
+		return self.stream.get(property)
+
+	# returns whether a frame can be read
+	def isreadable(self):
+		return self.grabbed
+
+	# returns index of camera
+	def getsrc(self):
+		return self.src
+	
+	# releases video capture object
+	def release(self):
+		self.stop()
+		self.stream.release()
+		self.writer.release()
+
+	# releases old VideoCapture object and creates a new one
+	# use this if there's a hardware error with the camera such
+	# as it being unplugged while the program is running
+	def relaunch(self):
+		print('relaunch has been called')
+		self.release()
+		self.__init__(self.src, self.fps, self.name)
+
+	# starts the thread that handles recording
+	def recordstart(self):
+		if self.recording == False and self.stopped == False:
+			self.recording = True
+			print('recording started')
+			t = Thread(target=self.record, name=(self.name + 'record'), args=())
+			t.daemon = True
+			t.start()
+		else:
+			print('recording has already started')
+
+	# target function to grab a frame from the camera after a set amount of time
+	def record(self):
+		lasttime = time.time()
+		lastwait = 0
+		while True:
+			if self.recording == False:
+				return
+			if self.stopped == False:
+				self.writer.write(VideoStream.timestampframe(self.read()))
+
+				# essentially all this does is calculate the amount of time to wait
+				# before grabbing the next frame
+				currenttime = time.time()
+				difference = (currenttime-lasttime)*1000
+				lasttime = currenttime
+				timetosleep = lastwait-((difference-self.waittime)/4)
+				lastwait = timetosleep
+				# print('difference: ' + str(difference) + ' going to wait ' + str(timetosleep) + 'ms')
+				time.sleep(timetosleep/1000)
+
+	# stops the thread that handles recording
+	def recordstop(self):
+		if self.recording == True:
+			print('recording stopped')
+			self.recording = False
+		else:
+			print('recording is already stopped')
+
+	# grab the current timestamp and draw it on the frame
+	@staticmethod
+	def timestampframe(frame):
+		timestamp = datetime.datetime.now()
+		copiedframe = frame.copy()
+		cv2.putText(copiedframe, timestamp.strftime(
+			  "%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
+			  cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+		return copiedframe

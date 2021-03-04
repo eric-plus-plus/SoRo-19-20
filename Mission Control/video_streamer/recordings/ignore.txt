@@ -1,0 +1,4 @@
+this file exists to get git to recognize the recordings folder.
+the video streamer cannot create this folder on its own,
+so if you try to record video without this folder existing beforehand,
+it will fail and the video will not save.

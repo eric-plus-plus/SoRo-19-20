@@ -1,17 +1,11 @@
 from flask import Response, Flask, render_template, request
 import argparse
-import datetime
 from videostream import VideoStream
 import imutils
 import cv2
 
 # initialize a flask object
 app = Flask(__name__)
-
-# initialize the video stream with the desired fps
-def startstream(src, fps, name):
-		print('stream started')
-		return VideoStream(src, fps, name).start()
 
 def findactivestreams(vslist):
 	activestreams = 0
@@ -33,6 +27,10 @@ def index():
 		for i in range(0, camerasconnected):
 			if 'stopvs{}'.format(i+1) in request.form:
 				vslist[i].stop()
+			if 'stoprecordvs{}'.format(i+1) in request.form:
+				vslist[i].recordstop()
+			if 'startrecordvs{}'.format(i+1) in request.form:
+				vslist[i].recordstart()				
 			if 'relaunchvs{}'.format(i+1) in request.form:
 				vslist[i].relaunch()
 			if 'startvs{}'.format(i+1) in request.form and activestreams <= 3:
@@ -45,14 +43,6 @@ def index():
 		return render_template("index.html", 
 				camerasconnected=camerasconnected,
 				activestreams=activestreams)
-
-# grab the current timestamp and draw it on the frame
-def timestampframe(frame):
-		timestamp = datetime.datetime.now()
-		cv2.putText(frame, timestamp.strftime(
-			  "%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
-			  cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-		return frame.copy()
 
 def generate():
 		# grab global references to the list of video streams
@@ -78,7 +68,7 @@ def generate():
 				mergedim = cv2.hconcat(framelist)
 
 				# add the timestamp to the merged image
-				timestampframe(mergedim)
+				mergedim = VideoStream.timestampframe(mergedim)
 
 				# clear the framelist for the next iteration
 				framelist.clear()
@@ -134,7 +124,7 @@ if __name__ == '__main__':
 		args = vars(ap.parse_args())
 		fps = args["fps"]
 		# start a thread that will grab frames from camera
-		vs = startstream(args["source1"], fps, 'vs1')
+		vs = VideoStream(args["source1"], fps, 'vs1').start()
 
 		# create a list of video streams to reference in generate()
 		vslist = [vs]
@@ -166,6 +156,6 @@ if __name__ == '__main__':
 
 # release the video stream pointer
 for vs in vslist:
-		vs.stop()
+		vs.release()
 
 	
