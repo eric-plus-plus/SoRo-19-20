@@ -164,22 +164,22 @@ fn main() {
                 //accelerate faster proportional to the speed of your processor
                 //which seems pay to win
 
-                const button_increment: f32 = 3.0;
+                const BUTTON_INCREMENT: f32 = 3.0;
                 if gamepad.is_pressed(Button::North) {
-                    fan_speed += button_increment;
+                    fan_speed += BUTTON_INCREMENT;
                     fan_speed = fan_speed.min(126.0)
                 }
                 if gamepad.is_pressed(Button::West) {
-                    fan_speed -= button_increment;
+                    fan_speed -= BUTTON_INCREMENT;
                     fan_speed = fan_speed.max(-126.0)
                 }
 
                 if gamepad.is_pressed(Button::East) {
-                    drill_speed += button_increment;
+                    drill_speed += BUTTON_INCREMENT;
                     drill_speed = drill_speed.min(126.0)
                 }
                 if gamepad.is_pressed(Button::South) {
-                    drill_speed -= button_increment;
+                    drill_speed -= BUTTON_INCREMENT;
                     drill_speed = drill_speed.max(-126.0)
                 }
 
