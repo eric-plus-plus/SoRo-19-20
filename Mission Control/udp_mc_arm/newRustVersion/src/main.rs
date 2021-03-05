@@ -2,7 +2,7 @@ use gilrs::{Axis, Button, Event, Gamepad, Gilrs};
 use std::{collections::HashMap, convert::TryInto, fs};
 use std::{net::UdpSocket, time::SystemTime};
 
-const DEFAULT_CONFIG: &str = "target=10.0.0.1:1003";
+const DEFAULT_CONFIG: &str = "target=10.0.0.102:1002";
 
 fn alert_about_malformed_config(message: &str) {
     println!("\n\n-----------------");
