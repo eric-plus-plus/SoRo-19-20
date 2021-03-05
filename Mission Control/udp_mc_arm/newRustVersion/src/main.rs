@@ -25,37 +25,48 @@ fn to_twos_complement(n: i32) -> u8 {
     return n as u8;
 }
 
-fn get_actuator_value(map: &HashMap<&Axis, f32>) -> i32 {
-    (map.get(&Axis::LeftStickY).unwrap_or(&0.0) * 90.0).floor() as i32
+
+fn clamp(val: &f32, lower_bound: f32, upper_bound:f32) -> f32{
+    lower_bound.max(*val).min(upper_bound)
 }
 
-fn compute_direction(gamepad: &Gamepad) -> i32 {
-    if gamepad.is_pressed(Button::DPadLeft) {
-        return 0;
+fn calculate_shoulder_velocity(gamepad: &Gamepad) -> f32{
+    if let Some(axis_val) = gamepad.axis_data(Axis::RightStickY) {
+        return axis_val.value();
     }
+    return 0.0;
+}
 
-    if gamepad.is_pressed(Button::DPadUp) {
-        return 1;
+fn calculate_elbow_velocity(gamepad: &Gamepad) -> f32{
+    if let Some(axis_val) = gamepad.axis_data(Axis::LeftStickY) {
+        return axis_val.value() * -1.0;
     }
+    return 0.0;
+}
 
-    if gamepad.is_pressed(Button::DPadRight) {
-        return 2;
+
+fn calculate_claw_velocity(gamepad: &Gamepad, positive_button: Button, negative_button: Button) -> f32{
+    let mut to_return = 0.0;
+    if gamepad.is_pressed(positive_button) {
+        to_return += 1.0;
     }
-
-    return 0;
+    if gamepad.is_pressed(negative_button) {
+        to_return -= 1.0;
+    }
+    return to_return;
 }
 
 fn main() {
     let mut gilrs = Gilrs::new().unwrap();
 
-    let config_file = fs::read_to_string("./udp_mc_drill.conf");
+    let config_file = fs::read_to_string("./udp_mc_arm.conf");
     let mut config_file = match config_file {
         Ok(data) => data.trim().to_string(),
         Err(err) => match err.kind() {
             std::io::ErrorKind::NotFound => {
                 println!("Could not find config file, writing one and initializing with default");
-                fs::write("./udp_mc_drill.conf", &DEFAULT_CONFIG).unwrap();
-                fs::read_to_string("./udp_mc_drill.conf").unwrap()
+                fs::write("./udp_mc_arm.conf", &DEFAULT_CONFIG).unwrap();
+                fs::read_to_string("./udp_mc_arm.conf").unwrap()
             }
             _ => {
                 panic!("Unknown error: {:?}", err.kind())
@@ -113,8 +124,10 @@ fn main() {
 
     let socket = UdpSocket::bind("0.0.0.0:43257").expect("Couldn't bind to addr");
 
-    let mut fan_speed: f32 = 0.0;
-    let mut drill_speed: f32 = 0.0;
+    let mut last_shoulder_value = 90.0;
+    let mut last_elbow_value = 90.0;
+    let mut last_claw_l_position = 75.0;
+    let mut last_claw_r_position = 150.0;
 
     loop {
         // Examine new events
@@ -158,48 +171,32 @@ fn main() {
                 > 100
             {
 
-                //crucial that this computation is done during the send loop
-                //incrementing outside the 100ms loop would max the value super quickly
-                //it could also have the added effect of making it so that the drill will
-                //accelerate faster proportional to the speed of your processor
-                //which seems pay to win
-
-                const BUTTON_INCREMENT: f32 = 3.0;
-                if gamepad.is_pressed(Button::North) {
-                    fan_speed += BUTTON_INCREMENT;
-                    fan_speed = fan_speed.min(126.0)
-                }
-                if gamepad.is_pressed(Button::West) {
-                    fan_speed -= BUTTON_INCREMENT;
-                    fan_speed = fan_speed.max(-126.0)
-                }
-
-                if gamepad.is_pressed(Button::East) {
-                    drill_speed += BUTTON_INCREMENT;
-                    drill_speed = drill_speed.min(126.0)
-                }
-                if gamepad.is_pressed(Button::South) {
-                    drill_speed -= BUTTON_INCREMENT;
-                    drill_speed = drill_speed.max(-126.0)
-                }
-
-
-                if gamepad.is_pressed(Button::RightTrigger) || gamepad.is_pressed(Button::LeftTrigger) {
-                    fan_speed = 0.0;
-                }
-                if gamepad.is_pressed(Button::RightTrigger2) || gamepad.is_pressed(Button::LeftTrigger2) {
-                    drill_speed = 0.0;
-                }
-
                 time_of_last_send = SystemTime::now();
+                last_shoulder_value += calculate_shoulder_velocity(&gamepad);
+                last_shoulder_value = clamp(&last_shoulder_value, 50.0, 140.0);
+
+
+                last_elbow_value += calculate_elbow_velocity(&gamepad);
+                last_elbow_value = clamp(&last_elbow_value, 50.0, 140.0);
+
+                last_claw_l_position += calculate_claw_velocity(&gamepad, Button::DPadLeft, Button::DPadRight);
+                last_claw_l_position = clamp(&last_claw_l_position, 35.0, 75.0);
+
+                last_claw_r_position += calculate_claw_velocity(&gamepad, Button::DPadUp, Button::DPadDown);
+                last_claw_r_position = clamp(&last_claw_r_position, 90.0, 150.0);
+
+
 
                 let mut unconverted_values = [
                     -127,
-                    2,
-                    compute_direction(&gamepad),
-                    get_actuator_value(&map),
-                    drill_speed as i32,
-                    fan_speed as i32,
+                    1,
+                    90, //base_speed
+                    last_shoulder_value as i32, //shoulder position
+                    last_elbow_value as i32, //elbow position
+                    calculate_claw_velocity(&gamepad, Button::LeftTrigger, Button::RightTrigger) as i32, //wristtheta speed
+                    calculate_claw_velocity(&gamepad, Button::LeftTrigger2, Button::RightTrigger2) as i32, //wrist phi speed 
+                    last_claw_l_position as i32, //claw l pos
+                    last_claw_r_position as i32, //claw r pos
                     255, //dummy value, will be overwritten with the hash
                 ];
                 //this overwrite is nice so that we can reference elements of buf instead of copyf
@@ -207,8 +204,11 @@ fn main() {
                 let mut hash: i32 = unconverted_values[2]
                     + unconverted_values[3]
                     + unconverted_values[4]
-                    + unconverted_values[5];
-                hash /= 4;
+                    + unconverted_values[5]
+                    + unconverted_values[6]
+                    + unconverted_values[7]
+                    + unconverted_values[8];
+                hash /= 7;
                 unconverted_values[unconverted_values.len() - 1] = hash;
                 println!("Hash is {:}", hash);
                 println!("{:#?}", unconverted_values);
@@ -217,7 +217,7 @@ fn main() {
                     .iter()
                     .map(|&x| to_twos_complement(x))
                     .collect();
-                let converted_message: [u8; 7] = mapped_vec.try_into().unwrap_or([0; 7]);
+                let converted_message: [u8; 10] = mapped_vec.try_into().unwrap_or([0; 10]);
 
                 println!("{:#?}", converted_message);
 
