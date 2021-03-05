@@ -165,15 +165,19 @@ void loop() {
 
 void updateServos() {
   // convert char (-127 to 126) to pwm values (0 to 255)
-  int speedOutput = map(actuatorSpeed, -127, 126, 0, 255);
+  int speedOutput = actuatorSpeed;
+  if (speedOutput < 0)
+    speedOutput *= -1;
+
+  speedOutput = map(speedOutput, 0, 90, 0, 255);
   
-  if (actuatorDir == 0)
+  if (actuatorSpeed < 0)
   {
     // down
     analogWrite(PIN_ACTUATOR_UP, 0);
     analogWrite(PIN_ACTUATOR_DOWN, speedOutput);
   }
-  else if (actuatorDir == 1)
+  else if (actuatorSpeed > 0)
   {
     //up
     analogWrite(PIN_ACTUATOR_UP, speedOutput);
