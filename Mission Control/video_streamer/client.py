@@ -31,6 +31,7 @@ def index():
 		# add button handler for the quality selector
 		if 'qualitysubmit' in request.form:
 			encodingquality = int(request.form['qualityslider'])
+
 		# add button handler for the FPS buttons
 		for i in [30,20,15,12,10,8,5,4,3,2,1]:
 			if 'fps_{}'.format(i) in request.form:
@@ -45,7 +46,7 @@ def index():
 		# find number of active video streams for rendering
 		activestreams = findactivestreams(vslist)
 		recordingstreams = findrecording(vslist)
-		print(recordingstreams)
+
 		# return the rendered template
 		return render_template("index.html", 
 				camerasconnected=camerasconnected,
