@@ -3,7 +3,7 @@
     <title>Webcam Streamer</title>
   </head>
   <body>
-    <h1>Stream</h1>
+    <img src ={{url_for('static',filename="logo.png")}} style="width: 200px;">
     <div>
       <img src="{{ url_for('video_feed') }}">
     </div>
@@ -25,6 +25,12 @@
         <input type="submit" name="fps_{{i}}" value="{{i}} FPS" 
         {%if fps == i%} style="background-color: lightblue;" {%endif%}>
         {%endfor%}
+      </div>
+      <div>
+        Frame Size:
+        <input type="range" min="60" max="640" value="{{ framesize }}" name="sizeslider">
+        {{ framesize }}px 
+        <input type="submit" name="sizesubmit" value="Send Frame Size">
       </div>
       {%for i in range(0, camerasconnected)%}
       <div>

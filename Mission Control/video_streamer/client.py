@@ -8,7 +8,8 @@ import time
 # global variables to keep track of encoding quality and the targeted time between frames
 encodingquality = 50 
 targetfps = 30	 # 30 FPS as a default
-targetwait = 1/targetfps
+targetwait = 1000/targetfps # in milliseconds
+framesize = 600 # 600px width default
 
 # initialize a flask object
 app = Flask(__name__)
@@ -19,14 +20,14 @@ def findactivestreams(vslist):
 	for vs in vslist:
 		if vs.stopped == False:
 			activestreams += 1
-	return activestreams
+	return activestreams	
 
 # define the root url to be index.html
 # in other words, when the user accesses http://[ip]:[port]/
 # they will see index.html
 @app.route("/", methods=['GET','POST'])
 def index():
-		global encodingquality, targetwait, targetfps
+		global encodingquality, targetwait, targetfps, framesize
 
 		# add button handler for the quality selector
 		if 'qualitysubmit' in request.form:
@@ -38,6 +39,9 @@ def index():
 				targetwait = 1000/i
 				targetfps = i
 
+		if 'sizesubmit' in request.form:
+			framesize = int(request.form['sizeslider'])
+ 
 		# find active streams for limiting new streams
 		activestreams = findactivestreams(vslist)
 		camerasconnected = vslist.__len__()
@@ -54,7 +58,8 @@ def index():
 				encodingquality=encodingquality,
 				responsewait=targetwait,
 				fps=targetfps,
-				recordingstreams=recordingstreams)
+				recordingstreams=recordingstreams,
+				framesize=framesize)
 
 # handlers for the currently connected cameras
 def handlecamops(activestreams, camerasconnected):
@@ -114,11 +119,12 @@ def generate():
 					continue
 				
 				# resize each frame to 600
+				resizedlist = []
 				for frame in framelist:
-						frame = imutils.resize(frame, width=600)
+						resizedlist.append(imutils.resize(frame, width=framesize))
 					
 				# merge each of the three frames into one image
-				mergedim = cv2.hconcat(framelist)
+				mergedim = cv2.hconcat(resizedlist)
 
 				# add the timestamp to the merged image
 				mergedim = VideoStream.timestampframe(mergedim)
@@ -155,39 +161,19 @@ if __name__ == '__main__':
 		ap.add_argument("-o", "--port", type=int, required=True,
 				help="port number of the server (1024 to 65535)")
 
-		# allow up to 6 video streams to be created
-		ap.add_argument("-s1", "--source1", type=int, default=0,
-				help="index of first camera to use")
-		ap.add_argument("-s2", "--source2", type=int, default=-1,
-				help="index of second camera to use")
-		ap.add_argument("-s3", "--source3", type=int, default=-1,
-				help="index of third camera to use")
-		ap.add_argument("-s4", "--source4", type=int, default=-1,
-				help="index of fourth camera to use")
-		ap.add_argument("-s5", "--source5", type=int, default=-1,
-				help="index of fifth camera to use")
-		ap.add_argument("-s6", "--source6", type=int, default=-1,
-				help="index of sixth camera to use")
-
-		# choose fps
-		ap.add_argument("-f", "--fps", type=int, default=30,
-				help="fps of stream")
-
 		# parse arguments
 		args = vars(ap.parse_args())
-		fps = args["fps"]
-
-		# start a thread that will grab frames from camera
-		vs = VideoStream(args["source1"], fps, 'vs1').start()
 
 		# create a list of video streams to reference in generate()
-		vslist = [vs]
+		vslist = []
 
-		# if up to 5 other video sources have been defined, start that many streams 
-		for i in range(2,6):
-			if args["source{}".format(i)] != -1:
-				newvs = VideoStream(args["source{}".format(i)], fps, 'vs{}'.format(i))
-				vslist.append(newvs)
+		# find up to 10 attached cameras and try and start streams on them
+		for i in range(0,9):
+			vs = VideoStream(i,'vs{}'.format(i+1))
+			if vs.stream.isOpened() is False:
+				vs.release()
+			else:
+				vslist.append(vs)
 
 		# start the flask app
 		app.run(host=args["ip"], port=args["port"], debug=True,

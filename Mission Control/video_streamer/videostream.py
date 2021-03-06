@@ -6,7 +6,7 @@ import os
 
 class VideoStream:
 	# initialize self with defined source and fps
-	def __init__(self, src=0, fps=30,  name="VideoStream"):
+	def __init__(self, src=0, name="VideoStream"):
 		# set grabbed to false
 		self.grabbed = False
 
@@ -21,11 +21,9 @@ class VideoStream:
 
 		# initialize the VideoCapture object with the source
 		self.stream = cv2.VideoCapture(src)
+
 		# set the capture codec to MJPG
 		self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
-
-		# tries to set fps to argument
-		self.stream.set(cv2.CAP_PROP_FPS, fps)
 
 		# gets actual width and height from camera
 		self.width = int(self.stream.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -114,7 +112,7 @@ class VideoStream:
 	def relaunch(self):
 		print('relaunch has been called')
 		self.release()
-		self.__init__(self.src, self.fps, self.name)
+		self.__init__(self.src, self.name)
 
 
 	# starts the thread that handles recording
