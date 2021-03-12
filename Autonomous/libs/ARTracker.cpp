@@ -71,17 +71,17 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2;
+        parameters->adaptiveThreshWinSizeMax = 400; // These two parameters adjust the size of squares aruco breaks the image into.                                          
+        parameters->adaptiveThreshWinSizeMin = 200; // If these are too low, especially min, it will detect many markers that are not there
+
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
-        cv::Mat outputImage = image.clone();
-        cv::aruco::drawDetectedMarkers(outputImage, corners, MarkerIDs);
-        //cv::imwrite("marker0.png", outputImage);
         
         if(MarkerIDs.size() > 0)
         {
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
-      //          std::cout << i << "," << MarkerIDs[i] << "\n";
+               std::cout << i << "," << MarkerIDs[i] << "\n";
                 if(MarkerIDs[i] == id)
                 {
                     index = i;
@@ -133,6 +133,8 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
+        parameters->adaptiveThreshWinSizeMax = 400; // These two parameters adjust the size of squares aruco breaks the image into.                                          
+        parameters->adaptiveThreshWinSizeMin = 200; // If these are too low, especially min, it will detect many markers that are not there
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects);
         if(MarkerIDs.size() > 0)
         {
