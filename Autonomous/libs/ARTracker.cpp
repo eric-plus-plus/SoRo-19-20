@@ -32,73 +32,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     if(!config())
         std::cout << "Error opening file" << std::endl;
 
-    // MANUALLY ADD EACH MARKER
-    urcDict.markerSize = 5;
-    urcDict.maxCorrectionBits = 0;
-    
-    char bits0[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {1,1,1,1,1}, {1,1,1,1,1}};
-    cv::Mat markerBits0 = cv::Mat(5, 5, CV_8UC1, &bits0);
-    cv::Mat markerCompressed0 = cv::aruco::Dictionary::getByteListFromBits(markerBits0);
-    urcDict.bytesList.push_back(markerCompressed0);
-
-    char bits1[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,0,1,1,0}, {1,1,1,0,1}};
-    cv::Mat markerBits1 = cv::Mat(5, 5, CV_8UC1, &bits1);
-    cv::Mat markerCompressed1 = cv::aruco::Dictionary::getByteListFromBits(markerBits1);
-    urcDict.bytesList.push_back(markerCompressed1);
-
-    char bits2[5][5]  = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {1,0,1,1,0}, {1,0,1,1,0}};
-    cv::Mat markerBits2 = cv::Mat(5, 5, CV_8UC1, &bits2);
-    cv::Mat markerCompressed2 = cv::aruco::Dictionary::getByteListFromBits(markerBits2);
-    urcDict.bytesList.push_back(markerCompressed2);
-
-    char bits3[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,1,1,1,1}, {1,0,1,0,0}};
-    cv::Mat markerBits3 = cv::Mat(5, 5, CV_8UC1, &bits3);
-    cv::Mat markerCompressed3 = cv::aruco::Dictionary::getByteListFromBits(markerBits3);
-    urcDict.bytesList.push_back(markerCompressed3);
-
-    char bits4[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,1,1,1,0}, {0,1,1,1,0}};
-    cv::Mat markerBits4 = cv::Mat(5, 5, CV_8UC1, &bits4);
-    cv::Mat markerCompressed4 = cv::aruco::Dictionary::getByteListFromBits(markerBits4);
-    urcDict.bytesList.push_back(markerCompressed4);
-
-    char bits5[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {1,0,1,1,1}, {0,1,1,0,0}};
-    cv::Mat markerBits5 = cv::Mat(5, 5, CV_8UC1, &bits5);
-    cv::Mat markerCompressed5 = cv::aruco::Dictionary::getByteListFromBits(markerBits5);
-    urcDict.bytesList.push_back(markerCompressed5);
-
-    char bits6[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,0,1,1,1}, {0,0,1,1,1}};
-    cv::Mat markerBits6 = cv::Mat(5, 5, CV_8UC1, &bits6);
-    cv::Mat markerCompressed6 = cv::aruco::Dictionary::getByteListFromBits(markerBits6);
-    urcDict.bytesList.push_back(markerCompressed6);
-
-    char bits7[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {1,1,1,1,0}, {0,0,1,0,1}};
-    cv::Mat markerBits7 = cv::Mat(5, 5, CV_8UC1, &bits7);
-    cv::Mat markerCompressed7 = cv::aruco::Dictionary::getByteListFromBits(markerBits7);
-    urcDict.bytesList.push_back(markerCompressed7);
-
-    char bits8[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,0,1,0,1}, {1,1,1,1,0}};
-    cv::Mat markerBits8 = cv::Mat(5, 5, CV_8UC1, &bits8);
-    cv::Mat markerCompressed8 = cv::aruco::Dictionary::getByteListFromBits(markerBits8);
-    urcDict.bytesList.push_back(markerCompressed8);
-
-    char bits9[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {1,1,1,0,0}, {1,1,1,0,0}};
-    cv::Mat markerBits9 = cv::Mat(5, 5, CV_8UC1, &bits9);
-    cv::Mat markerCompressed9 = cv::aruco::Dictionary::getByteListFromBits(markerBits9);
-    urcDict.bytesList.push_back(markerCompressed9);
-
-    char bits10[5][5] = {{1,1,0,1,1}, {1,1,0,1,1}, {1,0,1,0,1}, {0,1,1,0,0}, {1,0,1,1,1}};
-    cv::Mat markerBits10 = cv::Mat(5, 5, CV_8UC1, bits10);
-    cv::Mat markerCompressed10 = cv::aruco::Dictionary::getByteListFromBits(markerBits10);
-    urcDict.bytesList.push_back(markerCompressed10);
-
-    // PRINT DICTIONARY FOR FURTHER USE
-    cv::FileStorage fs("../urcDict.yml", cv::FileStorage::WRITE);
-    fs << "MarkerSize" << urcDict.markerSize;
-    fs << "MaxCorrectionBits" << urcDict.maxCorrectionBits;
-    fs << "ByteList" << urcDict.bytesList;
-    fs.release();
-
-    /*// Read in the dictionary from the file
+    // Read in the dictionary from the file
     cv::FileStorage fs("../urcDict.yml", cv::FileStorage::READ);
     int markerSize, maxCorrBits;
     cv::Mat bits;
@@ -107,7 +41,7 @@ ARTracker::ARTracker(char* cameras[], std::string format) : videoWriter("autonom
     fs["ByteList"] >> bits;
     fs.release();
     urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
-    dictPtr = &urcDict; //put the dict from the file into the opencv Ptr*/
+    dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
     
 
     for(int i = 0; true; i++) //initializes the cameras
