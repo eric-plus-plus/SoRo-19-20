@@ -70,10 +70,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2;
-        parameters->minCornerDistanceRate = 0.25;
-        parameters->minMarkerPerimeterRate = 0.25;
-        //parameters->polygonalApproxAccuracyRate = 0.15;
-        //parameters->minMarkerDistanceRate = 0.3;
+        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
+        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         
         if(MarkerIDs.size() > 0)
@@ -81,8 +79,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
-               std::cout << i << "," << MarkerIDs[i] << "\n";
-               std::cout << corners[i][1].x - corners[i][0].x << "\n\n";
+               // std::cout << i << "," << MarkerIDs[i] << "\n";
+               // std::cout << corners[i][1].x - corners[i][0].x << "\n\n";
                 if(MarkerIDs[i] == id)
                 {
                     index = i;
@@ -100,8 +98,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 }    
                 break;
             }
-	    //else
-            //    std::cout << "Found a tag but was not the correct one" << std::endl;
+	    else
+               std::cout << "Found a tag but was not the correct one" << std::endl;
         }
         if(i == 220) //did not find any AR tags with any b&w cutoff
         {
@@ -112,12 +110,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             return false;
         }
     }
-    //std::cout << "got to width calc, index: " << index << std::endl;
-    //for(int i = 0; i < corners[index].size(); ++i) 
-    //    std::cout << corners[index][i].x << "\n";
     widthOfTag = corners[index][1].x - corners[index][0].x;
-    //std::cout << "got past width calc\n" ; 
-    //distanceToAR = (knownWidthOfTag(20cm) * focalLengthOfCamera) / pixelWidthOfTag
     distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
     
     centerXTag = (corners[index][1].x + corners[index][0].x) / 2;
@@ -134,8 +127,8 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
-        parameters->adaptiveThreshWinSizeMax = 400; // These two parameters adjust the size of squares aruco breaks the image into.                                          
-        parameters->adaptiveThreshWinSizeMin = 200; // If these are too low, especially min, it will detect many markers that are not there
+        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
+        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects);
         if(MarkerIDs.size() > 0)
         {

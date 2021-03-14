@@ -46,6 +46,8 @@ int main()
     {
         cap >> image;
         parameters->markerBorderBits = 2;
+        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
+        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
         cv::aruco::detectMarkers(image, dictPtr, corners, MarkerIDs, parameters, rejects);
         
         double widthOfTag = 0;
