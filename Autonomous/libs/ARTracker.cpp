@@ -70,8 +70,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2;
-        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
-        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
+        //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
+        //parameters->minMarkerPerimeterRate = 0.15; // false positives but don't seem totally necessary
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
         
         if(MarkerIDs.size() > 0)
@@ -79,7 +79,6 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             index = -1;
             for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
-               // std::cout << i << "," << MarkerIDs[i] << "\n";
                // std::cout << corners[i][1].x - corners[i][0].x << "\n\n";
                 if(MarkerIDs[i] == id)
                 {
@@ -127,8 +126,8 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     for(int i = 40; i <= 220; i+=60)
     {
         parameters->markerBorderBits = 2; 
-        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
-        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
+        //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
+        //parameters->minMarkerPerimeterRate = 0.15; // false positives but don't seem totally necessary
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects);
         if(MarkerIDs.size() > 0)
         {
