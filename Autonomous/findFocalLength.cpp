@@ -33,10 +33,10 @@ int main()
     fs["ByteList"] >> bits;
     fs.release();
     cv::aruco::Dictionary urcDict = cv::aruco::Dictionary(bits, markerSize, maxCorrBits);
-    cv::Ptr<cv::aruco:Dictionary> dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
+    cv::Ptr<cv::aruco::Dictionary> dictPtr = &urcDict; //put the dict from the file into the opencv Ptr
     
     
-    cv::VideoCapture cap("/dev/video1"); 
+    cv::VideoCapture cap("/dev/video2"); 
     cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
     
@@ -46,8 +46,6 @@ int main()
     {
         cap >> image;
         parameters->markerBorderBits = 2;
-        parameters->minCornerDistanceRate = 0.15; // These two parameters seem to be the most important for
-        parameters->minMarkerPerimeterRate = 0.15; // weeding out false positives
         cv::aruco::detectMarkers(image, dictPtr, corners, MarkerIDs, parameters, rejects);
         
         double widthOfTag = 0;
@@ -57,7 +55,7 @@ int main()
             std::cout << "nothing found" << std::endl;
             
         std::cout << "Focal Length: " << ((widthOfTag * 100.0) / 20.0) << std::endl;
-        cv::imshow("win", image);
-        cv::waitKey(100);
+        //cv::imshow("win", image);
+        //cv::waitKey(100);
     }
 }
