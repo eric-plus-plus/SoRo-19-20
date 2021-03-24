@@ -15,6 +15,5 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
 
 target_link_libraries( autonomous gps )
 target_link_libraries( autonomous  ${OpenCV_LIBS})
-target_link_libraries( autonomous  aruco )
 #target_link_libsraries( autonomous ${CMAKE_THREAD_libs_INIT} ) 
 

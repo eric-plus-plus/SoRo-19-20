@@ -29,5 +29,8 @@ v4l2-ctl -d $right_file --set-ctrl=contrast=255
 v4l2-ctl -d $right_file --set-ctrl=sharpness=255
 
 cd build
-#./autonomous $main_file $left_file $right_file
-gdb autonomous --args autonomous $main_file $left_file $right_file #switch to this to debug
+
+./autonomous $main_file $left_file $right_file
+#gdb autonomous --args autonomous $main_file $left_file $right_file #switch to this to debug
+#valgrind --leak-check=yes ./autonomous $main_file $left_file $right_file #switch to this to debug
+

@@ -4,7 +4,7 @@
 
 //id of the tag, a DriveMode object, and whether or not the rover should search for a tag if it doesn't see before arriving at the GPS coords
 //finish should be false for the first two legs where the GPS coords are right at the AR tag, true otherwise
-void driveToPoll(int id, DriveMode rover, bool finish)
+void driveToPoll(int id, DriveMode *rover, bool finish)
 {
     double lat, lon;
     std::string ledStr;
@@ -25,21 +25,21 @@ void driveToPoll(int id, DriveMode rover, bool finish)
         locations.push_back(point);
     }
     
-    ledStr = rover.out->ledToStr(true, false, false);
-    rover.out->sendMessage(&ledStr); //red
+    ledStr = rover->out->ledToStr(true, false, false);
+    rover->out->sendMessage(&ledStr); //red
     
-    found = rover.driveAlongCoordinates(locations, id);
+    found = rover->driveAlongCoordinates(locations, id, -1);
     //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
     if(found || finish) 
-        rover.trackARTag(id);
+        rover->trackARTag(id);
     
-    ledStr = rover.out->ledToStr(false, true, false);
-    rover.out->sendMessage(&ledStr); //green
+    ledStr = rover->out->ledToStr(false, true, false);
+    rover->out->sendMessage(&ledStr); //green
 }
 
 //for the gates
 //takes the two ids of the gates and a DriveMode object
-void driveToPolls(int id1,int id2, DriveMode rover)
+void driveToPolls(int id1,int id2, DriveMode* rover)
 {
     double lat, lon;
     std::string ledStr;
@@ -59,15 +59,15 @@ void driveToPolls(int id1,int id2, DriveMode rover)
         locations.push_back(point);
     }
     
-    ledStr = rover.out->ledToStr(true, false, false);
-    rover.out->sendMessage(&ledStr); //red
+    ledStr = rover->out->ledToStr(true, false, false);
+    rover->out->sendMessage(&ledStr); //red
     
-    rover.driveAlongCoordinates(locations, id1, id2);
+    rover->driveAlongCoordinates(locations, id1, id2);
     //always tracks for the gates because we have to drive through them to get points
-    rover.trackARTags(id1,id2);
+    rover->trackARTags(id1,id2);
     
-    ledStr = rover.out->ledToStr(false, true, false);
-    rover.out->sendMessage(&ledStr); //green
+    ledStr = rover->out->ledToStr(false, true, false);
+    rover->out->sendMessage(&ledStr); //green
 }
  
 //takes arguments mainCamera, rest of the camera files
@@ -77,11 +77,12 @@ int main(int argc, char* argv[])
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    driveToPoll(5, rover, false);
-    driveToPoll(4, rover, false);
-    driveToPoll(0, rover, true);
+    driveToPoll(5, &rover, false);
+    //driveToPoll(5, &rover, false);
+    driveToPoll(0, &rover, true);
     
-    driveToPolls(4,5,rover);  
+    //driveToPolls(0,4,&rover);  
+    //driveToPolls(5,0,&rover);  
   
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
