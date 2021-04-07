@@ -39,12 +39,13 @@ def index():
 				targetwait = 1000/i
 				targetfps = i
 
+		# add button handler for the frame size slider
 		if 'sizesubmit' in request.form:
 			framesize = int(request.form['sizeslider'])
  
 		# find active streams for limiting new streams
 		activestreams = findactivestreams(vslist)
-		camerasconnected = vslist.__len__()
+		camerasconnected = len(vslist)
 		handlecamops(activestreams, camerasconnected)
 		
 		# find number of active video streams for rendering
@@ -115,7 +116,7 @@ def generate():
 							framelist.append(vs.read())
 
 				# continue if there are no frames to read
-				if framelist.__len__() == 0:
+				if len(framelist) == 0:
 					continue
 				
 				# resize each frame to 600
@@ -182,5 +183,3 @@ if __name__ == '__main__':
 # release the video stream pointer
 for vs in vslist:
 		vs.release()
-
-	

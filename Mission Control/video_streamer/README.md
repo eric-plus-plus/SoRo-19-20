@@ -67,6 +67,6 @@ and navigate to that ip from another device.
 
 ### Notes on Usage
 
-The program will automatically look for up to 10 cameras on launch, but only 3 simultaneous streams are supported for bandwidth considerations. Recordings from each camera can be started and will be saved to ./recordings/recording.avi. The quality and framerate can both be adjusted during runtime. 
+The program will automatically look for up to 10 cameras on launch, but only 3 simultaneous streams are supported for bandwidth considerations. Recordings from each camera can be started and will be saved to ./recordings/recording.avi. The quality and framerate can both be adjusted during runtime.
 
 Each stream can also be relaunched, which disposes of the current VideoCapture and VideoWriter object and creates new instances. This could be useful in case of a hardware error with a USB camera; the program can reaccess the camera without fully restarting. It also has the side effect of saving any recordings that had been captured up to that point in the execution.

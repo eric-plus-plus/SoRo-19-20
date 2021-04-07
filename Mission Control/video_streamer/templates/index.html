@@ -5,7 +5,7 @@
   <body>
     <img src ={{url_for('static',filename="logo.png")}} style="width: 200px;">
     <div>
-      <img src="{{ url_for('video_feed') }}">
+      <img src="{{ url_for('video_feed') }}" style="width: {{600*activestreams}}px;">
     </div>
     Cameras Connected: {{ camerasconnected }}
     Active Streams: {{ activestreams }}
