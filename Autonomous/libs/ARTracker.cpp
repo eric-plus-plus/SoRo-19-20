@@ -179,7 +179,6 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     distanceToAR1 = (knownTagWidth * focalLength) / widthOfTag1;
     distanceToAR2 = (knownTagWidth * focalLength) / widthOfTag2;
     std::cout << "1: " << distanceToAR1 << "\n2: " << distanceToAR2 << std::endl;
-    std::cout << "focal: " << focalLength << "\nwidth: " << widthOfTag << std::endl;
     distanceToAR = (distanceToAR1 + distanceToAR2) / 2;
     std::cout << distanceToAR << std::endl;
     

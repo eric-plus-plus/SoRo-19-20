@@ -57,13 +57,16 @@ DriveMode::DriveMode(char* cameras[], std::string format, double speed):tracker(
 //Sends speed in a separate thread
 void DriveMode::sendSpeed() 
 {
+    int count = 0;
     while(running) 
     {
         //send wheel speeds
-        //std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
-        speedString = out->controlToStr(round(*leftWheelSpeed), round(*rightWheelSpeed), 0,0);
+        //if(count % 20 == 0)
+	//	std::cout << "Left Speeds: " << round(*leftWheelSpeed) << " Right Speeds: " << round(*rightWheelSpeed) << std::endl;
+        //count += 1;
+	speedString = out->controlToStr(round(*leftWheelSpeed), round(*rightWheelSpeed), 0,0);
         out->sendMessage(&speedString);
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); //waits 50ms before sending the speed again
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); //waits 50ms before sending the speed again
     }
 }
 
@@ -78,8 +81,8 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     }
     else
     {
-        kp =.5;
-       	ki =.000005;
+        kp =.7;
+       	ki =.00004;
     }
     errorAccumulation += error * time;
     PIDValues[0] = baseSpeed - (error * kp + errorAccumulation * ki);
@@ -93,8 +96,8 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     }
     else
     {
-        max = baseSpeed + 50;
-	    min = baseSpeed- 50;
+        max = baseSpeed + 60;
+        min = baseSpeed- 60;
     }
     
     if(PIDValues[0] > max) PIDValues[0] = max;
@@ -127,12 +130,18 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-//    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
-    *leftWheelSpeed = speed;
-    *rightWheelSpeed = speed;
+    *leftWheelSpeed=-60;
+    *rightWheelSpeed=-60;
+    cv::waitKey(2000);
+    *leftWheelSpeed = 0;
+    *rightWheelSpeed = 0;
+    cv::waitKey(2000);
+    *leftWheelSpeed = 80;
+    *rightWheelSpeed = 20;
     printSpeeds();
     cv::waitKey(4000);
     
@@ -188,10 +197,10 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
     
     tracker.trackAR(id); //gets an intial angle from the main camera
-    
+
     errorAccumulation = 0;
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
-    while(tracker.angleToAR > 25 || tracker.angleToAR < -20 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
+    while(tracker.angleToAR > 20 || tracker.angleToAR < -18 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackAR(id))
         {    
@@ -210,8 +219,8 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = -40;
-            *rightWheelSpeed = 40;
+            *leftWheelSpeed = 10;
+            *rightWheelSpeed = 80;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
