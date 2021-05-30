@@ -235,7 +235,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             std::cout << "we lost it..." << std::endl;
             return false; //TODO: do something about this
         }
-	printSpeeds();
+        printSpeeds();
         cv::waitKey(100);
     }
     
@@ -254,7 +254,7 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
             	neverFound = false;
-	    }
+            }
             else
             {
                 std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
@@ -262,12 +262,12 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
             }
 
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-	    if(!neverFound)
-	    {
-	    	*leftWheelSpeed = wheelSpeeds[1];
-            	*rightWheelSpeed = wheelSpeeds[0];
-	    }
-	    printSpeeds();
+            if(!neverFound)
+            {
+                *leftWheelSpeed = wheelSpeeds[1];
+                *rightWheelSpeed = wheelSpeeds[0];
+            }
+            printSpeeds();
         }
         else
         {
@@ -296,7 +296,7 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
     
     //turns to face the artag directly before driving to it. May want to convert to PID although this also shouldn't have to be super accurate.
     errorAccumulation = 0;
-    while(tracker.angleToAR > 25 || tracker.angleToAR < -20 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
+    while(tracker.angleToAR > 20 || tracker.angleToAR < -18 || tracker.angleToAR == 0) //its 0 if it doesn't see it, camera is closer to the left which is why one is 10 and the other is -5
     {
         if(tracker.trackARs(id1, id2))
         {    
@@ -315,8 +315,8 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = -40;
-            *rightWheelSpeed = 40;
+            *leftWheelSpeed = 10;
+            *rightWheelSpeed = 80;
             std::cout << "Haven't seen it so turning left" << std::endl;
         }
         else if(timesNotFound < 10)
@@ -338,23 +338,31 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
     time = 0;
     errorAccumulation = 0; 
     std::cout << "\nWe are locked on and ready to track!\n" << std::endl;
+    bool neverFound = true;
+    bool trackStatus = false;
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        if(tracker.trackARs(id1, id2) || timesNotFound < 10)
+        trackStatus = tracker.trackARs(id1, id2);
+        if(trackStatus || timesNotFound < 10)
         {
-            if(tracker.trackARs(id1, id2))
+            if(trackStatus)
             {
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
+                neverFound = false;
             }
             else
             {
                 std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
                 timesNotFound++;
             }
+            
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            *leftWheelSpeed = wheelSpeeds[1];
-            *rightWheelSpeed = wheelSpeeds[0];
+            if(!neverFound)
+            {
+                *leftWheelSpeed = wheelSpeeds[1];
+                *rightWheelSpeed = wheelSpeeds[0];
+            }
             printSpeeds();
         }
         else
