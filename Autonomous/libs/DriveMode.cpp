@@ -130,7 +130,7 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     locationInst.startGPSThread();
 
     std::cout<<"Waiting for GPS connection..." << std::endl;
-    while(locationInst.allZero); //waits for the GPS to pick something up before starting
+    //while(locationInst.allZero); //waits for the GPS to pick something up before starting
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
@@ -242,25 +242,32 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
     time = 0;
     errorAccumulation = 0; 
     std::cout << "We are locked on and ready to track!" << std::endl;
-    
+    bool neverFound = true;
+    bool trackStatus = false;
     while(tracker.distanceToAR > stopDistance || tracker.distanceToAR == -1) //distance = -1 if the camera cannot find a tag
     {
-        if(tracker.trackAR(id) || timesNotFound < 10)
+	trackStatus = tracker.trackAR(id);
+        if(trackStatus || timesNotFound < 10)
         {
-            if(tracker.trackAR(id))
+            if(trackStatus)
             {
                 wheelSpeeds = getWheelSpeeds(tracker.angleToAR, speed);
                 timesNotFound = 0;
-            }
+            	neverFound = false;
+	    }
             else
             {
                 std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
                 timesNotFound++;
             }
+
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            *leftWheelSpeed = wheelSpeeds[1];
-            *rightWheelSpeed = wheelSpeeds[0];
-            printSpeeds();
+	    if(!neverFound)
+	    {
+	    	*leftWheelSpeed = wheelSpeeds[1];
+            	*rightWheelSpeed = wheelSpeeds[0];
+	    }
+	    printSpeeds();
         }
         else
         {

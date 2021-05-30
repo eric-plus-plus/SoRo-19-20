@@ -67,9 +67,9 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 
     int index = -1; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
-    for(int i = 40; i <= 220; i+=60)
+    for(int i = 10; i <= 250; i+=10)
     {
-        parameters->markerBorderBits = 2;
+        parameters->markerBorderBits = 1;
         //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
         //parameters->minMarkerPerimeterRate = 0.15; // false positives but don't seem totally necessary
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
@@ -100,7 +100,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 	    else
                std::cout << "Found a tag but was not the correct one" << std::endl;
         }
-        if(i == 220) //did not find any AR tags with any b&w cutoff
+        if(i == 240) //did not find any AR tags with any b&w cutoff
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -124,7 +124,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     int index1 = -1, index2 = -1;
     
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
-    for(int i = 40; i <= 220; i+=60)
+    for(int i = 40; i <= 240; i+=40)
     {
         parameters->markerBorderBits = 2; 
         //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out

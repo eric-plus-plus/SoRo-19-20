@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    driveToPoll(4, &rover, false);
+    driveToPoll(1, &rover, false);
     driveToPoll(5, &rover, false);
     driveToPoll(0, &rover, true);
     
