@@ -97,7 +97,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 }    
                 break;
             }
-	    else
+	        else
                std::cout << "Found a tag but was not the correct one" << std::endl;
         }
         if(i == 250) //did not find any AR tags with any b&w cutoff

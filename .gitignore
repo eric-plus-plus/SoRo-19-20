@@ -26,3 +26,5 @@ build-*
 Scripts
 *.avi
 .vscode/launch.json
+.ipynb_checkpoints
+

@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     //cv::namedWindow("win"); //This will break the code if run over SSH
     while(true)
     {
-        returnVal = tracker.findAR(5);
+        returnVal = tracker.findAR(10);
         cout << "Return value: " << returnVal << endl;
         cout << "distance: " << tracker.distanceToAR << endl;
         cout << "angle: " << tracker.angleToAR << endl;
