@@ -73,7 +73,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
         //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
         //parameters->minMarkerPerimeterRate = 0.15; // false positives but don't seem totally necessary
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
-        
+       
         if(MarkerIDs.size() > 0)
         {
             index = -1;
@@ -84,7 +84,9 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 {
                     index = i;
                     break; 
-                }   
+                }
+	        else
+                    std::cout << "Found tag " << MarkerIDs[i] << std::endl;
             }
             
             if(index != -1)
@@ -97,10 +99,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 }    
                 break;
             }
-	    else
-               std::cout << "Found a tag but was not the correct one" << std::endl;
         }
-        if(i == 250) //did not find any AR tags with any b&w cutoff
+        if(i == 250) //did not find the correct AR tag with any b&w cutoff
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -157,7 +157,11 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
                     
                     if(tag1LeftCorner != -1 && tag2LeftCorner != -1)
                         break;
-                }   
+                }
+	        else
+		{
+                    std::cout << "found tag " << MarkerIDs[i] << std::endl;
+		}	
             }
             
             if(tag1LeftCorner != -1 && tag2LeftCorner != -1)

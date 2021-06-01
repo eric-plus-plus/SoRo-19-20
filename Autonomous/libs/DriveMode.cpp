@@ -355,10 +355,12 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
             {
                 std::cout << "Didn't find it " << timesNotFound + 1 << " times" << std::endl;
                 timesNotFound++;
+		*leftWheelSpeed = 0;
+		*rightWheelSpeed = 0;
             }
             
             std::cout << tracker.angleToAR << " " << tracker.distanceToAR << std::endl;
-            if(!neverFound)
+            if(!neverFound || timesNotFound == 0)
             {
                 *leftWheelSpeed = wheelSpeeds[1];
                 *rightWheelSpeed = wheelSpeeds[0];
@@ -371,11 +373,16 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
             *leftWheelSpeed = 0;
             *rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
-            return false; //TODO: do something about this
+            break;
+	    //return false; //TODO: do something about this
         }
         cv::waitKey(100); //waits for 100ms    
         time += 100;
     }
+    cv::waitKey(1000);
+    *leftWheelSpeed = 70;
+    *rightWheelSpeed = 70;
+    cv::waitKey(5000);
     *leftWheelSpeed = 0;
     *rightWheelSpeed = 0;
     return true;
