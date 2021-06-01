@@ -371,11 +371,16 @@ bool DriveMode::trackARTags(int id1, int id2) //used for legs 4-7
             *leftWheelSpeed = 0;
             *rightWheelSpeed = 0;
             std::cout << "Tag not found" << std::endl;
-            return false; //TODO: do something about this
+            break;
+            //return false; //TODO: do something about this
         }
         cv::waitKey(100); //waits for 100ms    
         time += 100;
     }
+    cv::waitKey(1000);
+    *leftWheelSpeed = speed;
+    *rightWheelSpeed = speed;
+    cv::waitKey(4000);
     *leftWheelSpeed = 0;
     *rightWheelSpeed = 0;
     return true;
