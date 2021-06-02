@@ -65,28 +65,27 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
 {
     cv::cvtColor(image, image, cv::COLOR_RGB2GRAY); //converts to grayscale
 
+    parameters->markerBorderBits = 1;
     int index = -1; 
     //tries converting to b&w using different different cutoffs to find the perfect one for the current lighting
-    for(int i = 10; i <= 250; i+=10)
+    for(int i = 5; i <= 255; i+=15)
     {
-        parameters->markerBorderBits = 1;
-        //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
-        //parameters->minMarkerPerimeterRate = 0.15; // false positives but don't seem totally necessary
         cv::aruco::detectMarkers((image > i), dictPtr, corners, MarkerIDs, parameters, rejects); //detects all of the tags in the current b&w cutoff
        
         if(MarkerIDs.size() > 0)
         {
             index = -1;
-            for(int i = 0; i < MarkerIDs.size(); i++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
+            for(int j = 0; j < MarkerIDs.size(); j++) //this just checks to make sure that it found the right tag. Probably should move this into the b&w block
             {
                // std::cout << corners[i][1].x - corners[i][0].x << "\n\n";
-                if(MarkerIDs[i] == id)
+                if(MarkerIDs[j] == id)
                 {
-                    index = i;
-                    break; 
+                    index = j;
+		    std::cout << "Found it with threshold " <<i << std::endl;
+		    break; 
                 }
 	        else
-                    std::cout << "Found tag " << MarkerIDs[i] << std::endl;
+                    std::cout << "Found tag " << MarkerIDs[j] << " with " << i << std::endl;
             }
             
             if(index != -1)
@@ -100,7 +99,7 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
                 break;
             }
         }
-        if(i == 250) //did not find the correct AR tag with any b&w cutoff
+        if(i == 255) //did not find the correct AR tag with any b&w cutoff
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -108,6 +107,8 @@ bool ARTracker::arFound(int id, cv::Mat image, bool writeToFile)
             angleToAR = 0;
             return false;
         }
+	else if(i < 15)
+	    i -= 10;
     }
     widthOfTag = corners[index][1].x - corners[index][0].x;
     distanceToAR = (knownTagWidth * focalLength) / widthOfTag;
@@ -128,7 +129,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
     int tag2LeftCorner = -1;
     int tag2RightCorner = -1;
     //tries converting to b&w using different different cutoffs to find the perfect one for the ar tag
-    for(int i = 10; i <= 250; i+=10)
+    for(int i = 10; i <= 220; i+=20)
     {
         parameters->markerBorderBits = 1; 
         //parameters->minCornerDistanceRate = 0.15; // These two parameters may help in weeding out
@@ -178,7 +179,7 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
                 std::cout << "Found one tag" << std::endl;
         }
         
-        if(i == 250) //did not ever find two ars. TODO add something for if it finds one tag
+        if(i == 220) //did not ever find two ars. TODO add something for if it finds one tag
         {
             if(writeToFile)
                 videoWriter.write(image);
@@ -205,24 +206,24 @@ int ARTracker::countValidARs(int id1, int id2, cv::Mat image, bool writeToFile)
 }
 
 
-bool ARTracker::findAR(int id)
+int ARTracker::findAR(int id)
 {    
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(arFound(id, frame, false)) return true;
+        if(arFound(id, frame, false)) return i;
     }
-    return false;
+    return -1;
 }
 
-bool ARTracker::findARs(int id1, int id2)
+int ARTracker::findARs(int id1, int id2)
 {
     for(int i = 0; i < caps.size(); i++)
     {
         *caps[i] >> frame;
-        if(countValidARs(id1, id2, frame, false)) return true;
+        if(countValidARs(id1, id2, frame, false)) return i;
     }
-    return false;
+    return -1;
 
 }
 

@@ -91,8 +91,8 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     int max, min;
     if(baseSpeed != 0) //not a pivot turn
     {
-        max = baseSpeed + 30; //forces it to arc when driving
-        min = baseSpeed - 30;
+        max = baseSpeed + 25; //forces it to arc when driving
+        min = baseSpeed - 25;
     }
     else
     {
@@ -111,7 +111,7 @@ std::vector<double> DriveMode::getWheelSpeeds(double error, double baseSpeed)
     else if(PIDValues[0] > 0 && PIDValues[0] < 10)
         PIDValues[0] = 10;
 
-    if(PIDValues[1] <= 0 && PIDValues[1] > -10)
+    if(PIDValues[1] < 0 && PIDValues[1] > -10)
         PIDValues[1] = -10;
     else if(PIDValues[1] > 0 && PIDValues[1] < 10)
         PIDValues[1] = 10;
@@ -125,7 +125,7 @@ void DriveMode::printSpeeds()
     std::cout << "Right Wheels: " << round(*rightWheelSpeed) << std::endl;
 }
 
-bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2)
+int DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations, int id1, int id2)
 {    
     locationInst.startGPSThread();
 
@@ -134,16 +134,16 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::cout << "Connected to GPS" << std::endl; 
      
     //Drives for 4 seconds to hopefully get a good angle from the gps
-    *leftWheelSpeed=-60;
-    *rightWheelSpeed=-60;
-    cv::waitKey(2000);
+    *leftWheelSpeed=-speed;
+    *rightWheelSpeed=-speed;
+    cv::waitKey(3000);
     *leftWheelSpeed = 0;
     *rightWheelSpeed = 0;
     cv::waitKey(2000);
     *leftWheelSpeed = 80;
     *rightWheelSpeed = 20;
     printSpeeds();
-    cv::waitKey(4000);
+    cv::waitKey(2700);
     
     float bearingTo;
     std::vector<double> wheelSpeeds;
@@ -161,23 +161,25 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
 
             cv::waitKey(100); //waits for 100ms
             time += 100; //updates time
-            
+            int camera; 
             if(id2 == -1)
             {
-                if(tracker.findAR(id1))
+		camera = tracker.findAR(id1);
+                if(camera > -1)
                 {
                     locationInst.stopGPSThread();
                     std::cout << "Found tag!!!" << std::endl;
-                    return true;
+                    return camera;
                 }
             }
             else
             {
-                if(tracker.findARs(id1, id2))
+		camera = tracker.findARs(id1, id2);
+                if(camera > -1)
                 {
                     locationInst.stopGPSThread();
                     std::cout << "Found tags!!!" << std::endl;
-                    return true;
+                    return camera;
                 }
             }
         }
@@ -186,16 +188,23 @@ bool DriveMode::driveAlongCoordinates(std::vector<std::vector<double>> locations
     std::cout << "Made it to the gps location without seeing both tags..." << std::endl;
     *leftWheelSpeed = 0;
     *rightWheelSpeed = 0;
-    return false; //got to gps location without finding the wanted ar tag
+    return -1; //got to gps location without finding the wanted ar tag
 }
 
-bool DriveMode::trackARTag(int id) //used for legs 1-3
-{
+bool DriveMode::trackARTag(int id, int camera) //used for legs 1-3
+{	
     std::string str;
     std::vector<double> wheelSpeeds;
     int timesNotFound = -1;
-    int stopDistance = 250;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
+    int stopDistance = 290;  //drives until the distance to the tag is less than stopDistance in cm. NOTE: rover only needs to be within 300cm to score.
     
+    if(tracker.distanceToAR <= stopDistance && tracker.distanceToAR > -1)
+    {
+        *leftWheelSpeed = 0;
+	*rightWheelSpeed = 0;
+	return true;
+    }
+
     tracker.trackAR(id); //gets an intial angle from the main camera
 
     errorAccumulation = 0;
@@ -219,14 +228,30 @@ bool DriveMode::trackARTag(int id) //used for legs 1-3
         }
         else if(timesNotFound == -1)// hasn't seen anything yet so turns to the left until it sees it
         {
-            *leftWheelSpeed = 10;
-            *rightWheelSpeed = 80;
-            std::cout << "Haven't seen it so turning left" << std::endl;
-        }
-        else if(timesNotFound < 10)
+	    if(camera == 2)
+	    {
+		*leftWheelSpeed = 70;
+		*rightWheelSpeed = 10;
+	    }
+	    else
+	    {
+            	*leftWheelSpeed = 10;
+            	*rightWheelSpeed = 70;
+            	std::cout << "Haven't seen it so turning left" << std::endl;
+	    }
+	    timesNotFound = 0;
+	}
+        else if(timesNotFound < 50)
         {
             timesNotFound++;
-            std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
+	    if(timesNotFound %2 == 0)
+	    {
+		if(camera == 2)    
+			*rightWheelSpeed += 1;
+		else
+			*leftWheelSpeed+=1;
+	    }
+	    std::cout << "Didn't find it " << timesNotFound << " times" << std::endl;
         }
         else
         {

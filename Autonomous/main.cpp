@@ -8,7 +8,7 @@ void driveToPoll(int id, DriveMode *rover, bool finish)
 {
     double lat, lon;
     std::string ledStr;
-    bool found;
+    int found;
     std::vector<std::vector<double>> locations; 
     
     //gets lists of coords to drive to
@@ -30,8 +30,8 @@ void driveToPoll(int id, DriveMode *rover, bool finish)
     
     found = rover->driveAlongCoordinates(locations, id, -1);
     //only tracks the tag if finish is true or if it saw it while driving to the GPS coords
-    if(found || finish) 
-        rover->trackARTag(id);
+    if(found > -1|| finish) 
+        rover->trackARTag(id, found);
     
     ledStr = rover->out->ledToStr(false, true, false);
     rover->out->sendMessage(&ledStr); //green
@@ -73,16 +73,16 @@ void driveToPolls(int id1,int id2, DriveMode* rover)
 //takes arguments mainCamera, rest of the camera files
 int main(int argc, char* argv[])
 {
-    DriveMode rover(argv + 1, "MJPG", 40.0);
+    DriveMode rover(argv + 1, "MJPG", 25.0);
     std::string ledStr = rover.out->ledToStr(true, false, false);
     rover.out->sendMessage(&ledStr); //red
     
-    driveToPoll(7, &rover, false);
-    //driveToPoll(5, &rover, false);
+    driveToPoll(1, &rover, false);
+    driveToPoll(2, &rover, true);
     //driveToPoll(0, &rover, true);
     
-    driveToPolls(0,3,&rover);  
-    //driveToPolls(5,0,&rover);  
+    driveToPolls(3,4,&rover);  
+    driveToPolls(9,10,&rover);  
   
     std::cout << "Finished everything!" << std::endl;
     std::cout << "\ndon't worry about the next error" << std::endl;
