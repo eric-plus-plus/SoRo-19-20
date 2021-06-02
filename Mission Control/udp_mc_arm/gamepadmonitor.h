@@ -51,6 +51,8 @@ public slots:
     void onRYAxis(double value);
     void onRXAxis(double value);
     void onButtonB(bool pressed);
+    void onButtonY(bool pressed);
+    void onButtonX(bool pressed);
     void onL2(double value);
     void onR2(double value);
     void onButtonUp(bool pressed);

@@ -3,7 +3,11 @@
 #include <QtGamepad/QGamepad>
 #include <QDebug>
 #include <stdio.h>
-
+// 149 73
+#define CLAW_L_OPEN 149
+#define CLAW_L_CLOSED 87
+#define CLAW_R_OPEN 73
+#define CLAW_R_CLOSED 28
 
 GamepadMonitor::GamepadMonitor( QObject *parent)
     : QObject(parent)
@@ -23,6 +27,8 @@ GamepadMonitor::GamepadMonitor( QObject *parent)
     connect(m_gamepad, SIGNAL(axisRightYChanged(double)), this, SLOT(onRYAxis(double)));
     connect(m_gamepad, SIGNAL(axisRightXChanged(double)), this, SLOT(onRXAxis(double)));
     connect(m_gamepad, SIGNAL(buttonBChanged(bool)), this, SLOT(onButtonB(bool)));
+    connect(m_gamepad, SIGNAL(buttonYChanged(bool)), this, SLOT(onButtonY(bool)));
+    connect(m_gamepad, SIGNAL(buttonXChanged(bool)), this, SLOT(onButtonX(bool)));
     connect(m_gamepad, SIGNAL(buttonUpChanged(bool)), this, SLOT(onButtonUp(bool)));
     connect(m_gamepad, SIGNAL(buttonDownChanged(bool)), this, SLOT(onButtonDown(bool)));
     connect(m_gamepad, SIGNAL(buttonL2Changed(double)), this, SLOT(onL2(double)));
@@ -62,8 +68,8 @@ GamepadMonitor::GamepadMonitor( QObject *parent)
 
     // initialize stuff
     // values dependent of previous inputs over time:
-    clawL = 75;           // claw servo angle
-    clawR = 150;
+    clawL = CLAW_L_OPEN;           // claw servo angle
+    clawR = CLAW_L_CLOSED;
     coord_u = 18.5;       // wrist position
     coord_v = 9.5;
     phi = 0.0;            // wrist angle
@@ -121,11 +127,27 @@ void GamepadMonitor::onRXAxis(double value){
  void GamepadMonitor::onButtonB(bool pressed){
      if(pressed)
      {
-        clawL = 35.0;
-        clawR = 90.0;
+        clawL = CLAW_L_CLOSED;
+        clawR = CLAW_R_CLOSED;
      } else {
-        clawL = 75.0;
-        clawR = 150.0;
+        clawL = CLAW_L_OPEN;
+        clawR = CLAW_R_OPEN;
+     }
+ }
+
+ void GamepadMonitor::onButtonY(bool pressed){
+     if(pressed)
+     {
+        clawL -= 1;
+        clawR += 1;
+     }
+ }
+
+ void GamepadMonitor::onButtonX(bool pressed){
+     if(pressed)
+     {
+        clawL += 1;
+        clawR -= 1;
      }
  }
 

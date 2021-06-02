@@ -43,8 +43,8 @@ unsigned char shoulder_pos = 135;
 unsigned char elbow_pos = 119;
 char wristTheta_speed = 0;
 char wristPhi_speed = 0;
-unsigned char clawL_pos = 75;
-unsigned char clawR_pos = 150;
+unsigned char clawL_pos = 149;
+unsigned char clawR_pos = 73;
 
 unsigned char serialHash = 0;
 unsigned char myHash = 81;
